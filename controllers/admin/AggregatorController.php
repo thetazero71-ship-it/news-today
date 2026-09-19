@@ -31,11 +31,45 @@ class AggregatorController extends AdminController
  // fall back to the requested/default category below
  }
 
- if ($fallbackCatId > 0) {
- return $fallbackCatId;
- }
- return get_default_category_id($db);
- }
+if ($fallbackCatId > 0) {
+        return $this->resolveOrCreateCategory($db, $fallbackCatId);
+    }
+    return $this->resolveOrCreateCategory($db, get_default_category_id($db));
+    }
+
+    /**
+     * Make sure a category id really exists before it is written into an article.
+     * On shared hosting the DB can be missing that category (rss_sources.category_id
+     * has no FK and may point to a deleted category, or the categories table can be
+     * empty / seeded with ids starting above 1). When no valid id is found this
+     * creates the default "general-news" category once and returns its real id, so
+     * the INSERT/UPDATE never violates fk_articles_category.
+     */
+    private function resolveOrCreateCategory($db, $categoryId)
+    {
+    $categoryId = (int) $categoryId;
+    if ($categoryId > 0) {
+    $exists = $db->fetch("SELECT id FROM categories WHERE id = :id", [':id' => $categoryId]);
+    if ($exists) {
+    return $categoryId;
+    }
+    }
+
+    $defaultId = get_default_category_id($db);
+    if ($defaultId > 0) {
+    $exists = $db->fetch("SELECT id FROM categories WHERE id = :id", [':id' => $defaultId]);
+    if ($exists) {
+    return $defaultId;
+    }
+    }
+
+    $db->query(
+    "INSERT INTO categories (name, name_ar, slug, description_ar, is_visible, sort_order)
+    VALUES ('أخبار عامة', 'أخبار عامة', 'general-news', 'أخبار تقنية عامة ومتنوعة', 1, 99)
+    ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)"
+    );
+    return (int) $db->lastInsertId();
+    }
 
  /**
   * ظٹط±ط¯ظ‘ JSON ط¹ظ†ط¯ظ…ط§ ظٹظƒظˆظ† ط§ظ„ط·ظ„ط¨ ظ‚ط§ط¯ظ…ط§ظ‹ ظ…ظ† ظˆط§ط¬ظ‡ط© AJAX (ظ†ط´ط± ط¨ط¯ظˆظ† ط¥ط¹ط§ط¯ط© طھط­ظ…ظٹظ„ ط§ظ„طµظپط­ط©)طŒ
