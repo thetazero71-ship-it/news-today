@@ -77,8 +77,6 @@ jobs:
             .env*
             config/hosting.php
             check_db.php
-            health_check.php
-            diagnostics_*.php
             dev-router.php
             router_local.php
             run-windows.bat

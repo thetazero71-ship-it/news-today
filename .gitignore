@@ -12,10 +12,8 @@ config/hosting.php
 *.sqlite
 *.sqlite3
 
-# ── Dev / diagnostics entry points ──
+# ── Dev entry points (diagnostics tools are deployed for the admin panel) ──
 check_db.php
-health_check.php
-diagnostics_*.php
 dev-router.php
 router_local.php
 
