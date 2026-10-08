@@ -626,7 +626,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
  this.disabled = true;
 
- fetch('<?= app_url("admin/live-blog/entry/") ?>' + id + '/toggle-pin', {
+  fetch('<?= app_url("admin/live-blog/entries/") ?>' + id + '/toggle-pin', {
  method: 'POST',
  body: formData,
  headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -674,7 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
  this.disabled = true;
 
- fetch('<?= app_url("admin/live-blog/entry/") ?>' + id + '/delete', {
+  fetch('<?= app_url("admin/live-blog/entries/") ?>' + id + '/delete', {
  method: 'POST',
  body: formData,
  headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -733,7 +733,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
  this.disabled = true;
 
- fetch('<?= app_url("admin/live-blog/chat/") ?>' + id + '/delete', {
+  fetch('<?= app_url("admin/live-blog/chat/delete") ?>', {
  method: 'POST',
  body: formData,
  headers: { 'X-Requested-With': 'XMLHttpRequest' }

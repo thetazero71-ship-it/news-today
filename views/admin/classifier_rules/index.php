@@ -388,7 +388,7 @@ function saveSourceRuleAjax(sourceName, changedEl) {
  formData.append('weight', weightInput.value);
  formData.append('_csrf_token', '<?= CSRF::generate() ?>');
 
- fetch('<?= app_url("admin/classifier-rules/update-source-rule") ?>', {
+  fetch('<?= app_url("admin/classifier-rules/source-rule") ?>', {
  method: 'POST',
  headers: { 'X-Requested-With': 'XMLHttpRequest' },
  body: formData

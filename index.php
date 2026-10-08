@@ -578,14 +578,13 @@ $router->get('/series/{slug}', 'SeriesController@show');
 
 // Stories
 $router->get('/stories', 'StoryController@index');
-$router->get('/story/{id}', 'StoryController@show');
 
 // Archive (الأخبار المتقادمة/المؤرشفة)
 $router->get('/archive', 'ArchiveController@index');
 
 // Interactions, Comments & Newsletter
 $router->post('/comment/store', 'CommentController@store');
-$router->post('/reaction/toggle', 'ReactionController@toggle');
+$router->post('/api/reaction/{id}/{type}', 'ReactionController@react');
 $router->post('/newsletter/subscribe', 'NewsletterController@subscribe');
 $router->get('/newsletter/unsubscribe/{token}', 'NewsletterController@unsubscribe');
 
@@ -669,7 +668,7 @@ $router->post('/admin/articles/{id}/update', 'ArticlesController@update');
 $router->post('/admin/articles/{id}/delete', 'ArticlesController@delete');
 $router->post('/admin/articles/bulk-expire', 'ArticlesController@bulkExpire');
 $router->post('/admin/articles/translate-preview', 'ArticlesController@translatePreview');
-$router->post('/admin/articles/ai-generate-full', 'ArticlesController@aiGenerateFull');
+$router->post('/admin/articles/quick-update-category', 'ArticlesController@quickUpdateCategory');
 
 // Categories Management
 $router->get('/admin/categories', 'CategoriesController@index');
@@ -687,9 +686,9 @@ $router->get('/admin/live-blog/{id}/entries', 'AdminLiveBlogController@entries')
 $router->post('/admin/live-blog/entries/store', 'AdminLiveBlogController@storeEntry');
 $router->post('/admin/live-blog/entries/{id}/update', 'AdminLiveBlogController@updateEntry');
 $router->post('/admin/live-blog/entries/{id}/delete', 'AdminLiveBlogController@deleteEntry');
-$router->post('/admin/live-blog/entries/{id}/toggle-pin', 'AdminLiveBlogController@togglePin');
-$router->post('/admin/live-blog/chat/store', 'AdminLiveBlogController@storeChatMessage');
+$router->post('/admin/live-blog/entries/{id}/toggle-pin', 'AdminLiveBlogController@togglePinEntry');
 $router->post('/admin/live-blog/chat/delete', 'AdminLiveBlogController@deleteChatMessage');
+$router->post('/admin/live-blog/upload-media', 'AdminLiveBlogController@uploadMedia');
 
 // Interactive Polls Management (CRUD)
 $router->get('/admin/polls', 'PollsController@index');
@@ -713,10 +712,6 @@ $router->post('/admin/tutorials/upload-step-image', 'TutorialsController@ajaxUpl
 // RSS Aggregator & News Feeds
 $router->get('/admin/news-feeds', 'AggregatorController@index');
 $router->get('/admin/aggregator', 'AggregatorController@index');
-$router->post('/admin/news-feeds/fetch-feed', 'AggregatorController@fetchFeed');
-$router->post('/admin/aggregator/fetch-feed', 'AggregatorController@fetchFeed');
-$router->post('/admin/news-feeds/bulk-action', 'AggregatorController@bulkAction');
-$router->post('/admin/aggregator/bulk-action', 'AggregatorController@bulkAction');
 $router->post('/admin/news-feeds/translate-publish', 'AggregatorController@translatePublish');
 $router->post('/admin/aggregator/translate-publish', 'AggregatorController@translatePublish');
 $router->post('/admin/news-feeds/fast-publish', 'AggregatorController@quickPublish');
@@ -733,8 +728,6 @@ $router->post('/admin/aggregator/export-opml', 'AggregatorController@exportOpml'
 $router->post('/admin/aggregator/export-json', 'AggregatorController@exportJson');
 $router->post('/admin/news-feeds/import', 'AggregatorController@importFeeds');
 $router->post('/admin/aggregator/import', 'AggregatorController@importFeeds');
-$router->post('/admin/news-feeds/auto-sync-all', 'AggregatorController@autoSyncAll');
-$router->post('/admin/aggregator/auto-sync-all', 'AggregatorController@autoSyncAll');
 // فحص صحة خلاصات RSS (يُرجع JSON)
 $router->get('/admin/news-feeds/health-check', 'AggregatorController@healthCheck');
 $router->post('/admin/news-feeds/health-check', 'AggregatorController@healthCheck');
@@ -877,7 +870,6 @@ $router->post('/admin/profile/change-password', 'AdminProfileController@changePa
 
 // Comments, Users & Backup
 $router->get('/admin/comments', 'CommentsController@index');
-$router->post('/admin/comments/{id}/status', 'CommentsController@updateStatus');
 $router->post('/admin/comments/{id}/delete', 'CommentsController@delete');
 
 $router->get('/admin/users', 'UsersController@index');
