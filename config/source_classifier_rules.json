@@ -1,307 +1,712 @@
 {
-    "the hacker news (أمن سيبراني واختراق)": {
+    "abc news au - world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "abc news: international": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "aerotime": {
+        "mode": "smart",
+        "target_slug": "mali-tiry",
+        "weight": 6.0
+    },
+    "airforce technology": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+        "target_slug": "mali-tiry",
+        "weight": 8.0
     },
-    "the hacker news": {
+    "al arabiya english (العربية)": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "al jazeera english (الجزيرة)": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "al jazeera – breaking news, world news and video from al jazeera": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "amnesty international": {
+        "mode": "smart",
+        "target_slug": "society",
+        "weight": 5.0
+    },
+    "army times": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
-    },
-    "techcrunch (استثمارات وشركات ناشئة)": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
-    },
-    "techcrunch": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
-    },
-    "the verge (أجهزة وثقافة رقمية)": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
-    },
-    "the verge": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
-    },
-    "ars technica (تحليلات تقنية وعلمية)": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+        "target_slug": "mali-tiry",
+        "weight": 10.0
     },
     "ars technica": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
     },
-    "wired (مستقبل التكنولوجيا والذكاء)": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+    "aviation week network": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 8.0
     },
-    "wired": {
+    "bbc arabic": {
         "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "engadget (إلكترونيات وهواتف)": {
+    "bbc news": {
         "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "bbc news - technology": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "bbc uk politics": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 10.0
+    },
+    "bbc world (بي بي سي)": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "bleeping computer (أمن معلومات)": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 10.0
+    },
+    "blog daily listings rss": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 10.0
+    },
+    "bloomberg (عبر google news)": {
+        "mode": "strict",
+        "target_slug": "economic",
+        "weight": 9.0
+    },
+    "breaking defense": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 10.0
+    },
+    "china defense blog": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "cnbc": {
+        "mode": "smart",
+        "target_slug": "economic",
+        "weight": 4.0
+    },
+    "cnbc economy": {
+        "mode": "strict",
+        "target_slug": "economic",
+        "weight": 9.0
+    },
+    "cnbc top news": {
+        "mode": "smart",
+        "target_slug": "economic",
+        "weight": 4.0
+    },
+    "cnn - app tech section": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "cnn world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "cnn.com - rss channel - app international edition": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "cnn.com - rss channel - world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "coindesk": {
+        "mode": "smart",
+        "target_slug": "economic",
+        "weight": 6.0
+    },
+    "cointelegraph": {
+        "mode": "smart",
+        "target_slug": "economic",
+        "weight": 6.0
+    },
+    "defense news": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 10.0
+    },
+    "defense one": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 10.0
+    },
+    "defense one - all content": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 10.0
+    },
+    "defense.gov explore feed": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 10.0
+    },
+    "der spiegel international": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "drone wars // война дронов": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "dw - all news (دويتشه فيله)": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "dw - politics": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
     },
     "engadget": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
-    },
-    "venturebeat (ذكاء اصطناعي وألعاب)": {
-        "mode": "smart",
-        "target_slug": "artificial-intelligence",
-        "weight": 7
-    },
-    "venturebeat": {
-        "mode": "smart",
-        "target_slug": "artificial-intelligence",
-        "weight": 7
-    },
-    "9to5mac (أخبار وتسريبات آبل)": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
-    },
-    "9to5mac": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
-    },
-    "9to5google (أخبار أندرويد وجوجل)": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
-    },
-    "9to5google": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
-    },
-    "mit technology review (أبحاث ثورية)": {
-        "mode": "smart",
-        "target_slug": "artificial-intelligence",
-        "weight": 7
-    },
-    "mit technology review": {
-        "mode": "smart",
-        "target_slug": "artificial-intelligence",
-        "weight": 7
-    },
-    "marktechpost (ملخصات أبحاث ai)": {
         "mode": "strict",
-        "target_slug": "artificial-intelligence",
-        "weight": 10
+        "target_slug": "technology",
+        "weight": 9.0
     },
-    "marktechpost": {
-        "mode": "strict",
-        "target_slug": "artificial-intelligence",
-        "weight": 10
+    "euronews - world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
     },
-    "bleepingcomputer (حماية وثغرات)": {
-        "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+    "fararu | فرارو | اخبار روز ایران و جهان": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "bleepingcomputer": {
+    "financial times - home": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+        "target_slug": "economic",
+        "weight": 9.0
     },
-    "krebs on security (تحقيقات قرصنة)": {
+    "foreign affairs": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+        "target_slug": "cya-sah",
+        "weight": 9.0
+    },
+    "foreign policy": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 9.0
+    },
+    "france 24 - news": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "freshrss releases": {
+        "mode": "smart",
+        "target_slug": "technology",
+        "weight": 6.0
+    },
+    "gizmodo": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
+    },
+    "globalsecurity.org": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "haaretz - world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "hacker news": {
+        "mode": "smart",
+        "target_slug": "technology",
+        "weight": 7.0
+    },
+    "investing.com - news": {
+        "mode": "strict",
+        "target_slug": "economic",
+        "weight": 9.0
+    },
+    "jane's (مميز - جزئي)": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 10.0
     },
     "krebs on security": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+        "target_slug": "technology",
+        "weight": 10.0
     },
-    "dark reading (أمن المؤسسات)": {
+    "latest & breaking news on fox news": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "maariv.co.il - צבא וביטחון": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+        "target_slug": "mali-tiry",
+        "weight": 9.0
     },
-    "dark reading": {
+    "maariv.co.il - الأخبار في إسرائيل": {
+        "mode": "smart",
+        "target_slug": "society",
+        "weight": 4.0
+    },
+    "maariv.co.il - خبر عاجل": {
+        "mode": "smart",
+        "target_slug": "general-news",
+        "weight": 3.0
+    },
+    "maariv.co.il - سياسي - سياسي": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+        "target_slug": "cya-sah",
+        "weight": 8.0
     },
-    "securityweek (أخبار الدفاع السيبراني)": {
+    "maariv.co.il - معاريف": {
+        "mode": "smart",
+        "target_slug": "general-news",
+        "weight": 2.0
+    },
+    "mashable - tech": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+        "target_slug": "technology",
+        "weight": 9.0
     },
-    "securityweek": {
+    "military times": {
         "mode": "strict",
-        "target_slug": "cybersecurity",
-        "weight": 10
+        "target_slug": "mali-tiry",
+        "weight": 10.0
     },
-    "hacker news yc (مجتمع التقنيين)": {
-        "mode": "smart",
-        "target_slug": "software-development",
-        "weight": 7
-    },
-    "hacker news yc": {
-        "mode": "smart",
-        "target_slug": "software-development",
-        "weight": 7
-    },
-    "dev.to (تجارب برمجية ومطورين)": {
+    "military.com - news": {
         "mode": "strict",
-        "target_slug": "software-development",
-        "weight": 10
+        "target_slug": "mali-tiry",
+        "weight": 10.0
     },
-    "dev.to": {
+    "mit technology review": {
         "mode": "strict",
-        "target_slug": "software-development",
-        "weight": 10
+        "target_slug": "technology",
+        "weight": 9.0
     },
-    "github blog (أدوات المصادر المفتوحة)": {
+    "nasa news (فضاء)": {
         "mode": "strict",
-        "target_slug": "software-development",
-        "weight": 10
+        "target_slug": "science",
+        "weight": 9.0
     },
-    "github blog": {
+    "nato news (ناتو)": {
         "mode": "strict",
-        "target_slug": "software-development",
-        "weight": 10
+        "target_slug": "mali-tiry",
+        "weight": 8.0
     },
-    "smashing magazine (تصميم وويب حديث)": {
-        "mode": "smart",
-        "target_slug": "software-development",
-        "weight": 7
-    },
-    "smashing magazine": {
-        "mode": "smart",
-        "target_slug": "software-development",
-        "weight": 7
-    },
-    "infoq (عمارة البرمجيات والسحابة)": {
-        "mode": "smart",
-        "target_slug": "software-development",
-        "weight": 7
-    },
-    "infoq": {
-        "mode": "smart",
-        "target_slug": "software-development",
-        "weight": 7
-    },
-    "tom's hardware (عتاد وحواسيب)": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
-    },
-    "tom's hardware": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
-    },
-    "gsmarena (مواصفات الهواتف)": {
+    "navy times": {
         "mode": "strict",
-        "target_slug": "hardware-devices",
-        "weight": 10
+        "target_slug": "mali-tiry",
+        "weight": 10.0
     },
-    "gsmarena": {
+    "ncsc news feed": {
         "mode": "strict",
-        "target_slug": "hardware-devices",
-        "weight": 10
+        "target_slug": "technology",
+        "weight": 10.0
     },
-    "wccftech (رقائق وأشباه موصلات)": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
+    "news": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 10.0
     },
-    "wccftech": {
+    "npr - world": {
         "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
+        "target_slug": "cya-sah",
+        "weight": 4.0
     },
-    "عالم التقنية (أخبار ومقالات عربية)": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+    "nyt - politics": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 10.0
     },
-    "عالم التقنية": {
+    "nyt - world (نيويورك تايمز)": {
         "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "التقنية بلا حدود (أجهزة ومؤتمرات)": {
+    "nyt > top stories": {
         "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "التقنية بلا حدود": {
+    "nyt > world news": {
         "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "البوابة العربية للأخبار التقنية": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+    "oilprice.com (طاقة)": {
+        "mode": "strict",
+        "target_slug": "economic",
+        "weight": 9.0
     },
-    "أخبار التطبيقات (تطبيقات وشروحات)": {
+    "reddit - r/asksocialscience": {
         "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
+        "target_slug": "society",
+        "weight": 4.0
     },
-    "أخبار التطبيقات": {
-        "mode": "smart",
-        "target_slug": "hardware-devices",
-        "weight": 7
+    "reddit - r/combatfootage": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
     },
-    "google the keyword (أخبار جوجل)": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+    "reddit - r/credibledefense": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
     },
-    "google the keyword": {
-        "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+    "reddit - r/cybersecurity": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
     },
-    "microsoft stories (أخبار مايكروسوفت)": {
+    "reddit - r/europe": {
         "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "microsoft stories": {
+    "reddit - r/geopolitics": {
         "mode": "smart",
-        "target_slug": "general-tech",
-        "weight": 3
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "aws news blog (سحابة أمازون)": {
+    "reddit - r/geopolitics (سياق دفاعي)": {
         "mode": "smart",
-        "target_slug": "software-development",
-        "weight": 7
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "aws news blog": {
+    "reddit - r/internationalpolitics": {
         "mode": "smart",
-        "target_slug": "software-development",
-        "weight": 7
+        "target_slug": "cya-sah",
+        "weight": 5.0
     },
-    "nvidia blog (معالجات وذكاء اصطناعي)": {
-        "mode": "smart",
-        "target_slug": "artificial-intelligence",
-        "weight": 7
+    "reddit - r/linux": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
     },
-    "nvidia blog": {
+    "reddit - r/military": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "reddit - r/militaryhistory": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "reddit - r/netsec": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
+    },
+    "reddit - r/neutralpolitics": {
         "mode": "smart",
-        "target_slug": "artificial-intelligence",
-        "weight": 7
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "reddit - r/politicaldiscussion": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "reddit - r/politics": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "reddit - r/programming": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "reddit - r/selfhosted": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "reddit - r/sysadmin": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "reddit - r/technology": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "reddit - r/warcollege": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "reddit - r/worldnews": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "rt arabic": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "rt world news": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "rusi (دراسات دفاعية)": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "server fault (سيرفرات وشبكات)": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "simple flying": {
+        "mode": "smart",
+        "target_slug": "mali-tiry",
+        "weight": 6.0
+    },
+    "sky news": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "sky news - world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "stack overflow - android": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "stack overflow - c++": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "stack overflow - javascript": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "stack overflow - python": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "stack overflow - أحدث الأسئلة": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "stratfor worldview": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "super user (مشاكل كمبيوتر)": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 8.0
+    },
+    "techcrunch": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
+    },
+    "technology | the guardian": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
+    },
+    "the associated press / @ap": {
+        "mode": "smart",
+        "target_slug": "general-news",
+        "weight": 3.0
+    },
+    "the atlantic": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 9.0
+    },
+    "the aviationist": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 8.0
+    },
+    "the conversation (تحليلات)": {
+        "mode": "smart",
+        "target_slug": "society",
+        "weight": 4.0
+    },
+    "the economist - economics": {
+        "mode": "strict",
+        "target_slug": "economic",
+        "weight": 9.0
+    },
+    "the economist - finance": {
+        "mode": "strict",
+        "target_slug": "economic",
+        "weight": 9.0
+    },
+    "the guardian - politics": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 10.0
+    },
+    "the guardian - society": {
+        "mode": "strict",
+        "target_slug": "society",
+        "weight": 8.0
+    },
+    "the independent - world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "the japan times": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "the next web": {
+        "mode": "smart",
+        "target_slug": "technology",
+        "weight": 6.0
+    },
+    "the straits times - world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "the verge": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
+    },
+    "the war zone (twz)": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "times of india - top": {
+        "mode": "smart",
+        "target_slug": "general-news",
+        "weight": 3.0
+    },
+    "times of israel": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 6.0
+    },
+    "trt world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "washington post - politics": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 9.0
+    },
+    "white house.gov press office feed": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 10.0
+    },
+    "wired": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
+    },
+    "world": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "world - cbsnews.com": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "world economic forum": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "world news | the guardian": {
+        "mode": "strict",
+        "target_slug": "cya-sah",
+        "weight": 8.0
+    },
+    "wsj - us business": {
+        "mode": "strict",
+        "target_slug": "economic",
+        "weight": 9.0
+    },
+    "zdnet": {
+        "mode": "strict",
+        "target_slug": "technology",
+        "weight": 9.0
+    },
+    "חמ\"ל: חדשות ועדכונים בזמן אמת": {
+        "mode": "smart",
+        "target_slug": "general-news",
+        "weight": 3.0
+    },
+    "أخبار الدفاع العربي": {
+        "mode": "strict",
+        "target_slug": "mali-tiry",
+        "weight": 9.0
+    },
+    "أخبار اليوم | سكاي نيوز عربية": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
+    },
+    "الجزيرة : صفحة المحليات": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 5.0
+    },
+    "فرانس 24 – الأخبار والأحداث الدولية على مدار الساعة": {
+        "mode": "smart",
+        "target_slug": "cya-sah",
+        "weight": 4.0
     }
 }
