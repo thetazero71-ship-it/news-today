@@ -176,6 +176,125 @@ class CategoryClassifier
                 'human rights', 'corruption', 'protest', 'boycott',
                 'حرب', 'حروب', 'أزمة', 'تسوية', 'موقف', 'بيان'
             ]
+        ],
+
+        'economic' => [
+            'name_ar' => 'اقتصادية',
+            'high_priority' => [
+                'economy', 'economic', 'inflation', 'gdp', 'central bank', 'interest rate', 'federal reserve',
+                'ecb', 'imf', 'world bank', 'unemployment', 'recession', 'stimulus', 'budget deficit',
+                'trade deficit', 'exports', 'imports', 'tariff', 'tariffs', 'stock market', 'wall street',
+                'nasdaq', 's&p 500', 'treasury yield', 'bond yield', 'oil price', 'crude oil', 'gold price',
+                'commodity', 'commodities', 'supply chain', 'consumer prices', 'cpi', 'fiscal', 'monetary policy',
+                'debt', 'default', 'bailout', 'bankrupt', 'merger', 'acquisition', 'antitrust settlement',
+                'اقتصاد', 'اقتصادية', 'الاقتصاد', 'تضخم', 'الاحتياطي الفيدرالي', 'المجلس الاحتياطي',
+                'البنك المركزي', 'البنوك المركزية', 'أسعار الفائدة', 'سعر الفائدة', 'الناتج المحلي', 'البطالة',
+                'الركود', 'الكساد', 'الميزانية', 'العجز', 'الفائض', 'التعرفة', 'التعريفة', 'التجارة', 'التصدير',
+                'الاستيراد', 'الأسهم', 'أسهم', 'البورصة', 'وول ستريت', 'النفط', 'الذهب', 'السلع', 'الضرائب',
+                'الجمارك', 'العملة'
+            ],
+            'medium_priority' => [
+                'prices', 'wages', 'salary', 'cost of living', 'consumer confidence', 'manufacturing',
+                'retail sales', 'housing market', 'jobs', 'earnings', 'market', 'investors', 'portfolio', 'أسعار',
+                'الأجور', 'الرواتب', 'تكلفة المعيشة', 'ثقة المستهلك', 'التصنيع', 'مبيعات التجزئة', 'سوق الإسكان',
+                'الوظائف', 'أرباح', 'السوق', 'المستثمرون', 'محافظ مالية'
+            ]
+        ],
+
+        'health' => [
+            'name_ar' => 'صحيحة',
+            'high_priority' => [
+                'health', 'healthcare', 'hospital', 'medical', 'medicine', 'doctor', 'physician', 'nurse',
+                'vaccine', 'vaccination', 'virus', 'outbreak', 'epidemic', 'pandemic', 'disease', 'infection',
+                'cancer', 'diabetes', 'heart attack', 'stroke', 'surgery', 'drug', 'drugmaker', 'fda',
+                'world health organization', 'mental health', 'depression', 'anxiety', 'obesity', 'nutrition',
+                'malnutrition', 'covid', 'influenza', 'cholera', 'measles', 'mpox', 'clinical trial', 'patient',
+                'صحة', 'صحيحة', 'الصحة', 'صحة عامة', 'مستشفى', 'المستشفيات', 'طبي', 'طبية', 'طبيب', 'أطباء',
+                'ممرض', 'تمريض', 'لقاح', 'اللقاحات', 'تطعيم', 'فيروس', 'الفيروسات', 'وباء', 'جائحة', 'مرض',
+                'الأمراض', 'عدوى', 'سرطان', 'سكري', 'نوبة قلبية', 'جلطة', 'جراحة', 'دواء', 'الأدوية', 'صحة نفسية',
+                'الاكتئاب', 'القلق', 'التغذية', 'سوء التغذية', 'منظمة الصحة', 'الصحة العالمية', 'أمراض'
+            ],
+            'medium_priority' => [
+                'symptoms', 'treatment', 'therapy', 'screening', 'immunization', 'hospitalized', 'clinic',
+                'disease outbreak', 'أعراض', 'علاج', 'علاجية', 'فحص', 'تحصين', 'مُصاب', 'عيادة', 'تفشي', 'مستوصف'
+            ]
+        ],
+
+        'sports' => [
+            'name_ar' => 'رياضية',
+            'high_priority' => [
+                'football', 'soccer', 'basketball', 'tennis', 'volleyball', 'handball', 'cricket', 'rugby',
+                'olympic', 'olympics', 'fifa', 'uefa', 'nba', 'nfl', 'formula 1', 'f1', 'premier league',
+                'la liga', 'real madrid', 'barcelona', 'liverpool', 'manchester city', 'chelsea', 'arsenal',
+                'transfer', 'striker', 'goal', 'match', 'tournament', 'championship', 'world cup', 'badminton',
+                'swimming', 'marathon', 'athletics', 'referee', 'coach', 'stadium', 'playoffs', 'knockout',
+                'friendly match', 'رياضة', 'رياضية', 'الرياضة', 'كرة القدم', 'كرة', 'الدوري', 'الدوريات', 'بطولة',
+                'بطولات', 'كأس العالم', 'كأس', 'أولمبياد', 'الأولمبية', 'الأولمبياد', 'مباراة', 'مباريات', 'لاعب',
+                'لاعبون', 'مدرب', 'الحكم', 'جمهور', 'ملعب', 'انتقالات', 'فيفاء', 'الاتحاد الدولي', 'ليفربول',
+                'ريال مدريد', 'برشلونة', 'مانشستر', 'تشelsea', 'آرسنال', 'بطولة أوروبا', 'الدوري الأمريكي',
+                'سباحة', 'جري', 'ماراثون'
+            ],
+            'medium_priority' => [
+                'league', 'player', 'players', 'team', 'teams', 'score', 'win', 'loss', 'season', 'final', 'draw',
+                'squad', 'manager', 'fans', 'cup', 'فريق', 'فرق', 'نتيجة', 'فوز', 'خسارة', 'موسم', 'نهائي',
+                'تعادل', 'مدرب', 'مشجع', 'كأس'
+            ]
+        ],
+
+        'science' => [
+            'name_ar' => 'علوم',
+            'high_priority' => [
+                'science', 'scientist', 'research', 'study finds', 'discovery', 'telescope', 'nasa', 'space',
+                'satellite', 'rocket launch', 'exoplanet', 'astronomy', 'physics', 'chemistry', 'biology',
+                'genome', 'genetics', 'dna', 'crispr', 'quantum', 'nuclear fusion', 'particle', 'james webb',
+                'mars', 'moon mission', 'space station', 'laboratory', 'peer-reviewed', 'experiment', 'astronaut',
+                'solar system', 'علم', 'علوم', 'العلوم', 'عالم', 'علماء', 'العلماء', 'باحث', 'البحث', 'دراسة',
+                'دراسات', 'اكتشاف', 'تلسكوب', 'ناسا', 'فضاء', 'الفضاء', 'قمر صناعي', 'كوكب', 'الكواكب', 'فلك',
+                'علوم فلكية', 'رحلة فضاء', 'محطة فضائية', 'فيزياء', 'كيمياء', 'أحياء', 'بيولوجيا', 'دنا',
+                'تعديل وراثي', 'خلية', 'مختبر', 'بحث علمي', 'دراسة علمية', 'اندماج نووي', 'حوسبة'
+            ],
+            'medium_priority' => [
+                'physics', 'experiment results', 'cells', 'protein', 'species', 'ecosystem', 'data analysis',
+                'theory', 'تجربة', 'نتائج', 'بروتوكول', 'نوع', 'جزيء', 'نظرية', 'رياضيات', 'إحصاء'
+            ]
+        ],
+
+        'technology' => [
+            'name_ar' => 'تقنية',
+            'high_priority' => [
+                'technology', 'tech', 'smartphone', 'app', 'software', 'hardware', 'chip', 'semiconductor',
+                'cloud computing', 'internet', 'social media', 'data center', 'algorithm', 'open source',
+                'developer', 'cybersecurity', 'hacking', 'artificial intelligence', 'robot', 'chipmaker', 'linux',
+                'google', 'microsoft', 'apple', 'samsung', 'tesla', 'nvidia', '5g', 'web', 'website', 'browser',
+                'startup', 'app store', 'update', 'تقنية', 'تكنولوجيا', 'التقنية', 'تقنية المعلومات', 'هاتف',
+                'هواتف', 'هاتف ذكي', 'تطبيق', 'تطبيقات', 'برمجيات', 'عتاد', 'شريحة', 'معالج', 'ذكاء اصطناعي',
+                'روبوت', 'حوسبة سحابية', 'الإنترنت', 'مواقع', 'وسائل التواصل', 'خوارزمية', 'مصدر مفتوح', 'مطور',
+                'اختراق', 'أمن سيبراني', 'قرصنة', 'جوجل', 'مايكروسوفت', 'آبل', 'سامسونج', 'تسلا', 'إنفيديا',
+                'شبكة', 'برمجة', 'كود', 'تحديث'
+            ],
+            'medium_priority' => [
+                'device', 'gadget', 'network', 'platform', 'user', 'interface', 'version', 'release', 'beta',
+                'جهاز', 'أجهزة', 'منصة', 'مستخدم', 'واجهة', 'إصدار', 'نسخة', 'شبكات'
+            ]
+        ],
+
+        'society' => [
+            'name_ar' => 'اجتماعية',
+            'high_priority' => [
+                'society', 'social', 'community', 'protest', 'demonstration', 'immigration', 'migrants',
+                'refugees', 'education', 'school', 'university', 'student', 'teacher', 'housing', 'poverty',
+                'inequality', 'crime', 'murder', 'accident', 'earthquake', 'flood', 'wildfire', 'climate change',
+                'environment', 'pollution', 'charity', 'ngo', 'human rights', 'womens rights', 'family',
+                'marriage', 'culture', 'heritage', 'disaster', 'heatwave', 'drought', 'اجتماعية', 'مجتمع',
+                'المجتمع', 'احتجاج', 'تظاهرة', 'تظاجهات', 'مهاجرون', 'مهاجرين', 'لاجئون', 'لاجئين', 'تعليم',
+                'مدارس', 'جامعات', 'طلاب', 'معلم', 'إسكان', 'فقر', 'فقراء', 'جريمة', 'قتل', 'حادث', 'زلزال',
+                'فيضان', 'فيضانات', 'حرائق', 'تغير المناخ', 'مناخ', 'بيئة', 'تلوث', 'جمعيات', 'حقوق الإنسان',
+                'حقوق المرأة', 'ثقافة', 'تراث', 'كارثة', 'موجة حر', 'جفاف'
+            ],
+            'medium_priority' => [
+                'women', 'youth', 'elderly', 'community groups', 'volunteers', 'fundraising', 'public opinion',
+                'survey', 'نساء', 'شباب', 'كبار السن', 'متطوعون', 'تبرع', 'رأي عام', 'استطلاع'
+            ]
         ]
     ];
 

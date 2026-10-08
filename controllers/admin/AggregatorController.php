@@ -9,9 +9,11 @@ class AggregatorController extends AdminController
   */
  private function resolveCategoryId($db, $titleEn, $titleAr, $content, $sourceName, $sourceUrl, $fallbackCatId)
  {
- require_once __DIR__ . '/../../core/CategoryClassifier.php';
+  require_once __DIR__ . '/../../core/CategoryClassifier.php';
+  require_once __DIR__ . '/../../core/CategorySeeder.php';
+  CategorySeeder::ensure($db);
 
- $srcCatId = 0;
+  $srcCatId = 0;
  if (!empty($sourceName)) {
  $src = $db->fetch("SELECT category_id FROM rss_sources WHERE name = :name LIMIT 1", [':name' => $sourceName]);
  $srcCatId = (int) ($src['category_id'] ?? 0);

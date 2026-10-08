@@ -10,10 +10,12 @@ class ClassifierRulesController extends AdminController
 
  public function index()
  {
- $this->guardAdmin();
- $db = new Database();
+  $this->guardAdmin();
+  $db = new Database();
+  require_once __DIR__ . '/../../core/CategorySeeder.php';
+  CategorySeeder::ensure($db);
 
- $categories = $db->fetchAll("SELECT id, name, slug FROM categories ORDER BY id ASC");
+  $categories = $db->fetchAll("SELECT id, name, slug FROM categories ORDER BY id ASC");
  $rules = CategoryClassifier::getRules();
  $allConflicts = CategoryClassifier::getAllConflicts();
  $sourceRules = CategoryClassifier::getSourceRules();

@@ -120,6 +120,9 @@ try {
     }
 
     // ─── تحميل التصنيفات الصحيحة مسبقاً ──────────────────────────
+    require_once __DIR__ . '/../core/CategorySeeder.php';
+    CategorySeeder::ensure($db);
+
     $validCategories = [];
     $catSlugMap = [];
     $catRows = $db->fetchAll("SELECT id, slug FROM categories ORDER BY id ASC");
