@@ -124,6 +124,58 @@ class CategoryClassifier
                 'market cap', 'quarterly earnings', 'revenue', 'cloud service', 'datacenter',
                 'سوق التقنية', 'وادي السيليكون', 'أرباح فصلية', 'مراكز بيانات', 'خدمات سحابية'
             ]
+        ],
+
+        'mali-tiry' => [
+            'name_ar' => 'عسكرية',
+            'high_priority' => [
+                'military', 'us army', 'army', 'pentagon', 'navy', 'air force',
+                'marine corps', 'marines', 'aircraft carrier', 'fighter jet', 'bomber',
+                'missile', 'guided missile', 'patriot missile', 'drone', 'uav',
+                'weapons', 'ammunition', 'defense', 'troops', 'combat', 'warship',
+                'frigate', 'destroyer', 'submarine', 'apache', 'northrop grumman',
+                'military exercise', 'iraq', 'syria', 'hezbollah', 'houthi',
+                'الجيش', 'الجيش الأمريكي', 'البنتاغون', 'البحرية', 'مشاة البحرية',
+                'القوات المسلحة', 'القوات الجوية', 'القوات البرية',
+                'حاملة الطائرات', 'حاملات الطائرات', 'مروحيات', 'أباتشي',
+                'صاروخ', 'صواريخ', 'قاذفة', 'قاذفات', 'طائرات مسيرة', 'طائرة مسيرة',
+                'مناورات', 'معملية عسكرية', 'قاعدة عسكرية', 'قواعد عسكرية',
+                'جندي', 'جنود', 'ضباط', 'عسكري', 'عسكرية',
+                'نورثروب جرومان', 'سكايديو', 'أسلحة', 'تسليح', 'ذخيرة', 'دبابة',
+                'مدمرة', 'غواصة', 'سفينة حربية', 'صاروخ موجه', 'أنظمة صاروخية'
+            ],
+            'medium_priority' => [
+                'troop', 'soldier', 'recruit', 'ordnance', 'deployment', 'artillery',
+                'escort', 'patrol', 'airstrike', 'commander', 'headquarters', 'training',
+                'قيادة عسكرية', 'تقرير رقابي', 'مناورة', 'خلل فني', 'إصابات',
+                'أسطول', 'منظومة', 'ذخيرة حربية', 'سلاح', 'موقف دفاعي'
+            ]
+        ],
+
+        'cya-sah' => [
+            'name_ar' => 'سياسية',
+            'high_priority' => [
+                'politics', 'political', 'president', 'presidential', 'prime minister',
+                'election', 'elections', 'parliament', 'congress', 'congressional',
+                'senate', 'government', 'cabinet', 'minister', 'ministry', 'diplomacy',
+                'diplomatic', 'ambassador', 'sanctions', 'united nations',
+                'security council', 'summit', 'ceasefire', 'truce', 'peace talks',
+                'negotiations', 'treaty', 'coalition', 'legislation', 'lawmaker',
+                'policy', 'referendum', 'opposition', 'white house', 'netanyahu',
+                'انتخابات', 'الرئيس', 'رئيس الوزراء', 'الحكومة', 'الوزراء', 'البرلمان',
+                'الكونغرس', 'مجلس الأمن', 'الأمم المتحدة', 'وزارة الخارجية', 'الخارجية',
+                'دبلوماسية', 'دبلوماسي', 'سفير', 'قمة', 'اتفاقية', 'هدنة',
+                'وقف إطلاق النار', 'مفاوضات', 'استراتيجية', 'سياسي', 'سياسية',
+                'الرؤية السياسية', 'ميزانية', 'تشريع', 'استجواب', 'محاكمة',
+                'انقلاب', 'استقالة', 'معارضة', 'قرار دولي', 'مجلس النواب',
+                'نتنياهو', 'إسرائيل', 'غزة', 'إيران'
+            ],
+            'medium_priority' => [
+                'politicians', 'campaign', 'voters', 'reform', 'governance',
+                'administration', 'party', 'parties', 'resolution', 'sanction',
+                'human rights', 'corruption', 'protest', 'boycott',
+                'حرب', 'حروب', 'أزمة', 'تسوية', 'موقف', 'بيان'
+            ]
         ]
     ];
 
@@ -415,8 +467,18 @@ class CategoryClassifier
         }
 
         // Initialize Category Scores
+        // Only score categories that actually exist in the database (catSlugMap),
+        // otherwise a rule for a missing category could win and force a bogus id.
+        $scoredSlugs = array_keys($rules);
+        if (!empty($catSlugMap)) {
+            $existing = array_values(array_intersect($scoredSlugs, array_keys($catSlugMap)));
+            if (!empty($existing)) {
+                $scoredSlugs = $existing;
+            }
+        }
+
         $scores = [];
-        foreach (array_keys($rules) as $slug) {
+        foreach ($scoredSlugs as $slug) {
             $scores[$slug] = 0.0;
         }
 
@@ -431,7 +493,7 @@ class CategoryClassifier
         } elseif ($sourceCatId > 0 && !empty($catSlugMap)) {
             $reverseMap = array_flip($catSlugMap);
             $presetSlug = $reverseMap[$sourceCatId] ?? '';
-            if (isset($scores[$presetSlug])) {
+            if ($presetSlug !== '' && isset($scores[$presetSlug])) {
                 $scores[$presetSlug] += 3.0;
             }
         }
@@ -476,7 +538,10 @@ class CategoryClassifier
         }
 
         // ─── 5. Calculate Title & Content Keyword Scores ────────────
-        foreach ($rules as $slug => $data) {
+        foreach ($scores as $slug => $unusedScore) {
+            $data = $rules[$slug] ?? null;
+            if (!is_array($data)) continue;
+
             // High-priority matches in TITLE (Score: 6.0 each)
             foreach (($data['high_priority'] ?? []) as $kw) {
                 if (self::containsKeyword($titleCombined, $kw)) {
@@ -502,18 +567,27 @@ class CategoryClassifier
 
         // ─── 6. Find the Category with the Highest Score ────────────
         arsort($scores);
-        $bestSlug = key($scores);
-        $topScore = current($scores);
+        $bestSlug = (string) key($scores);
+        $topScore = (float) current($scores);
 
         // Fallback if score is too low or neutral
         if ($topScore < 2.5) {
             if ($sourceCatId > 0 && in_array($sourceCatId, $catSlugMap, true)) {
                 return $sourceCatId;
             }
-            $bestSlug = 'general-tech';
+            $bestSlug = 'general-news';
         }
 
-        return $catSlugMap[$bestSlug] ?? ($catSlugMap['general-tech'] ?? 9);
+        if (isset($catSlugMap[$bestSlug])) {
+            return (int) $catSlugMap[$bestSlug];
+        }
+
+        // Last resort: any real category id (never a hardcoded id that may not exist)
+        if (!empty($catSlugMap)) {
+            return (int) reset($catSlugMap);
+        }
+
+        return $sourceCatId > 0 ? $sourceCatId : 0;
     }
 
     private static function containsKeyword(string $text, string $kw): bool
