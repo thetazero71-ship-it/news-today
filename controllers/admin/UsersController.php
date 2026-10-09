@@ -60,6 +60,8 @@ class UsersController extends AdminController
 
  public function store()
  {
+$this->guardPermission('users.manage');
+
  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
  header('Location: ' . app_url('admin/users'));
  exit;
@@ -111,6 +113,8 @@ class UsersController extends AdminController
 
  public function update($id)
  {
+$this->guardPermission('users.manage');
+
  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
  header('Location: ' . app_url('admin/users'));
  exit;
@@ -140,6 +144,8 @@ class UsersController extends AdminController
 
  public function ban($id)
  {
+$this->guardPermission('users.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $db = Database::getInstance();
  $stmt = $db->prepare("UPDATE users SET status = 'banned' WHERE id = ?");
@@ -153,6 +159,8 @@ class UsersController extends AdminController
 
  public function activate($id)
  {
+$this->guardPermission('users.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $db = Database::getInstance();
  $stmt = $db->prepare("UPDATE users SET status = 'active' WHERE id = ?");
@@ -166,6 +174,8 @@ class UsersController extends AdminController
 
  public function delete($id)
  {
+$this->guardPermission('users.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $db = Database::getInstance();
  $stmt = $db->prepare("DELETE FROM users WHERE id = ?");

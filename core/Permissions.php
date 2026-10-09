@@ -23,8 +23,14 @@ class Permissions
     private static $catalog = array(
         'dashboard'   => array('view' => 'عرض لوحة التحكم'),
         'analytics'   => array('view' => 'عرض الإحصائيات والتحليلات'),
-        'traffic'     => array('view' => 'عرض رادار الزيارات'),
-        'activity'    => array('view' => 'سجل النشاط'),
+        'traffic'     => array(
+            'view'   => 'عرض رادار الزيارات',
+            'manage' => 'تنظيف بيانات الزيارات',
+        ),
+        'activity'    => array(
+            'view'   => 'سجل النشاط',
+            'manage' => 'تنظيف سجل النشاط',
+        ),
         'profile'     => array('manage' => 'إدارة الملف الشخصي'),
 
         'articles'    => array(
@@ -75,8 +81,14 @@ class Permissions
             'manage' => 'إدارة المشتركين والقوالب',
         ),
 
-        'ai'          => array('logs' => 'سجلات الذكاء الاصطناعي'),
-        'translation' => array('view' => 'سجل الترجمة'),
+        'ai'          => array(
+            'logs'   => 'سجلات الذكاء الاصطناعي',
+            'manage' => 'إدارة حصص المرشد ومحادثاته',
+        ),
+        'translation' => array(
+            'view'   => 'سجل الترجمة',
+            'manage' => 'حذف سجلات الترجمة',
+        ),
 
         'settings'    => array(
             'view'   => 'عرض الإعدادات',

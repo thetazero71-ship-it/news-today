@@ -61,6 +61,8 @@ class TranslationLogsController extends AdminController
 
  public function delete()
  {
+$this->guardPermission('translation.manage');
+
  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
  header('Location: ' . app_url('admin/translation-logs'));
  exit;
@@ -77,6 +79,8 @@ class TranslationLogsController extends AdminController
 
  public function clearAll()
  {
+$this->guardPermission('translation.manage');
+
  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
  header('Location: ' . app_url('admin/translation-logs'));
  exit;

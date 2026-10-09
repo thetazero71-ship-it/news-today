@@ -26,6 +26,8 @@ class AdminLiveBlogController extends AdminController
 
  public function store()
  {
+$this->guardPermission('liveblog.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $titleAr = trim($_POST['title_ar'] ?? '');
  $titleEn = trim($_POST['title_en'] ?? '');
@@ -88,6 +90,8 @@ class AdminLiveBlogController extends AdminController
 
  public function storeEntry($id)
  {
+$this->guardPermission('liveblog.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $content = trim($_POST['content_ar'] ?? '');
  $entryType = $_POST['entry_type'] ?? 'text';
@@ -116,6 +120,8 @@ class AdminLiveBlogController extends AdminController
 
  public function updateEntry($entryId)
  {
+$this->guardPermission('liveblog.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $content = trim($_POST['content_ar'] ?? '');
  $entryType = $_POST['entry_type'] ?? 'text';
@@ -156,6 +162,8 @@ class AdminLiveBlogController extends AdminController
 
  public function deleteEntry($entryId)
  {
+$this->guardPermission('liveblog.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $db = Database::getInstance();
  $stmt = $db->prepare("SELECT live_blog_id FROM live_blog_entries WHERE id = ?");
@@ -193,6 +201,8 @@ class AdminLiveBlogController extends AdminController
 
  public function togglePinEntry($entryId)
  {
+$this->guardPermission('liveblog.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $db = Database::getInstance();
  $stmt = $db->prepare("SELECT live_blog_id, is_pinned FROM live_blog_entries WHERE id = ?");
@@ -237,6 +247,8 @@ class AdminLiveBlogController extends AdminController
 
  public function uploadMedia()
  {
+$this->guardPermission('liveblog.manage');
+
  header('Content-Type: application/json; charset=utf-8');
  CSRF::validate($_POST['_csrf'] ?? '');
 
@@ -338,6 +350,8 @@ class AdminLiveBlogController extends AdminController
 
  public function deleteChatMessage($msgId)
  {
+$this->guardPermission('liveblog.manage');
+
  CSRF::validate($_POST['_csrf'] ?? '');
  $db = Database::getInstance();
  $stmt = $db->prepare("SELECT id, live_blog_id FROM live_blog_chat WHERE id = ?");

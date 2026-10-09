@@ -616,6 +616,8 @@ private function ensureCoreRows($db)
 
   public function update()
   {
+$this->guardPermission('settings.manage');
+
   if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   header('Location: ' . app_url('admin/settings'));
 exit;
@@ -682,6 +684,8 @@ exit;
  */
  public function uploadAsset()
  {
+$this->guardPermission('settings.manage');
+
  header('Content-Type: application/json; charset=utf-8');
 
  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
