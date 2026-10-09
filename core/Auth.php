@@ -74,6 +74,9 @@ class Auth
         if (!$user) {
             return false;
         }
+        if (class_exists('Permissions')) {
+            return Permissions::can($user, (string) $permission);
+        }
         if ($user['role_name'] === 'admin') {
             return true;
         }

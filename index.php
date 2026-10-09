@@ -10,6 +10,7 @@ date_default_timezone_set('UTC');
 
 define('APP_ROOT', __DIR__);
 require_once APP_ROOT . '/config/database.php';
+require_once APP_ROOT . '/config/rbac.php';
 
 // Spl Autoloader for Core, Models, and Controllers
 spl_autoload_register(function ($class) {

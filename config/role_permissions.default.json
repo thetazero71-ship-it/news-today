@@ -1,0 +1,40 @@
+{
+    "_comment": "الصلاحيات المقترحة لكل دور. بيانات فقط — لا تُطبَّق على قاعدة البيانات إلا في Phase 2 بعد الموافقة. علامة _v2 تجعل البذر اللاحق لا يستبدل أي تعديل يدوي.",
+    "_v2": 1,
+    "admin": {
+        "all": true
+    },
+    "editor": {
+        "dashboard": ["view"],
+        "analytics": ["view"],
+        "traffic": ["view"],
+        "activity": ["view"],
+        "profile": ["manage"],
+        "articles": ["view", "create", "edit", "publish", "delete", "premium"],
+        "polls": ["manage"],
+        "tutorials": ["manage"],
+        "media": ["view", "upload", "delete"],
+        "comments": ["create", "moderate"],
+        "messages": ["view", "reply"],
+        "liveblog": ["manage"],
+        "feeds": ["view", "publish"],
+        "cron": ["view"],
+        "newsletter": ["view"],
+        "ai": ["logs"],
+        "translation": ["view"]
+    },
+    "author": {
+        "dashboard": ["view"],
+        "profile": ["manage"],
+        "articles": ["view", "create", "edit_own", "publish_own"],
+        "media": ["view", "upload"],
+        "comments": ["create"]
+    },
+    "subscriber": {
+        "articles": ["premium"],
+        "comments": ["create"]
+    },
+    "reader": {
+        "comments": ["create"]
+    }
+}

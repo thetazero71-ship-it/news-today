@@ -11,6 +11,63 @@ class AdminController extends Controller
         }
     }
 
+    /**
+     * Permission guard (RBAC). Accepts "entity.action" or an array of
+     * alternatives where holding any one of them is enough.
+     *
+     * While enforcement is off (config/rbac.php) this is exactly guardAdmin(),
+     * so wiring it in area by area cannot change behaviour before the switch
+     * is turned on.
+     */
+    protected function guardPermission($permission)
+    {
+        Auth::requireLogin();
+
+        if (!class_exists('Permissions') || !Permissions::enforced()) {
+            if (!Auth::isAdmin()) {
+                $this->denyPermission($permission);
+            }
+            return;
+        }
+
+        $permissions = is_array($permission) ? $permission : array($permission);
+        $user = Auth::user();
+
+        foreach ($permissions as $perm) {
+            if (Permissions::can($user, (string) $perm)) {
+                return;
+            }
+        }
+
+        $this->denyPermission($permission);
+    }
+
+    protected function postGuardPermission($permission)
+    {
+        $this->guardPermission($permission);
+        CSRF::verifyRequest();
+    }
+
+    private function denyPermission($permission)
+    {
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
+        http_response_code(403);
+        if ($isAjax) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(array(
+                'ok'      => false,
+                'success' => false,
+                'error'   => 'ليس لديك صلاحية للوصول إلى هذه العملية.',
+            ), JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        $label = is_array($permission) ? implode(' / ', $permission) : (string) $permission;
+        exit('Forbidden: ' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8'));
+    }
+
     protected function postGuard()
     {
         $this->guardAdmin();
