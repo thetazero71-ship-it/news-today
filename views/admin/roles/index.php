@@ -64,6 +64,8 @@
             <td>
               <?php if ($role['is_super']): ?>
                 <span class="badge bg-primary-subtle text-primary">دور خارق — كل الصلاحيات</span>
+              <?php elseif ((int) $role['granted'] >= (int) $role['total']): ?>
+                <span class="badge bg-warning-subtle text-warning">وصول كامل (49/49)</span>
               <?php else: ?>
                 <span class="badge bg-light text-dark"><?= (int) $role['granted'] ?> / <?= (int) $role['total'] ?></span>
               <?php endif; ?>

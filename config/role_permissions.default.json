@@ -5,23 +5,8 @@
         "all": true
     },
     "editor": {
-        "dashboard": ["view"],
-        "analytics": ["view"],
-        "traffic": ["view"],
-        "activity": ["view"],
-        "profile": ["manage"],
-        "articles": ["view", "create", "edit", "publish", "delete", "premium"],
-        "polls": ["manage"],
-        "tutorials": ["manage"],
-        "media": ["view", "upload", "delete"],
-        "comments": ["create", "moderate"],
-        "messages": ["view", "reply"],
-        "liveblog": ["manage"],
-        "feeds": ["view", "publish"],
-        "cron": ["view"],
-        "newsletter": ["view"],
-        "ai": ["logs"],
-        "translation": ["view"]
+        "_note": "قرار المالك: المحرر الرئيسي يحتفظ بوصوله الكامل للمنصة كما كان قبل نظام الصلاحيات (تعادل دور المدير). لتضييقه لاحقاً: افتح شاشة الأدوار وأزل ما لا يحتاجه.",
+        "all": true
     },
     "author": {
         "dashboard": ["view"],

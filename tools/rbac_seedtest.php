@@ -136,13 +136,19 @@ t('second run updates nothing', count($report2['updated']), 0);
 t('second run skips all', count($report2['skipped']), 5);
 t('subscriber was created on first run', in_array('subscriber', $report['created'], true), true);
 
-// after seeding: editor must LOSE the sensitive areas
+// after seeding: editor keeps FULL platform access (owner decision: "أ" = as-is),
+// while the author role stays scoped.
 $editorUser = array('role_name' => 'editor', 'permissions' => $db->roles[10]['permissions']);
 t('editor still edits articles', Permissions::can($editorUser, 'articles.edit'), true);
-t('editor cannot users.manage', Permissions::can($editorUser, 'users.manage'), false);
-t('editor cannot backup.export', Permissions::can($editorUser, 'backup.export'), false);
-t('editor cannot settings.manage', Permissions::can($editorUser, 'settings.manage'), false);
+t('editor keeps full access (decision A)', Permissions::can($editorUser, 'users.manage'), true);
+t('editor keeps backup.export', Permissions::can($editorUser, 'backup.export'), true);
+t('editor keeps settings.manage', Permissions::can($editorUser, 'settings.manage'), true);
 t('editor still moderate comments', Permissions::can($editorUser, 'comments.moderate'), true);
+
+$authorUser = array('role_name' => 'author', 'permissions' => $db->roles[11]['permissions']);
+t('author still scoped down', Permissions::can($authorUser, 'users.manage'), false);
+t('author cannot backup', Permissions::can($authorUser, 'backup.export'), false);
+t('author keeps edit_own', Permissions::can($authorUser, 'articles.edit_own'), true);
 
 // admin keeps everything
 $adminUser = array('role_name' => 'admin', 'permissions' => $db->roles[9]['permissions']);
