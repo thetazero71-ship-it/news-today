@@ -4,7 +4,7 @@ class TrafficRadarController extends AdminController
 {
  public function index()
  {
- $this->guardAdmin();
+$this->guardPermission('traffic.view');
  $db = new Database();
 
  $type = trim((string) ($_GET['type'] ?? ''));
@@ -106,7 +106,7 @@ class TrafficRadarController extends AdminController
 
  public function exportCsv()
  {
- $this->guardAdmin();
+$this->guardPermission('traffic.view');
  $db = new Database();
  $logs = $db->fetchAll("SELECT * FROM bot_traffic_logs ORDER BY id DESC LIMIT 5000");
 
@@ -139,7 +139,7 @@ class TrafficRadarController extends AdminController
 
  public function purge()
  {
- $this->postGuard();
+$this->postGuardPermission('traffic.manage');
  $db = new Database();
  $db->query("DELETE FROM bot_traffic_logs WHERE created_at < NOW() - INTERVAL 30 DAY");
  Session::flash('success', 'تم تنظيف سجلات حركة المرور الأقدم من 30 يوماً بنجاح!');

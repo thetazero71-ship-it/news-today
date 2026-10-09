@@ -8,7 +8,7 @@ class ActivityLogController extends AdminController
 
  public function index()
  {
- $this->guardAdmin();
+$this->guardPermission('activity.view');
  $db = new Database();
 
  $q = trim((string) ($_GET['q'] ?? ''));
@@ -187,7 +187,7 @@ class ActivityLogController extends AdminController
 
  public function exportCsv()
  {
- $this->guardAdmin();
+$this->guardPermission('activity.view');
  $db = new Database();
  $logs = $db->fetchAll("
  SELECT l.id, u.username, l.action, l.entity_type, l.entity_id, l.ip_address, l.created_at, l.new_values 
@@ -224,7 +224,7 @@ class ActivityLogController extends AdminController
 
  public function exportJson()
  {
- $this->guardAdmin();
+$this->guardPermission('activity.view');
  $db = new Database();
  $logs = $db->fetchAll("
  SELECT l.id, u.username, l.action, l.entity_type, l.entity_id, l.ip_address, l.created_at, l.old_values, l.new_values, l.user_agent 
@@ -245,7 +245,7 @@ class ActivityLogController extends AdminController
 
  public function cleanup()
  {
- $this->postGuard();
+$this->postGuardPermission('activity.manage');
  $db = new Database();
  
  // Only keep last 90 days of logs

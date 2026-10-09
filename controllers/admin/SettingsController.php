@@ -4,6 +4,7 @@ class SettingsController extends AdminController
 {
  public function index()
  {
+$this->guardPermission('settings.view');
 $db = Database::getInstance();
   $group = trim($_GET['group'] ?? 'general');
 
@@ -759,7 +760,7 @@ $this->guardPermission('settings.manage');
 
  public function quickSwitchProvider()
  {
- $this->postGuard();
+ $this->postGuardPermission('settings.manage');
  $provider = trim($_POST['provider'] ?? '');
  $allowed = ['openai', 'gemini', 'custom_api', 'mymemory', 'opencode'];
  if (!in_array($provider, $allowed, true)) {

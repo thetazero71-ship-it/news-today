@@ -4,7 +4,7 @@ class SecurityAlertsController extends AdminController
 {
  public function index()
  {
- $this->guardAdmin();
+ $this->guardPermission('security.view');
  $db = new Database();
 
  $severity = trim((string) ($_GET['severity'] ?? ''));
@@ -59,7 +59,7 @@ class SecurityAlertsController extends AdminController
 
  public function resolve($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('security.manage');
  $db = new Database();
  $db->query("UPDATE security_alerts SET is_resolved = 1 WHERE id = :id", [':id' => (int) $id]);
  Session::flash('success', "تم تعليم التنبيه الأمني (#{$id}) كتمت معالجته بنجاح!");
@@ -68,7 +68,7 @@ class SecurityAlertsController extends AdminController
 
  public function delete($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('security.manage');
  $db = new Database();
  $db->query("DELETE FROM security_alerts WHERE id = :id", [':id' => (int) $id]);
  Session::flash('success', "تم حذف سجل التنبيه الأمني (#{$id}) بنجاح!");
@@ -77,7 +77,7 @@ class SecurityAlertsController extends AdminController
 
  public function clearAll()
  {
- $this->postGuard();
+ $this->postGuardPermission('security.manage');
  $db = new Database();
  $db->query("DELETE FROM security_alerts WHERE is_resolved = 1 OR created_at < NOW() - INTERVAL 60 DAY");
  Session::flash('success', "تم مسح كافة التنبيهات الأمنية المعالجة بنجاح!");

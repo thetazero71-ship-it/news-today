@@ -11,6 +11,7 @@ class AiLogsController extends AdminController
 {
     public function index()
     {
+        $this->postGuardPermission('ai.logs');
         $db = Database::getInstance();
         $userId = (int) ($_GET['user_id'] ?? 0);
         $search = trim((string) ($_GET['q'] ?? ''));
@@ -114,6 +115,7 @@ class AiLogsController extends AdminController
 
     public function conversation()
     {
+        $this->postGuardPermission('ai.logs');
         $db = Database::getInstance();
         $userId = (int) ($_GET['user_id'] ?? 0);
         $anchor = (int) ($_GET['anchor'] ?? 0);
@@ -155,7 +157,7 @@ class AiLogsController extends AdminController
 
     public function reset()
     {
-        $this->guardAdmin();
+$this->guardPermission('ai.manage');
         CSRF::validate();
 
         $db = Database::getInstance();
@@ -180,7 +182,7 @@ class AiLogsController extends AdminController
 
     public function boost()
     {
-        $this->guardAdmin();
+$this->guardPermission('ai.manage');
         CSRF::validate();
 
         $db = Database::getInstance();

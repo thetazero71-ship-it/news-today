@@ -4,7 +4,7 @@ class AdminProfileController extends AdminController
 {
  public function show()
  {
- $this->guardAdmin();
+ $this->guardPermission('profile.manage');
  $user = Auth::user();
  $db = Database::getInstance();
 
@@ -22,7 +22,7 @@ class AdminProfileController extends AdminController
 
  public function update()
  {
- $this->postGuard();
+ $this->postGuardPermission('profile.manage');
  $user = Auth::user();
  $data = Sanitizer::cleanArray($_POST);
 
@@ -71,7 +71,7 @@ $db->prepare("
 
  public function changePassword()
  {
- $this->postGuard();
+ $this->postGuardPermission('profile.manage');
  $user = Auth::user();
  $old = $_POST['current_password'] ?? '';
  $new = $_POST['new_password'] ?? '';

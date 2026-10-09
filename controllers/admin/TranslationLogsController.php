@@ -105,7 +105,7 @@ $this->guardPermission('translation.manage');
 
  public function testProvider()
  {
- $this->guardAdmin();
+$this->guardPermission('translation.manage');
  $provider = trim($_POST['provider'] ?? $_GET['provider'] ?? 'omniroute');
  $overrides = [];
  if (!empty($_POST['omniroute_endpoint'])) $overrides['omniroute_endpoint'] = trim($_POST['omniroute_endpoint']);
@@ -127,7 +127,7 @@ $this->guardPermission('translation.manage');
 
  public function getModels()
  {
- $this->guardAdmin();
+$this->guardPermission('translation.view');
  $provider = trim($_GET['provider'] ?? $_POST['provider'] ?? 'omniroute');
  $overrides = [];
  if (!empty($_POST['omniroute_endpoint'])) $overrides['omniroute_endpoint'] = trim($_POST['omniroute_endpoint']);
