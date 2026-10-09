@@ -47,6 +47,21 @@ if (!function_exists('admin_e')) {
     }
 }
 
+if (!function_exists('admin_can')) {
+    /**
+     * Role based permission check for views (menus, buttons, links).
+     * Falls back to "allowed" if the RBAC engine is not loaded, so a partial
+     * install can never hide the whole admin menu.
+     */
+    function admin_can($permission)
+    {
+        if (!class_exists('Permissions')) {
+            return true;
+        }
+        return Permissions::check($permission);
+    }
+}
+
 if (!function_exists('e')) {
     function e($value)
     {
