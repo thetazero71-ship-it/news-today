@@ -144,6 +144,46 @@ class Permissions
     }
 
     /**
+     * Arabic name of an area (entity).
+     */
+    public static function entityLabel(string $entity): string
+    {
+        $labels = array(
+            'dashboard'   => 'لوحة التحكم',
+            'analytics'   => 'الإحصائيات',
+            'traffic'     => 'رادار الزيارات',
+            'activity'    => 'سجل النشاط',
+            'profile'     => 'الملف الشخصي',
+            'articles'    => 'المقالات',
+            'categories'  => 'الأقسام',
+            'pages'       => 'الصفحات',
+            'menus'       => 'القوائم',
+            'ads'         => 'الإعلانات',
+            'polls'       => 'الاستطلاعات',
+            'tutorials'   => 'الدروس',
+            'media'       => 'مكتبة الوسائط',
+            'comments'    => 'التعليقات',
+            'messages'    => 'رسائل التواصل',
+            'liveblog'    => 'التغطيات الحية',
+            'feeds'       => 'المصادر والأخبار المجمّعة',
+            'sources'     => 'مصادر RSS',
+            'classifier'  => 'قواعد التصنيف التلقائي',
+            'cron'        => 'المهام المجدولة',
+            'newsletter'  => 'النشرة البريدية',
+            'ai'          => 'الذكاء الاصطناعي',
+            'translation' => 'الترجمة',
+            'settings'    => 'إعدادات المنصة',
+            'users'       => 'المستخدمون',
+            'roles'       => 'الأدوار والصلاحيات',
+            'apikeys'     => 'مفاتيح API',
+            'security'    => 'الأمان والتنبيهات',
+            'backup'      => 'النسخ الاحتياطي',
+            'diagnostics' => 'أدوات التشخيص',
+        );
+        return $labels[$entity] ?? $entity;
+    }
+
+    /**
      * Enforcement switch. While off, guards behave exactly like guardAdmin().
      */
     public static function enforced(): bool

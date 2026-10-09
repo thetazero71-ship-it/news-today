@@ -882,6 +882,10 @@ $router->post('/admin/users/{id}/ban', 'UsersController@ban');
 $router->post('/admin/users/{id}/activate', 'UsersController@activate');
 $router->post('/admin/users/{id}/delete', 'UsersController@delete');
 
+$router->get('/admin/roles', 'RolesController@index');
+$router->get('/admin/roles/{id}/edit', 'RolesController@edit');
+$router->post('/admin/roles/{id}/update', 'RolesController@update');
+
 // Backup & Data Export / Import Center
 $router->get('/admin/backup', 'BackupController@index');
 $router->get('/admin/backup/export-db', 'BackupController@exportDatabase');

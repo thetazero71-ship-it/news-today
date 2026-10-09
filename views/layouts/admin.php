@@ -1102,9 +1102,14 @@ html.admin-dark .btn-outline-info {
  <a class="nav-link-admin <?= is_admin_active('admin/polls', $currentUri, $adminBase) ?>" href="<?= admin_e(app_url('admin/polls')) ?>" title="استطلاعات الرأي (Polls)">
  <i class="bi bi-bar-chart-line-fill text-warning"></i> <span class="nav-text">استطلاعات الرأي</span>
  </a>
- <a class="nav-link-admin <?= is_admin_active('admin/users', $currentUri, $adminBase) ?>" href="<?= admin_e(app_url('admin/users')) ?>" title="المستخدمون والصلاحيات">
- <i class="bi bi-people"></i> <span class="nav-text">المستخدمون والصلاحيات</span>
- </a>
+<a class="nav-link-admin <?= is_admin_active('admin/users', $currentUri, $adminBase) ?>" href="<?= admin_e(app_url('admin/users')) ?>" title="المستخدمون والصلاحيات">
+  <i class="bi bi-people"></i> <span class="nav-text">المستخدمون والصلاحيات</span>
+  </a>
+<?php if (class_exists('Permissions') && Permissions::check('roles.manage')): ?>
+  <a class="nav-link-admin <?= is_admin_active('admin/roles', $currentUri, $adminBase) ?>" href="<?= admin_e(app_url('admin/roles')) ?>" title="الأدوار وتوزيع الصلاحيات">
+  <i class="bi bi-shield-lock"></i> <span class="nav-text">الأدوار والصلاحيات</span>
+  </a>
+<?php endif; ?>
  <a class="nav-link-admin <?= is_admin_active('admin/settings', $currentUri, $adminBase) ?>" href="<?= admin_e(app_url('admin/settings')) ?>" title="الإعدادات الشاملة (14)">
  <i class="bi bi-sliders2"></i> <span class="nav-text">الإعدادات الشاملة (14)</span>
  </a>
