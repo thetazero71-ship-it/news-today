@@ -10,9 +10,27 @@ class AdminSimpleController extends AdminController
     protected $title = '';
     protected $order = 'id DESC';
 
+    /**
+     * Permission that protects every action of this generic CRUD controller.
+     * Derived from the resource name so AdsController / PagesController /
+     * MenusController are covered without duplicating the mapping.
+     */
+    protected function crudPermission(): string
+    {
+        $resource = (string) $this->resource;
+        $map = array(
+            'ads'    => 'ads.manage',
+            'pages'  => 'pages.manage',
+            'menus'  => 'menus.manage',
+            'polls'  => 'polls.manage',
+            'tutorials' => 'tutorials.manage',
+        );
+        return isset($map[$resource]) ? $map[$resource] : $resource . '.manage';
+    }
+
     public function index()
     {
-        $this->guardAdmin();
+        $this->guardPermission($this->crudPermission());
         $db = Database::getInstance();
         $rows = $db->fetchAll('SELECT * FROM ' . $this->table . ' ORDER BY ' . $this->order);
         
@@ -31,7 +49,7 @@ class AdminSimpleController extends AdminController
 
     public function create()
     {
-        $this->guardAdmin();
+        $this->guardPermission($this->crudPermission());
         $this->view('admin/simple/form', array(
             'title'    => 'إضافة ' . $this->title,
             'resource' => $this->resource,
@@ -42,7 +60,7 @@ class AdminSimpleController extends AdminController
 
     public function store()
     {
-        $this->postGuard();
+        $this->postGuardPermission($this->crudPermission());
         $data = Sanitizer::cleanArray($_POST);
         $columns = array();
         $placeholders = array();
@@ -64,7 +82,7 @@ class AdminSimpleController extends AdminController
 
     public function edit($id)
     {
-        $this->guardAdmin();
+        $this->guardPermission($this->crudPermission());
         $db = Database::getInstance();
         $row = $db->fetch('SELECT * FROM ' . $this->table . ' WHERE ' . $this->primary . ' = :id', array(':id' => (int) $id));
         $this->view('admin/simple/form', array(
@@ -77,7 +95,7 @@ class AdminSimpleController extends AdminController
 
     public function update($id)
     {
-        $this->postGuard();
+        $this->postGuardPermission($this->crudPermission());
         $data = Sanitizer::cleanArray($_POST);
         $sets = array();
         $params = array(':id' => (int) $id);
@@ -97,7 +115,7 @@ class AdminSimpleController extends AdminController
 
     public function delete($id)
     {
-        $this->postGuard();
+        $this->postGuardPermission($this->crudPermission());
         $db = Database::getInstance();
         $old = $db->fetch('SELECT * FROM ' . $this->table . ' WHERE ' . $this->primary . ' = :id', array(':id' => (int) $id));
         $db->query('DELETE FROM ' . $this->table . ' WHERE ' . $this->primary . ' = :id', array(':id' => (int) $id));

@@ -4,6 +4,7 @@ class TutorialsController extends AdminController
 {
  public function index()
  {
+ $this->guardPermission('tutorials.manage');
  $tutorialModel = new Tutorial();
  $tutorials = $tutorialModel->getAllWithStepCount();
 
@@ -16,6 +17,7 @@ class TutorialsController extends AdminController
 
  public function create()
  {
+ $this->guardPermission('tutorials.manage');
  $db = Database::getInstance();
  $categories = $db->fetchAll("SELECT * FROM categories ORDER BY name ASC");
 
@@ -30,7 +32,7 @@ class TutorialsController extends AdminController
 
  public function store()
  {
- $this->postGuard();
+ $this->postGuardPermission('tutorials.manage');
  $db = Database::getInstance();
 
  $title = trim($_POST['title'] ?? '');
@@ -94,6 +96,7 @@ class TutorialsController extends AdminController
 
  public function edit($id)
  {
+ $this->guardPermission('tutorials.manage');
  $tutorialModel = new Tutorial();
  $tutorial = $tutorialModel->getByIdWithSteps($id);
 
@@ -116,7 +119,7 @@ class TutorialsController extends AdminController
 
  public function update($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('tutorials.manage');
  $db = Database::getInstance();
 
  $tutorial = $db->fetch("SELECT * FROM tutorials WHERE id = :id", [':id' => (int) $id]);
@@ -179,7 +182,7 @@ class TutorialsController extends AdminController
 
  public function delete($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('tutorials.manage');
  $db = Database::getInstance();
  $tutorial = $db->fetch("SELECT * FROM tutorials WHERE id = :id", [':id' => (int) $id]);
 
@@ -198,6 +201,7 @@ class TutorialsController extends AdminController
  */
  public function ajaxUploadStepImage()
  {
+ $this->guardPermission('tutorials.manage');
  header('Content-Type: application/json');
  Auth::check();
  if (!Auth::isAdmin()) {

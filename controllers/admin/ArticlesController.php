@@ -4,7 +4,7 @@ class ArticlesController extends AdminController
 {
  public function index()
  {
- $this->guardAdmin();
+ $this->guardPermission('articles.view');
  $db = new Database();
  $q = trim((string) ($_GET['q'] ?? ''));
  $status = trim((string) ($_GET['status'] ?? ''));
@@ -38,7 +38,7 @@ class ArticlesController extends AdminController
 
  public function create()
  {
- $this->guardAdmin();
+ $this->guardPermission('articles.create');
  $db = new Database();
  $categories = $db->fetchAll('SELECT id, name FROM categories ORDER BY name');
  $this->view('admin/articles/form', array('categories' => $categories, 'mode' => 'create'));
@@ -46,7 +46,7 @@ class ArticlesController extends AdminController
 
  public function store()
  {
- $this->postGuard();
+ $this->postGuardPermission('articles.create');
  $data = Sanitizer::cleanArray($_POST);
  $slug = $this->slug($data['slug'] ?: $data['title']);
  $db = new Database();
@@ -87,7 +87,7 @@ class ArticlesController extends AdminController
 
  public function edit($id)
  {
- $this->guardAdmin();
+ $this->guardPermission(array('articles.edit', 'articles.edit_own'));
  $db = new Database();
  $article = $db->fetch('SELECT * FROM articles WHERE id=:id', array(':id' => (int) $id));
  if (!$article) {
@@ -103,7 +103,7 @@ class ArticlesController extends AdminController
 
  public function update($id)
  {
- $this->postGuard();
+ $this->postGuardPermission(array('articles.edit', 'articles.edit_own'));
  $db = new Database();
  $old = $db->fetch('SELECT * FROM articles WHERE id=:id', array(':id' => (int) $id));
  if (!$old) {
@@ -147,7 +147,7 @@ class ArticlesController extends AdminController
 
  public function delete($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('articles.delete');
  $db = new Database();
  $old = $db->fetch('SELECT * FROM articles WHERE id=:id', array(':id' => (int) $id));
  $db->query('UPDATE articles SET status=\'archived\' WHERE id=:id', array(':id' => (int) $id));
@@ -157,7 +157,7 @@ class ArticlesController extends AdminController
 
  public function toggleFeatured($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('articles.edit');
  $db = new Database();
  $db->query('UPDATE articles SET is_featured=1-is_featured WHERE id=:id', array(':id' => (int) $id));
  $this->audit('toggle_featured', 'article', $id);
@@ -166,7 +166,7 @@ class ArticlesController extends AdminController
 
  public function bulkAction()
  {
- $this->postGuard();
+ $this->postGuardPermission('articles.publish');
  $ids = array_map('intval', (array) ($_POST['ids'] ?? array()));
  $action = $_POST['action'] ?? '';
  if ($ids && !in_array($action, array('publish', 'archive', 'delete'), true)) {
@@ -188,7 +188,7 @@ class ArticlesController extends AdminController
  */
  public function bulkExpire()
  {
- $this->postGuard();
+ $this->postGuardPermission('articles.delete');
  $action = $_POST['action'] ?? '';
  $dateFrom = trim((string) ($_POST['date_from'] ?? ''));
  $dateTo = trim((string) ($_POST['date_to'] ?? ''));
@@ -263,7 +263,7 @@ class ArticlesController extends AdminController
  {
  header('Content-Type: application/json; charset=utf-8');
  try {
- $this->postGuard();
+ $this->postGuardPermission(array('articles.edit', 'articles.edit_own'));
  require_once __DIR__ . '/../../core/AiTranslator.php';
 
  $title = trim($_POST['title'] ?? '');
@@ -292,7 +292,7 @@ class ArticlesController extends AdminController
 
  public function quickUpdateCategory()
  {
- $this->guardAdmin();
+ $this->guardPermission('articles.edit');
  $this->postGuard();
 
  $articleId = (int) ($_POST['article_id'] ?? 0);

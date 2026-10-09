@@ -14,7 +14,7 @@ class PollsController extends AdminController
  */
  public function index()
  {
- $this->guardAdmin();
+ $this->guardPermission('polls.manage');
  $polls = $this->pollModel->getAll();
 
  $totalPolls = count($polls);
@@ -45,7 +45,7 @@ class PollsController extends AdminController
  */
  public function create()
  {
- $this->guardAdmin();
+ $this->guardPermission('polls.manage');
  $this->view('admin/polls/form', [
  'poll' => null,
  'isEdit' => false,
@@ -58,7 +58,7 @@ class PollsController extends AdminController
  */
  public function store()
  {
- $this->postGuard();
+ $this->postGuardPermission('polls.manage');
 
  $question = trim((string)($_POST['question'] ?? ''));
  if (empty($question)) {
@@ -105,7 +105,7 @@ class PollsController extends AdminController
  */
  public function edit($id)
  {
- $this->guardAdmin();
+ $this->guardPermission('polls.manage');
  $poll = $this->pollModel->getById($id);
  if (!$poll) {
  Session::flash('error', 'الاستطلاع غير موجود.');
@@ -124,7 +124,7 @@ class PollsController extends AdminController
  */
  public function update($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('polls.manage');
 
  $poll = $this->pollModel->getById($id);
  if (!$poll) {
@@ -179,7 +179,7 @@ class PollsController extends AdminController
  */
  public function delete($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('polls.manage');
 
  $poll = $this->pollModel->getById($id);
  if ($poll) {
@@ -196,7 +196,7 @@ class PollsController extends AdminController
  */
  public function setFeatured($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('polls.manage');
 
  $this->pollModel->setFeatured($id);
  Session::flash('success', 'تم تعيين الاستطلاع كاستطلاع رئيسي نشط على الصفحة الرئيسية.');
@@ -208,7 +208,7 @@ class PollsController extends AdminController
  */
  public function resetVotes($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('polls.manage');
 
  $this->pollModel->resetVotes($id);
  Session::flash('success', 'تم تصفير كافة الأصوات المسجلة في هذا الاستطلاع.');
