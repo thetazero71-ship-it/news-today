@@ -4,6 +4,7 @@ class CommentsController extends AdminController
 {
  public function index()
  {
+ $this->guardPermission('comments.moderate');
  $db = Database::getInstance();
 
  // 1. Calculate counts for all statuses
@@ -60,9 +61,12 @@ class CommentsController extends AdminController
 
  public function approve($id)
  {
- if ($_SERVER['REQUEST_METHOD'] === 'POST') {
- $this->postGuard();
+ // GET must never mutate state: these actions are POST forms only.
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+ header('Location: ' . app_url('admin/comments'));
+ exit;
  }
+ $this->postGuardPermission('comments.moderate');
  $db = Database::getInstance();
  $stmt = $db->prepare("UPDATE comments SET status = 'approved' WHERE id = ?");
  $stmt->execute([(int) $id]);
@@ -75,9 +79,12 @@ class CommentsController extends AdminController
 
  public function reject($id)
  {
- if ($_SERVER['REQUEST_METHOD'] === 'POST') {
- $this->postGuard();
+ // GET must never mutate state: these actions are POST forms only.
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+ header('Location: ' . app_url('admin/comments'));
+ exit;
  }
+ $this->postGuardPermission('comments.moderate');
  $db = Database::getInstance();
  $stmt = $db->prepare("UPDATE comments SET status = 'rejected' WHERE id = ?");
  $stmt->execute([(int) $id]);
@@ -90,9 +97,12 @@ class CommentsController extends AdminController
 
  public function spam($id)
  {
- if ($_SERVER['REQUEST_METHOD'] === 'POST') {
- $this->postGuard();
+ // GET must never mutate state: these actions are POST forms only.
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+ header('Location: ' . app_url('admin/comments'));
+ exit;
  }
+ $this->postGuardPermission('comments.moderate');
  $db = Database::getInstance();
  $stmt = $db->prepare("UPDATE comments SET status = 'spam' WHERE id = ?");
  $stmt->execute([(int) $id]);
@@ -105,9 +115,12 @@ class CommentsController extends AdminController
 
  public function delete($id)
  {
- if ($_SERVER['REQUEST_METHOD'] === 'POST') {
- $this->postGuard();
+ // GET must never mutate state: these actions are POST forms only.
+ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+ header('Location: ' . app_url('admin/comments'));
+ exit;
  }
+ $this->postGuardPermission('comments.moderate');
  $db = Database::getInstance();
  $stmt = $db->prepare("DELETE FROM comments WHERE id = ?");
  $stmt->execute([(int) $id]);

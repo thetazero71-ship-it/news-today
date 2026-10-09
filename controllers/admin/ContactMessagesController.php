@@ -4,6 +4,7 @@ class ContactMessagesController extends AdminController
 {
  public function index()
  {
+ $this->guardPermission('messages.view');
  $db = Database::getInstance();
 
  // 1. Calculate status counts
@@ -67,6 +68,7 @@ class ContactMessagesController extends AdminController
 
  public function show($id)
  {
+ $this->guardPermission('messages.view');
  $db = Database::getInstance();
  $stmt = $db->prepare("SELECT * FROM contact_messages WHERE id = ?");
  $stmt->execute([(int) $id]);
@@ -92,7 +94,7 @@ class ContactMessagesController extends AdminController
 
  public function toggleRead($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('messages.reply');
  $db = Database::getInstance();
  
  $stmt = $db->prepare("SELECT status FROM contact_messages WHERE id = ?");
@@ -113,7 +115,7 @@ class ContactMessagesController extends AdminController
 
  public function markReplied($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('messages.reply');
  $db = Database::getInstance();
  $stmt = $db->prepare("UPDATE contact_messages SET status = 'replied', replied_at = NOW() WHERE id = ?");
  $stmt->execute([(int) $id]);
@@ -126,7 +128,7 @@ class ContactMessagesController extends AdminController
 
  public function delete($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('messages.manage');
  $db = Database::getInstance();
  $stmt = $db->prepare("DELETE FROM contact_messages WHERE id = ?");
  $stmt->execute([(int) $id]);

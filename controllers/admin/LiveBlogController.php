@@ -4,6 +4,7 @@ class AdminLiveBlogController extends AdminController
 {
  public function index()
  {
+ $this->guardPermission('liveblog.manage');
  $db = Database::getInstance();
  $stmt = $db->query("
  SELECT lb.*, COUNT(lbe.id) as entries_count
@@ -21,6 +22,7 @@ class AdminLiveBlogController extends AdminController
 
  public function create()
  {
+ $this->guardPermission('liveblog.manage');
  $this->renderAdmin('admin/live-blog/create');
  }
 
@@ -51,6 +53,7 @@ $this->guardPermission('liveblog.manage');
 
  public function entries($id)
  {
+ $this->guardPermission('liveblog.manage');
  $db = Database::getInstance();
  $stmt = $db->prepare("SELECT * FROM live_blogs WHERE id = ?");
  $stmt->execute([(int) $id]);
@@ -313,6 +316,7 @@ $this->guardPermission('liveblog.manage');
 
  public function toggleStatus($id)
  {
+ $this->guardPermission('liveblog.manage');
  CSRF::validate($_POST['_csrf'] ?? '');
  $db = Database::getInstance();
  $stmt = $db->prepare("SELECT status, title_ar FROM live_blogs WHERE id = ?");
@@ -333,6 +337,7 @@ $this->guardPermission('liveblog.manage');
 
  public function delete($id)
  {
+ $this->guardPermission('liveblog.manage');
  CSRF::validate($_POST['_csrf'] ?? '');
  $db = Database::getInstance();
  
