@@ -90,7 +90,7 @@ if ($fallbackCatId > 0) {
 
  public function index()
  {
- $this->guardAdmin();
+ $this->guardPermission('feeds.view');
  $db = new Database();
  
  $sources = $db->fetchAll('SELECT s.*, c.name as category_name FROM rss_sources s LEFT JOIN categories c ON c.id = s.category_id ORDER BY s.id ASC');
@@ -215,7 +215,7 @@ if ($fallbackCatId > 0) {
  */
  public function translatePublish()
  {
- $this->postGuard();
+ $this->postGuardPermission('feeds.publish');
  require_once __DIR__ . '/../../core/AiTranslator.php';
 
  try {
@@ -370,7 +370,7 @@ $featuredImage = trim($data['featured_image'] ?? '');
  */
  public function quickPublish()
  {
- $this->postGuard();
+ $this->postGuardPermission('feeds.publish');
  $data = Sanitizer::cleanArray($_POST);
 
  $title = $this->cleanTextEntity(trim($data['title'] ?? ''));
@@ -490,7 +490,7 @@ $this->audit('direct_publish', 'article', $newId, null, ['source' => $sourceName
      */
     public function draftArticle()
     {
-        $this->postGuard();
+        $this->postGuardPermission('feeds.publish');
         $data = Sanitizer::cleanArray($_POST);
 
         $title = $this->cleanTextEntity(trim($data['title'] ?? ''));
@@ -572,7 +572,7 @@ if (empty($title)) {
 
  public function addSource()
  {
- $this->postGuard();
+ $this->postGuardPermission('feeds.publish');
  $data = Sanitizer::cleanArray($_POST);
  $name = trim($data['name'] ?? '');
  $url = trim($data['url'] ?? '');
@@ -596,7 +596,7 @@ if (empty($title)) {
 
  public function deleteSource($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('sources.manage');
  $db = new Database();
  $db->query("DELETE FROM rss_sources WHERE id = :id", [':id' => (int) $id]);
  Session::flash('success', 'تم حذف المصدر بنجاح.');
@@ -609,7 +609,7 @@ if (empty($title)) {
  */
 public function healthCheck()
  {
- $this->guardAdmin();
+ $this->guardPermission('feeds.view');
 
  // ميزانية زمنية ثابتة لكل طلب: بغضّ النظر عن بطء الخلاصات نضمن إرجاع استجابة
  // كاملة قبل مهلة الاستضافة القصوى (~30 ث)، عبر تقسيم الفحص إلى دفعات صغيرة
@@ -769,7 +769,7 @@ $suggestions = [];
 
  public function exportOpml()
  {
- $this->guardAdmin();
+ $this->guardPermission('sources.manage');
  $db = new Database();
  $sources = $db->fetchAll("SELECT * FROM rss_sources ORDER BY id ASC");
 
@@ -794,7 +794,7 @@ $suggestions = [];
 
  public function exportJson()
  {
- $this->guardAdmin();
+ $this->guardPermission('sources.manage');
  $db = new Database();
  $sources = $db->fetchAll("SELECT id, name, url, category_id, auto_fetch FROM rss_sources ORDER BY id ASC");
 
@@ -810,7 +810,7 @@ $suggestions = [];
 
  public function importFeeds()
  {
- $this->postGuard();
+ $this->postGuardPermission('sources.manage');
  $db = new Database();
  $importedCount = 0;
 

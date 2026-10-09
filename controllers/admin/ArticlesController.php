@@ -292,8 +292,7 @@ class ArticlesController extends AdminController
 
  public function quickUpdateCategory()
  {
- $this->guardPermission('articles.edit');
- $this->postGuard();
+ $this->postGuardPermission('articles.edit');
 
  $articleId = (int) ($_POST['article_id'] ?? 0);
  $categoryId = (int) ($_POST['category_id'] ?? 0);

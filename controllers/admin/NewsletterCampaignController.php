@@ -4,7 +4,7 @@ class NewsletterCampaignController extends AdminController
 {
  public function index()
  {
- $this->guardAdmin();
+ $this->guardPermission('newsletter.view');
  $db = new Database();
  $campaigns = $db->fetchAll('SELECT c.*, u.username FROM newsletter_campaigns c LEFT JOIN users u ON u.id=c.user_id ORDER BY c.created_at DESC');
  $subscribers = $db->fetchAll('SELECT * FROM newsletters ORDER BY subscribed_at DESC');
@@ -29,13 +29,13 @@ class NewsletterCampaignController extends AdminController
 
  public function create()
  {
- $this->guardAdmin();
+ $this->guardPermission('newsletter.manage');
  $this->view('admin/newsletter/form');
  }
 
  public function store()
  {
- $this->postGuard();
+ $this->postGuardPermission('newsletter.manage');
  $d = Sanitizer::cleanArray($_POST);
  $db = new Database();
  $db->query('INSERT INTO newsletter_campaigns (user_id,subject,body_html,status) VALUES (:user_id,:subject,:body_html,\'draft\')', array(
@@ -51,7 +51,7 @@ class NewsletterCampaignController extends AdminController
 
  public function send($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('newsletter.send');
  $db = new Database();
  $campaign = $db->fetch('SELECT * FROM newsletter_campaigns WHERE id=:id', array(':id' => (int) $id));
  if (!$campaign) {
@@ -113,7 +113,7 @@ class NewsletterCampaignController extends AdminController
 
  public function addSubscriber()
  {
- $this->postGuard();
+ $this->postGuardPermission('newsletter.manage');
  $email = strtolower(trim($_POST['email'] ?? ''));
  $name = Sanitizer::clean($_POST['name'] ?? '');
 
@@ -153,7 +153,7 @@ class NewsletterCampaignController extends AdminController
 
  public function toggleSubscriber($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('newsletter.manage');
  $db = new Database();
  $sub = $db->fetch('SELECT * FROM newsletters WHERE id=:id', array(':id' => (int) $id));
  if ($sub) {
@@ -172,7 +172,7 @@ class NewsletterCampaignController extends AdminController
 
  public function deleteSubscriber($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('newsletter.manage');
  $db = new Database();
  $sub = $db->fetch('SELECT * FROM newsletters WHERE id=:id', array(':id' => (int) $id));
  if ($sub) {
@@ -185,7 +185,7 @@ class NewsletterCampaignController extends AdminController
 
  public function saveSmtpSettings()
  {
- $this->postGuard();
+ $this->postGuardPermission('newsletter.manage');
  $db = new Database();
  $fields = array(
  'smtp_host' => $_POST['smtp_host'] ?? 'smtp.gmail.com',
@@ -217,7 +217,7 @@ class NewsletterCampaignController extends AdminController
 
  public function testSmtp()
  {
- $this->postGuard();
+ $this->postGuardPermission('newsletter.manage');
  $testEmail = trim($_POST['test_email'] ?? '');
  if (!filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
  Session::flash('error', 'البريد الإلكتروني التجريبي غير صالح.');

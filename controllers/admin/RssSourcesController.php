@@ -4,7 +4,7 @@ class RssSourcesController extends AdminController
 {
  public function index()
  {
- $this->guardAdmin();
+ $this->guardPermission('sources.manage');
  $db = new Database();
 
  $q = trim((string) ($_GET['q'] ?? ''));
@@ -63,7 +63,7 @@ class RssSourcesController extends AdminController
 
  public function create()
  {
- $this->guardAdmin();
+ $this->guardPermission('sources.manage');
  $db = new Database();
  $categories = $db->fetchAll('SELECT id, name FROM categories ORDER BY name ASC');
  $this->view('admin/rss_sources/form', [
@@ -74,7 +74,7 @@ class RssSourcesController extends AdminController
 
  public function store()
  {
- $this->postGuard();
+ $this->postGuardPermission('sources.manage');
  $data = Sanitizer::cleanArray($_POST);
  $name = trim($data['name'] ?? '');
  $url = trim($data['url'] ?? '');
@@ -102,7 +102,7 @@ class RssSourcesController extends AdminController
 
  public function edit($id)
  {
- $this->guardAdmin();
+ $this->guardPermission('sources.manage');
  $db = new Database();
  $source = $db->fetch("SELECT * FROM rss_sources WHERE id = :id", [':id' => (int) $id]);
  if (!$source) {
@@ -119,7 +119,7 @@ class RssSourcesController extends AdminController
 
  public function update($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('sources.manage');
  $db = new Database();
  $old = $db->fetch("SELECT * FROM rss_sources WHERE id = :id", [':id' => (int) $id]);
  if (!$old) {
@@ -147,7 +147,7 @@ class RssSourcesController extends AdminController
 
  public function delete($id)
  {
- $this->postGuard();
+ $this->postGuardPermission('sources.manage');
  $db = new Database();
  $old = $db->fetch("SELECT * FROM rss_sources WHERE id = :id", [':id' => (int) $id]);
  $db->query("DELETE FROM rss_sources WHERE id = :id", [':id' => (int) $id]);

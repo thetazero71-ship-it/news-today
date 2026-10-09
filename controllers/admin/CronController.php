@@ -4,7 +4,7 @@ class CronController extends AdminController
 {
  public function index()
  {
- $this->guardAdmin();
+ $this->guardPermission('cron.view');
  $db = new Database();
 
  // إحصائيات اليوم
@@ -141,7 +141,7 @@ class CronController extends AdminController
 
  public function pause()
  {
- $this->postGuard();
+ $this->postGuardPermission('cron.manage');
  $root = dirname(dirname(dirname(__FILE__)));
  $statusFile = $root . '/storage/cron_status.json';
 
@@ -167,7 +167,7 @@ class CronController extends AdminController
 
  public function resume()
  {
- $this->postGuard();
+ $this->postGuardPermission('cron.manage');
  $root = dirname(dirname(dirname(__FILE__)));
  $cronFile = $root . '/cron/rss_auto_publish.php';
  $statusFile = $root . '/storage/cron_status.json';
@@ -287,7 +287,7 @@ class CronController extends AdminController
 
  public function stop()
  {
- $this->postGuard();
+ $this->postGuardPermission('cron.manage');
  $root = dirname(dirname(dirname(__FILE__)));
  $statusFile = $root . '/storage/cron_status.json';
 

@@ -10,7 +10,7 @@ class ClassifierRulesController extends AdminController
 
  public function index()
  {
-  $this->guardAdmin();
+  $this->guardPermission('classifier.manage');
   $db = new Database();
   require_once __DIR__ . '/../../core/CategorySeeder.php';
   CategorySeeder::ensure($db);
@@ -48,8 +48,7 @@ class ClassifierRulesController extends AdminController
 
  public function updateSourceRule()
  {
- $this->guardAdmin();
- $this->postGuard();
+ $this->postGuardPermission('classifier.manage');
 
  $sourceName = trim($_POST['source_name'] ?? '');
  $mode = trim($_POST['mode'] ?? 'smart');
@@ -81,8 +80,7 @@ class ClassifierRulesController extends AdminController
 
  public function add()
  {
- $this->guardAdmin();
- $this->postGuard();
+ $this->postGuardPermission('classifier.manage');
 
  $categorySlug = trim($_POST['category_slug'] ?? '');
  $keyword = trim($_POST['keyword'] ?? '');
@@ -135,7 +133,7 @@ class ClassifierRulesController extends AdminController
 
  public function checkConflict()
  {
- $this->guardAdmin();
+ $this->guardPermission('classifier.manage');
  $keyword = trim($_GET['keyword'] ?? $_POST['keyword'] ?? '');
  $categorySlug = trim($_GET['category_slug'] ?? $_POST['category_slug'] ?? '');
 
@@ -151,8 +149,7 @@ class ClassifierRulesController extends AdminController
 
  public function delete()
  {
- $this->guardAdmin();
- $this->postGuard();
+ $this->postGuardPermission('classifier.manage');
 
  $categorySlug = trim($_POST['category_slug'] ?? '');
  $keyword = trim($_POST['keyword'] ?? '');
@@ -176,8 +173,7 @@ class ClassifierRulesController extends AdminController
 
  public function reclassifyAll()
  {
- $this->guardAdmin();
- $this->postGuard();
+ $this->postGuardPermission('classifier.manage');
 
  $db = new Database();
  $catRows = $db->fetchAll("SELECT id, slug FROM categories");
