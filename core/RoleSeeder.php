@@ -11,6 +11,9 @@
  */
 class RoleSeeder
 {
+    /** Bumped whenever the standard role model changes, so older seeded rows get upgraded. */
+    const MODEL = 'standard-2';
+
     public static function defaultsPath(): string
     {
         return dirname(__DIR__) . '/config/role_permissions.default.json';
@@ -54,7 +57,7 @@ class RoleSeeder
      */
     public static function ensure($db): array
     {
-        $report = array('created' => array(), 'updated' => array(), 'skipped' => array(), 'error' => '');
+        $report = array('created' => array(), 'updated' => array(), 'upgraded' => array(), 'skipped' => array(), 'error' => '');
         $defaults = self::defaults();
         if (empty($defaults)) {
             return $report;
@@ -101,11 +104,19 @@ class RoleSeeder
                     continue;
                 }
 
+                // No marker at all = never touched by the roles screen (safe to seed).
+                // Old _v2 marker = written by an earlier model (upgrade it).
+                if (isset($current['_v2'])) {
+                    $report['upgraded'][] = $name;
+                }
+
                 $db->query('UPDATE roles SET permissions = :p WHERE id = :id', array(
                     ':p' => $encoded,
                     ':id' => (int) $row['id'],
                 ));
-                $report['updated'][] = $name;
+                if (!isset($current['_v2'])) {
+                    $report['updated'][] = $name;
+                }
             }
         } catch (Throwable $e) {
             $report['error'] = $e->getMessage();
@@ -115,22 +126,57 @@ class RoleSeeder
     }
 
     /**
-     * True when the role was already seeded / hand-edited by the roles screen.
-     * Accepts the decoded array or the raw JSON column value.
+     * True when the role already carries the CURRENT model marker, i.e. it was
+     * seeded or hand-edited through the roles screen and must not be touched.
      */
     public static function isManaged($permissions): bool
     {
         if (is_string($permissions)) {
             $permissions = self::decode($permissions);
         }
-        return is_array($permissions) && !empty($permissions['_v2']);
+        if (!is_array($permissions)) {
+            return false;
+        }
+        if (isset($permissions['_model']) && $permissions['_model'] === self::MODEL) {
+            return true;
+        }
+        // hand edits from the roles screen always carry the version marker
+        return !empty($permissions['_roles_ui']);
+    }
+
+    /**
+     * Seeded by an EARLIER model (has the old _v2 marker but no _model) -> safe
+     * to upgrade, because those rows were never edited by hand in the roles screen.
+     */
+    public static function needsUpgrade($permissions): bool
+    {
+        if (is_string($permissions)) {
+            $permissions = self::decode($permissions);
+        }
+        if (!is_array($permissions)) {
+            return false;
+        }
+        return !empty($permissions['_v2']) && !isset($permissions['_model']);
     }
 
     public static function encode(array $permissions): string
     {
         $permissions['_v2'] = 1;
+        $permissions['_model'] = self::MODEL;
         ksort($permissions);
         return (string) json_encode($permissions, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Encode permissions that were edited by hand in the roles screen.
+     * These are never re-seeded, even when the standard model changes later.
+     */
+    public static function encodeManual(array $permissions): string
+    {
+        $encoded = $permissions;
+        $encoded['_roles_ui'] = 1;
+        ksort($encoded);
+        return (string) json_encode($encoded, JSON_UNESCAPED_UNICODE);
     }
 
     public static function decode(?string $json): array

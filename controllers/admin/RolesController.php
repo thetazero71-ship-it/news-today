@@ -96,7 +96,7 @@ class RolesController extends AdminController
 
         $submitted = isset($_POST['permissions']) ? (array) $_POST['permissions'] : array();
         $permissions = RoleSeeder::fromCheckboxList($submitted);
-        $encoded = RoleSeeder::encode($permissions);
+        $encoded = RoleSeeder::encodeManual($permissions);
 
         $old = (string) ($role['permissions'] ?? '');
 

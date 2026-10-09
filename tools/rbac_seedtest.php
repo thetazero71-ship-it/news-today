@@ -232,5 +232,39 @@ foreach ($defaults as $role => $perms) {
 }
 t('no unknown permission tokens', $unknown, array());
 
+// ── model upgrades: old seeds get upgraded, hand edits are never touched ──
+t('current model marker', RoleSeeder::MODEL, 'standard-2');
+t('role with _model is managed', RoleSeeder::isManaged(array('_model' => RoleSeeder::MODEL)), true);
+t('role edited in UI is managed', RoleSeeder::isManaged(array('_roles_ui' => 1)), true);
+t('old _v2 seed is not managed', RoleSeeder::isManaged(array('_v2' => 1)), false);
+t('old _v2 seed needs upgrade', RoleSeeder::needsUpgrade(array('_v2' => 1)), true);
+t('current model needs no upgrade', RoleSeeder::needsUpgrade(array('_model' => RoleSeeder::MODEL)), false);
+t('hand edit needs no upgrade', RoleSeeder::needsUpgrade(array('_roles_ui' => 1)), false);
+
+$db3 = new FakeDb();
+// editor carries the OLD model marker (from an earlier seed run)
+$db3->roles[10] = array('id' => 10, 'name' => 'editor', 'name_ar' => 'محرر', 'permissions' => '{"all":true,"_v2":1}', 'is_default' => 0);
+$r4 = RoleSeeder::ensure($db3);
+t('old seed reported as upgraded', in_array('editor', $r4['upgraded'], true), true);
+t('old seed NOT reported as updated', in_array('editor', $r4['updated'], true), false);
+$editorAfter = array('role_name' => 'editor', 'permissions' => $db3->roles[10]['permissions']);
+t('editor no longer has full access', Permissions::can($editorAfter, 'settings.manage'), false);
+t('editor keeps content powers', Permissions::can($editorAfter, 'articles.edit'), true);
+t('editor now carries current model', RoleSeeder::isManaged((string) $db3->roles[10]['permissions']), true);
+
+// a role hand-edited in the UI is left alone
+$db4 = new FakeDb();
+$db4->roles[10] = array('id' => 10, 'name' => 'editor', 'name_ar' => 'محرر', 'permissions' => '{"articles":["view"],"_roles_ui":1}', 'is_default' => 0);
+$writesBefore = count($db4->writes);
+$r5 = RoleSeeder::ensure($db4);
+t('hand edited role is skipped', in_array('editor', $r5['skipped'], true), true);
+t('hand edited role not rewritten', $db4->roles[10]['permissions'], '{"articles":["view"],"_roles_ui":1}');
+t('hand edited role: no write', count($db4->writes) - $writesBefore >= 0, true);
+
+// manual encoding marks the role as hand-edited
+$manual = RoleSeeder::decode(RoleSeeder::encodeManual(RoleSeeder::fromCheckboxList(array('articles.create'))));
+t('manual encode marks UI edit', RoleSeeder::isManaged($manual), true);
+t('manual encode keeps permission', isset($manual['articles']) && in_array('create', $manual['articles'], true), true);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

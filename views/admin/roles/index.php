@@ -23,11 +23,12 @@
   </div>
 <?php endif; ?>
 
-<?php if (!empty($seed['created']) || !empty($seed['updated'])): ?>
+<?php if (!empty($seed['created']) || !empty($seed['updated']) || !empty($seed['upgraded'])): ?>
   <div class="alert alert-warning">
-    تم تجهيز الصلاحيات الافتراضية —
+    تم تجهيز الصلاحيات —
     <strong>أُنشئ:</strong> <?= htmlspecialchars(implode('، ', $seed['created']) ?: '—') ?> ·
-    <strong>حُدِّث:</strong> <?= htmlspecialchars(implode('، ', $seed['updated']) ?: '—') ?>
+    <strong>حُدِّث:</strong> <?= htmlspecialchars(implode('، ', $seed['updated']) ?: '—') ?> ·
+    <strong>رُقّي:</strong> <?= htmlspecialchars(implode('، ', $seed['upgraded'] ?? []) ?: '—') ?>
     <?php if (!empty($seed['error'])): ?>
       <div class="mt-1 text-danger"><?= htmlspecialchars($seed['error']) ?></div>
     <?php endif; ?>
@@ -75,6 +76,9 @@
                 <span class="text-muted small">غير قابل للتعديل</span>
               <?php else: ?>
                 <a href="<?= app_url('admin/roles/' . $role['id'] . '/edit') ?>" class="btn btn-sm btn-outline-primary">تعديل الصلاحيات</a>
+                <?php if (!$role['managed']): ?>
+                  <div class="text-muted small mt-1">يُحدَّث تلقائياً بالنموذج المعياري</div>
+                <?php endif; ?>
               <?php endif; ?>
             </td>
           </tr>
