@@ -4,6 +4,7 @@ class BackupController extends AdminController
 {
  public function index()
  {
+ $this->guardPermission('backup.export');
  $db = Database::getInstance();
 
  // Gather system stats
@@ -33,7 +34,7 @@ class BackupController extends AdminController
  */
  public function exportDatabase()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $tables = $db->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
 
@@ -103,7 +104,7 @@ class BackupController extends AdminController
  */
  public function importDatabase()
  {
- $this->postGuard();
+$this->postGuardPermission('backup.import');
 
  if (empty($_FILES['sql_file']['tmp_name']) || $_FILES['sql_file']['error'] !== UPLOAD_ERR_OK) {
  Session::flash('error', 'يرجى اختيار ملف SQL صالح للاستيراد.');
@@ -144,7 +145,7 @@ class BackupController extends AdminController
  */
  public function exportArticlesJson()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $articles = $db->query("
  SELECT a.*, c.name AS category_name, c.slug AS category_slug, u.username AS author_name, u.email AS author_email
@@ -173,7 +174,7 @@ class BackupController extends AdminController
  */
  public function exportArticlesCsv()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $articles = $db->query("
  SELECT a.id, a.title, a.slug, c.name AS category, u.username AS author, a.status, a.views_count, a.published_at, a.created_at
@@ -216,7 +217,7 @@ class BackupController extends AdminController
  */
  public function importArticlesJson()
  {
- $this->postGuard();
+$this->postGuardPermission('backup.import');
 
  if (empty($_FILES['articles_json_file']['tmp_name']) || $_FILES['articles_json_file']['error'] !== UPLOAD_ERR_OK) {
  Session::flash('error', 'يرجى اختيار ملف JSON صالح.');
@@ -297,7 +298,7 @@ class BackupController extends AdminController
  */
  public function exportSettingsJson()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $settings = $db->query("SELECT `group`, `key`, `value`, `value_type`, `label_ar`, `description_ar`, `sort_order` FROM settings ORDER BY `group`, sort_order ASC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -320,7 +321,7 @@ class BackupController extends AdminController
  */
  public function importSettingsJson()
  {
- $this->postGuard();
+$this->postGuardPermission('backup.import');
 
  if (empty($_FILES['settings_json_file']['tmp_name']) || $_FILES['settings_json_file']['error'] !== UPLOAD_ERR_OK) {
  Session::flash('error', 'يرجى اختيار ملف حزمة الإعدادات JSON.');
@@ -384,7 +385,7 @@ class BackupController extends AdminController
  */
  public function exportSubscribersCsv()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $subscribers = $db->query("SELECT id, email, status, subscribed_at FROM newsletters ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -409,7 +410,7 @@ class BackupController extends AdminController
  */
  public function importSubscribersCsv()
  {
- $this->postGuard();
+$this->postGuardPermission('backup.import');
 
  if (empty($_FILES['subscribers_csv_file']['tmp_name']) || $_FILES['subscribers_csv_file']['error'] !== UPLOAD_ERR_OK) {
  Session::flash('error', 'يرجى اختيار ملف CSV صالح.');
@@ -452,7 +453,7 @@ class BackupController extends AdminController
  */
  public function exportPollsJson()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $polls = $db->query("SELECT * FROM polls ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -475,7 +476,7 @@ class BackupController extends AdminController
  */
  public function exportPollsCsv()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $polls = $db->query("SELECT * FROM polls ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -518,7 +519,7 @@ class BackupController extends AdminController
  */
  public function exportTutorialsJson()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $tutorials = $db->query("
  SELECT t.*, c.name as category_name 
@@ -545,7 +546,7 @@ class BackupController extends AdminController
  */
  public function exportRssOpml()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $sources = $db->query("
  SELECT s.*, c.name as category_name 
@@ -592,7 +593,7 @@ class BackupController extends AdminController
  */
  public function exportClassifierRulesJson()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $rules = [];
  if (class_exists('CategoryClassifier')) {
  $rules = [
@@ -616,7 +617,7 @@ class BackupController extends AdminController
  */
  public function exportContactMessagesCsv()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $messages = $db->query("SELECT * FROM contact_messages ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -650,7 +651,7 @@ class BackupController extends AdminController
  */
  public function exportLiveBlogJson()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $blogs = $db->query("SELECT * FROM live_blogs ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -672,7 +673,7 @@ class BackupController extends AdminController
  */
  public function exportActivityLogsCsv()
  {
- $this->guardAdmin();
+$this->guardPermission('backup.export');
  $db = Database::getInstance();
  $logs = $db->query("
  SELECT a.*, u.username 

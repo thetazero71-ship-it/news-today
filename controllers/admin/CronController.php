@@ -215,12 +215,7 @@ class CronController extends AdminController
 
  public function statusJson()
  {
- if (!Auth::check() || !Auth::isAdmin()) {
- header('Content-Type: application/json; charset=utf-8');
- http_response_code(403);
- echo json_encode(['error' => 'Unauthorized']);
- exit;
- }
+$this->guardPermission('cron.view');
 
  // تحرير قفل الجلسة مباشرة أثناء استعلام الـ AJAX الحي
  if (session_status() === PHP_SESSION_ACTIVE) {

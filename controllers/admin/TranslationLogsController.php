@@ -4,6 +4,7 @@ class TranslationLogsController extends AdminController
 {
  public function index()
  {
+ $this->guardPermission('translation.view');
  $db = Database::getInstance();
  $page = max(1, (int) ($_GET['page'] ?? 1));
  $perPage = 30;
@@ -48,6 +49,7 @@ class TranslationLogsController extends AdminController
 
  public function show()
  {
+ $this->guardPermission('translation.view');
  $id = (int) ($_GET['id'] ?? 0);
  $db = Database::getInstance();
  $log = $db->fetch('SELECT * FROM translation_logs WHERE id = ?', [$id]);

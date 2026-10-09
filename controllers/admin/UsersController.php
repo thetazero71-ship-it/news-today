@@ -4,6 +4,7 @@ class UsersController extends AdminController
 {
  public function index()
  {
+ $this->guardPermission('users.view');
  $db = Database::getInstance();
  $q = trim($_GET['q'] ?? '');
  $role = trim($_GET['role'] ?? '');
@@ -50,6 +51,7 @@ class UsersController extends AdminController
 
  public function create()
  {
+ $this->guardPermission('users.view');
  $db = Database::getInstance();
  $roles = $db->query("SELECT * FROM roles ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -93,6 +95,7 @@ $this->guardPermission('users.manage');
 
  public function edit($id)
  {
+ $this->guardPermission('users.manage');
  $db = Database::getInstance();
  $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
  $stmt->execute([(int) $id]);

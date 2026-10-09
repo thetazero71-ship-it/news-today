@@ -4,6 +4,7 @@ class AnalyticsController extends AdminController
 {
  public function index()
  {
+ $this->guardPermission('analytics.view');
  $db = Database::getInstance();
 
  // High level overview stats (Real Database Counts)
