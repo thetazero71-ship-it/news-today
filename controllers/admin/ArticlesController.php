@@ -157,7 +157,7 @@ class ArticlesController extends AdminController
 
  public function toggleFeatured($id)
  {
- $this->postGuardPermission('articles.edit');
+ $this->postGuardPermission('articles.feature');
  $db = new Database();
  $db->query('UPDATE articles SET is_featured=1-is_featured WHERE id=:id', array(':id' => (int) $id));
  $this->audit('toggle_featured', 'article', $id);

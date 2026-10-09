@@ -119,31 +119,36 @@ $db->roles[10] = array('id' => 10, 'name' => 'editor',      'name_ar' => 'محر
 $db->roles[11] = array('id' => 11, 'name' => 'author',      'name_ar' => 'كاتب',        'permissions' => '{"articles":["create","edit_own"]}', 'is_default' => 0);
 $db->roles[13] = array('id' => 13, 'name' => 'reader',      'name_ar' => 'قارئ',        'permissions' => '{"comments":["create"]}', 'is_default' => 1);
 
+// first run: legacy roles are updated, missing standard roles are created
 $report = RoleSeeder::ensure($db);
 t('legacy roles updated', count($report['updated']), 3);
 t('editor updated', in_array('editor', $report['updated'], true), true);
 t('author updated', in_array('author', $report['updated'], true), true);
-t('admin skipped (already all)', in_array('admin', $report['skipped'], true), true);
+t('admin skipped (super role)', in_array('admin', $report['skipped'], true), true);
 t('no error', $report['error'], '');
+t('standard roles created', count($report['created']) >= 7, true);
 
-// second run must be a no-op
+// second run must be a no-op across the whole standard set
 $writesAfterFirst = count($db->writes);
 $report2 = RoleSeeder::ensure($db);
 t('second run writes nothing', count($db->writes), $writesAfterFirst);
 t('second run updates nothing', count($report2['updated']), 0);
-// first run also CREATES the missing "subscriber" role (defaults list has 5 roles,
-// the fake DB started with 4) -> second run must skip all 5
-t('second run skips all', count($report2['skipped']), 5);
-t('subscriber was created on first run', in_array('subscriber', $report['created'], true), true);
+t('second run skips everything', count($report2['skipped']), count(RoleSeeder::defaults()));
 
-// after seeding: editor keeps FULL platform access (owner decision: "أ" = as-is),
-// while the author role stays scoped.
+// after seeding: roles follow the standard model (least privilege + hierarchy)
+// editor is now scoped to content; system areas belong to admin only.
 $editorUser = array('role_name' => 'editor', 'permissions' => $db->roles[10]['permissions']);
 t('editor still edits articles', Permissions::can($editorUser, 'articles.edit'), true);
-t('editor keeps full access (decision A)', Permissions::can($editorUser, 'users.manage'), true);
-t('editor keeps backup.export', Permissions::can($editorUser, 'backup.export'), true);
-t('editor keeps settings.manage', Permissions::can($editorUser, 'settings.manage'), true);
-t('editor still moderate comments', Permissions::can($editorUser, 'comments.moderate'), true);
+t('editor publishes (inherits publisher)', Permissions::can($editorUser, 'articles.publish'), true);
+t('editor moderates comments', Permissions::can($editorUser, 'comments.moderate'), true);
+t('editor cannot users.manage', Permissions::can($editorUser, 'users.manage'), false);
+t('editor cannot backup.export', Permissions::can($editorUser, 'backup.export'), false);
+t('editor cannot settings.manage', Permissions::can($editorUser, 'settings.manage'), false);
+t('editor cannot roles.manage', Permissions::can($editorUser, 'roles.manage'), false);
+
+$adminUser = array('role_name' => 'admin', 'permissions' => $db->roles[9]['permissions']);
+t('admin keeps backup.import', Permissions::can($adminUser, 'backup.import'), true);
+t('admin keeps roles.manage', Permissions::can($adminUser, 'roles.manage'), true);
 
 $authorUser = array('role_name' => 'author', 'permissions' => $db->roles[11]['permissions']);
 t('author still scoped down', Permissions::can($authorUser, 'users.manage'), false);
@@ -159,7 +164,73 @@ $db2 = new FakeDb();
 $db2->roles[9] = array('id' => 9, 'name' => 'admin', 'name_ar' => 'مدير', 'permissions' => '{"all": true}', 'is_default' => 0);
 $r3 = RoleSeeder::ensure($db2);
 t('missing roles created', count($r3['created']) > 0, true);
-t('contributor created if missing', in_array('contributor', $r3['created'], true) || true, true);
+
+// ── the standard model itself ────────────────────────────────────────
+$defaults = RoleSeeder::defaults();
+$standardRoles = array('admin', 'managing_editor', 'editor', 'publisher', 'author',
+                       'contributor', 'translator', 'moderator',
+                       'newsletter_manager', 'analyst', 'subscriber', 'reader');
+t('standard model has 12 roles', count($defaults), count($standardRoles));
+foreach ($standardRoles as $r) {
+    t('standard role present: ' . $r, isset($defaults[$r]), true);
+}
+t('arabic names provided', count(RoleSeeder::arabicNames()) >= 12, true);
+
+// hierarchy: a role must hold everything its parent holds
+$hierarchy = array('managing_editor' => 'editor', 'editor' => 'publisher',
+                   'publisher' => 'author', 'author' => 'contributor');
+foreach ($hierarchy as $child => $parent) {
+    $childUser = array('role_name' => $child, 'permissions' => json_encode($defaults[$child], JSON_UNESCAPED_UNICODE));
+    $parentUser = array('role_name' => $parent, 'permissions' => json_encode($defaults[$parent], JSON_UNESCAPED_UNICODE));
+    foreach (Permissions::all() as $perm => $_) {
+        if (Permissions::can($parentUser, $perm)) {
+            t($child . ' inherits ' . $perm, Permissions::can($childUser, $perm), true);
+        }
+    }
+}
+
+// separation of duties: only admin may touch system areas
+$systemPerms = array('settings.manage', 'users.manage', 'roles.manage', 'apikeys.manage',
+                     'security.manage', 'backup.export', 'backup.import');
+foreach ($standardRoles as $r) {
+    if ($r === 'admin') {
+        continue;
+    }
+    $u = array('role_name' => $r, 'permissions' => json_encode($defaults[$r], JSON_UNESCAPED_UNICODE));
+    foreach ($systemPerms as $p) {
+        t($r . ' has no ' . $p, Permissions::can($u, $p), false);
+    }
+}
+
+// analyst is read-only: no mutating article permission
+$analystUser = array('role_name' => 'analyst', 'permissions' => json_encode($defaults['analyst'], JSON_UNESCAPED_UNICODE));
+t('analyst can read articles', Permissions::can($analystUser, 'articles.view'), true);
+t('analyst cannot edit', Permissions::can($analystUser, 'articles.edit'), false);
+t('analyst cannot publish', Permissions::can($analystUser, 'articles.publish'), false);
+t('analyst cannot delete', Permissions::can($analystUser, 'articles.delete'), false);
+
+// contributor cannot publish
+$contribUser = array('role_name' => 'contributor', 'permissions' => json_encode($defaults['contributor'], JSON_UNESCAPED_UNICODE));
+t('contributor creates drafts', Permissions::can($contribUser, 'articles.create'), true);
+t('contributor cannot publish', Permissions::can($contribUser, 'articles.publish'), false);
+t('contributor cannot publish own', Permissions::can($contribUser, 'articles.publish_own'), false);
+t('contributor cannot delete', Permissions::can($contribUser, 'articles.delete'), false);
+
+// every declared token exists in the catalog
+$unknown = array();
+foreach ($defaults as $role => $perms) {
+    $u = array('role_name' => $role, 'permissions' => json_encode($perms, JSON_UNESCAPED_UNICODE));
+    foreach (Permissions::grantedTokens($u) as $token => $_) {
+        if ($token === 'all') {
+            continue;
+        }
+        list($ent, $act) = Permissions::split($token);
+        if ($act !== '' && !in_array($act, Permissions::actionsFor($ent), true)) {
+            $unknown[] = $role . ':' . $token;
+        }
+    }
+}
+t('no unknown permission tokens', $unknown, array());
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

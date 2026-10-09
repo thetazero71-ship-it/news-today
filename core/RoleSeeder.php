@@ -37,6 +37,19 @@ class RoleSeeder
     }
 
     /**
+     * Arabic display names declared next to the permissions (if provided).
+     */
+    public static function arabicNames(): array
+    {
+        $file = self::defaultsPath();
+        if (!is_file($file)) {
+            return array();
+        }
+        $json = json_decode(file_get_contents($file), true);
+        return (isset($json['_arabic']) && is_array($json['_arabic'])) ? $json['_arabic'] : array();
+    }
+
+    /**
      * @return array{created:string[],updated:string[],skipped:string[],error:string}
      */
     public static function ensure($db): array
@@ -184,7 +197,8 @@ class RoleSeeder
 
     private static function createRole($db, string $name, array $perms, array $columns, string $key): void
     {
-        $nameAr = self::arabicName($key);
+        $names = self::arabicNames();
+        $nameAr = isset($names[$name]) ? (string) $names[$name] : self::arabicName($key);
         $values = array(
             'name'        => $key,
             'name_ar'     => $nameAr,
@@ -215,12 +229,18 @@ class RoleSeeder
     private static function arabicName(string $key): string
     {
         $map = array(
-            'admin'      => 'مدير النظام الكامل',
-            'editor'     => 'محرر رئيسي',
-            'author'     => 'كاتب ومحرر محتوى',
-            'contributor'=> 'مساهم',
-            'subscriber' => 'مشترك مميز',
-            'reader'     => 'قارئ مسجل',
+            'admin'             => 'مدير النظام',
+            'managing_editor'   => 'المدير التحريري',
+            'editor'            => 'محرر رئيسي',
+            'publisher'         => 'ناشر',
+            'author'            => 'كاتب ومحرر محتوى',
+            'contributor'       => 'مساهم',
+            'translator'        => 'مترجم',
+            'moderator'         => 'مشرف التفاعل',
+            'newsletter_manager'=> 'مسؤول النشرة البريدية',
+            'analyst'           => 'محلل (قراءة فقط)',
+            'subscriber'        => 'مشترك مميز',
+            'reader'            => 'قارئ مسجل',
         );
         return $map[$key] ?? $key;
     }

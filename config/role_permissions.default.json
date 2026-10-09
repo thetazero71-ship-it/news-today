@@ -1,25 +1,330 @@
 {
-    "_comment": "الصلاحيات المقترحة لكل دور. بيانات فقط — لا تُطبَّق على قاعدة البيانات إلا في Phase 2 بعد الموافقة. علامة _v2 تجعل البذر اللاحق لا يستبدل أي تعديل يدوي.",
+    "_comment": "نموذج أدوار مُعتمد: تسلسل هرمي (RBAC1) + أقل امتياز ممكن + فصل المهام. المفتاح _inherits توثيق فقط، وأداة البذر توسّع الصلاحيات الموروثة قبل الحفظ. لا تُمنح صلاحية إلا بخطأ مقصود.",
     "_v2": 1,
+    "_inherits": {
+        "managing_editor": "editor",
+        "editor": "publisher",
+        "publisher": "author",
+        "author": "contributor"
+    },
+    "_arabic": {
+        "admin": "مدير النظام",
+        "managing_editor": "المدير التحريري",
+        "editor": "محرر رئيسي",
+        "publisher": "ناشر",
+        "author": "كاتب ومحرر محتوى",
+        "contributor": "مساهم",
+        "translator": "مترجم",
+        "moderator": "مشرف التفاعل",
+        "newsletter_manager": "مسؤول النشرة البريدية",
+        "analyst": "محلل (قراءة فقط)",
+        "subscriber": "مشترك مميز",
+        "reader": "قارئ مسجل"
+    },
     "admin": {
         "all": true
     },
+    "managing_editor": {
+        "activity": [
+            "view"
+        ],
+        "ads": [
+            "manage"
+        ],
+        "ai": [
+            "logs"
+        ],
+        "analytics": [
+            "view"
+        ],
+        "articles": [
+            "create",
+            "delete",
+            "edit",
+            "edit_own",
+            "feature",
+            "publish",
+            "publish_own",
+            "view"
+        ],
+        "categories": [
+            "manage"
+        ],
+        "classifier": [
+            "manage"
+        ],
+        "comments": [
+            "moderate"
+        ],
+        "cron": [
+            "view"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "diagnostics": [
+            "view"
+        ],
+        "feeds": [
+            "publish",
+            "view"
+        ],
+        "liveblog": [
+            "manage"
+        ],
+        "media": [
+            "delete",
+            "upload",
+            "view"
+        ],
+        "messages": [
+            "manage",
+            "reply",
+            "view"
+        ],
+        "newsletter": [
+            "manage",
+            "send",
+            "view"
+        ],
+        "polls": [
+            "manage"
+        ],
+        "profile": [
+            "manage"
+        ],
+        "traffic": [
+            "view"
+        ],
+        "translation": [
+            "manage",
+            "view"
+        ],
+        "tutorials": [
+            "manage"
+        ]
+    },
     "editor": {
-        "_note": "قرار المالك: المحرر الرئيسي يحتفظ بوصوله الكامل للمنصة كما كان قبل نظام الصلاحيات (تعادل دور المدير). لتضييقه لاحقاً: افتح شاشة الأدوار وأزل ما لا يحتاجه.",
-        "all": true
+        "analytics": [
+            "view"
+        ],
+        "articles": [
+            "create",
+            "delete",
+            "edit",
+            "edit_own",
+            "feature",
+            "publish",
+            "publish_own",
+            "view"
+        ],
+        "comments": [
+            "moderate"
+        ],
+        "cron": [
+            "view"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "feeds": [
+            "publish",
+            "view"
+        ],
+        "liveblog": [
+            "manage"
+        ],
+        "media": [
+            "delete",
+            "upload",
+            "view"
+        ],
+        "profile": [
+            "manage"
+        ]
+    },
+    "publisher": {
+        "analytics": [
+            "view"
+        ],
+        "articles": [
+            "create",
+            "edit",
+            "edit_own",
+            "feature",
+            "publish",
+            "publish_own",
+            "view"
+        ],
+        "cron": [
+            "view"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "feeds": [
+            "publish",
+            "view"
+        ],
+        "liveblog": [
+            "manage"
+        ],
+        "media": [
+            "upload",
+            "view"
+        ],
+        "profile": [
+            "manage"
+        ]
     },
     "author": {
-        "dashboard": ["view"],
-        "profile": ["manage"],
-        "articles": ["view", "create", "edit_own", "publish_own"],
-        "media": ["view", "upload"],
-        "comments": ["create"]
+        "analytics": [
+            "view"
+        ],
+        "articles": [
+            "create",
+            "edit_own",
+            "publish_own",
+            "view"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "media": [
+            "upload",
+            "view"
+        ],
+        "profile": [
+            "manage"
+        ]
+    },
+    "contributor": {
+        "articles": [
+            "create",
+            "edit_own",
+            "view"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "media": [
+            "upload",
+            "view"
+        ],
+        "profile": [
+            "manage"
+        ]
+    },
+    "translator": {
+        "articles": [
+            "edit_own",
+            "view"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "media": [
+            "upload",
+            "view"
+        ],
+        "profile": [
+            "manage"
+        ],
+        "translation": [
+            "manage",
+            "view"
+        ]
+    },
+    "moderator": {
+        "articles": [
+            "view"
+        ],
+        "comments": [
+            "moderate"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "liveblog": [
+            "manage"
+        ],
+        "messages": [
+            "reply",
+            "view"
+        ],
+        "profile": [
+            "manage"
+        ]
+    },
+    "newsletter_manager": {
+        "analytics": [
+            "view"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "newsletter": [
+            "manage",
+            "send",
+            "view"
+        ],
+        "profile": [
+            "manage"
+        ]
+    },
+    "analyst": {
+        "activity": [
+            "view"
+        ],
+        "ai": [
+            "logs"
+        ],
+        "analytics": [
+            "view"
+        ],
+        "articles": [
+            "premium",
+            "view"
+        ],
+        "dashboard": [
+            "view"
+        ],
+        "diagnostics": [
+            "view"
+        ],
+        "feeds": [
+            "view"
+        ],
+        "media": [
+            "view"
+        ],
+        "newsletter": [
+            "view"
+        ],
+        "profile": [
+            "manage"
+        ],
+        "security": [
+            "view"
+        ],
+        "traffic": [
+            "view"
+        ],
+        "translation": [
+            "view"
+        ]
     },
     "subscriber": {
-        "articles": ["premium"],
-        "comments": ["create"]
+        "articles": [
+            "premium"
+        ],
+        "comments": [
+            "create"
+        ]
     },
     "reader": {
-        "comments": ["create"]
+        "comments": [
+            "create"
+        ]
     }
 }
