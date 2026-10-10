@@ -681,6 +681,10 @@ exit;
   $db = Database::getInstance();
   $group = $_POST['_group'] ?? 'general';
 
+  $brandRenamedFrom = '';
+  $brandBefore = Settings::get('site_name_ar', '');
+  $brandBefore = is_string($brandBefore) ? trim($brandBefore) : '';
+
   // 1. Process regular settings input
  if (!empty($_POST['settings']) && is_array($_POST['settings'])) {
  foreach ($_POST['settings'] as $key => $value) {
@@ -710,13 +714,30 @@ exit;
  // reader that still asks for "site_name" gets the same brand.
  try {
  $brandName = Brand::name();
+
+ // text that embeds the old name (assistant greeting, newsletter copy, static
+ // pages) is rewritten so nothing keeps showing the previous brand
+ $migrated = array();
+ if ($brandBefore !== '' && $brandBefore !== $brandName) {
+  $migrated = Brand::migrateReferences($db, $brandBefore, $brandName);
+  Settings::clear();
+  Brand::flush();
+ }
+
  $stmt = $db->prepare("INSERT INTO settings (`group`, `key`, `value`) VALUES ('general', 'site_name', ?)
  ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)");
- $stmt->execute([$brandName]);
+ $stmt->execute([Brand::name()]);
 
  if (trim((string) Settings::get('mail_from_name', '')) === '') {
  $stmt = $db->prepare("UPDATE settings SET `value` = ? WHERE `key` = 'mail_from_name'");
- $stmt->execute([$brandName]);
+ $stmt->execute([Brand::name()]);
+ }
+
+ if (!empty($migrated)) {
+ Session::flash(
+ 'success',
+ 'تم تغيير اسم المنصة إلى «' . Brand::name() . '» وتحديث ' . count($migrated) . ' نصاً كان يحتوي الاسم القديم.'
+ );
  }
  } catch (Throwable $e) {
  // non-critical: brand alias sync

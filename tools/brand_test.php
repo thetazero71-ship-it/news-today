@@ -129,5 +129,56 @@ t('sync reports updated files', in_array('/manifest.json', $res['updated'], true
 array_map('unlink', glob($tmp . '/*'));
 @rmdir($tmp);
 
+echo "\n--- migrating stored text that embeds the old name ---\n";
+
+/** Tiny PDO-ish stub for migrateReferences(). */
+class FakeDb
+{
+    public $rows;
+    public $pages;
+    public $updates = array();
+
+    public function __construct($rows, $pages)
+    {
+        $this->rows = $rows;
+        $this->pages = $pages;
+    }
+
+    public function fetchAll($sql, array $params = array())
+    {
+        if (strpos($sql, 'FROM settings') !== false) {
+            return $this->rows;
+        }
+        return $this->pages;
+    }
+
+    public function query($sql, array $params = array())
+    {
+        $this->updates[] = $params;
+        return true;
+    }
+}
+
+$dbStub = new FakeDb(
+    array(
+        array('key' => 'ai_assistant_welcome_message', 'value' => 'مرحباً أنا مرشد عصب التقنية'),
+        array('key' => 'newsletter_welcome_body', 'value' => 'نشرة عصب التقنية البريدية'),
+        array('key' => 'unrelated_setting', 'value' => 'لا علاقة له'),
+    ),
+    array(array('id' => 7, 'slug' => 'about', 'content_ar' => '<p>عصب التقنية وجهة رقمية</p>'))
+);
+
+$changed = Brand::migrateReferences($dbStub, 'عصب التقنية', 'الاسم الجديد');
+t('rewrote the assistant greeting', in_array('ai_assistant_welcome_message', $changed, true));
+t('rewrote the newsletter copy', in_array('newsletter_welcome_body', $changed, true));
+t('rewrote the static page', in_array('page:about', $changed, true));
+t('left unrelated settings alone', in_array('unrelated_setting', $changed, true) === false);
+$values = array_column($dbStub->updates, 0);
+t('new name written into the stored text', in_array('مرحباً أنا مرشد الاسم الجديد', $values, true));
+t('no old name left in the rewritten values', count(preg_grep('/عصب التقنية/u', $values)) === 0);
+
+t('same name is a no-op', Brand::migrateReferences($dbStub, 'نفس الاسم', 'نفس الاسم') === array());
+t('blank old name is refused', Brand::migrateReferences($dbStub, '', 'جديد') === array());
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

@@ -24,10 +24,17 @@ if (isset($_GET['restore'])) {
         echo "bad restore payload\n";
         exit;
     }
+    $new = currentName($db);
     $db->query("UPDATE settings SET `value` = ? WHERE `key` = 'site_name_ar'", [$old]);
     $db->query("UPDATE settings SET `value` = ? WHERE `key` = 'site_name'", [$old]);
     Settings::clear();
+    require_once __DIR__ . '/core/Brand.php';
+    Brand::flush();
+    Brand::migrateReferences($db, $new, $old);
+    Brand::flush();
+    Brand::syncStaticFiles(__DIR__);
     echo "restored:" . base64_encode(currentName($db)) . "\n";
+    echo "mf=" . base64_encode((string) @file_get_contents(__DIR__ . '/manifest.json')) . "\n";
     exit;
 }
 
@@ -43,6 +50,11 @@ if (isset($_GET['set'])) {
 
     require_once __DIR__ . '/core/Brand.php';
     Brand::flush();
+    if ($old !== '' && $old !== $new) {
+        Brand::migrateReferences($db, $old, $new);
+        Settings::clear();
+        Brand::flush();
+    }
     $sync = Brand::syncStaticFiles(__DIR__);
 
     echo "NEW_B64=" . base64_encode(currentName($db)) . "\n";

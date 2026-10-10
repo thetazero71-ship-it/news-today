@@ -91,6 +91,71 @@ class Brand
     }
 
     /**
+     * Stored copy: some settings and pages hold the platform name inside their
+     * text (assistant welcome, newsletter copy, about page...). When the name
+     * changes, rewrite those stored sentences so no old name is left behind.
+     *
+     * @return array<int,string> human-readable list of what was rewritten
+     */
+    public static function migrateReferences($db, string $oldName, string $newName): array
+    {
+        $changed = array();
+        $oldName = trim($oldName);
+        $newName = trim($newName);
+        if ($oldName === '' || $newName === '' || $oldName === $newName || mb_strlen($oldName) < 2) {
+            return $changed;
+        }
+
+        // 1. settings whose text embeds the brand
+        $keys = array(
+            'ai_assistant_welcome_message',
+            'ai_assistant_placeholder',
+            'ai_assistant_privacy_note',
+            'newsletter_welcome_subject',
+            'newsletter_welcome_body',
+            'mail_from_name',
+            'site_description_ar',
+            'site_tagline',
+        );
+        try {
+            $rows = $db->fetchAll(
+                "SELECT `key`, `value` FROM settings
+                 WHERE `key` IN ('" . implode("','", $keys) . "')"
+            );
+            foreach ($rows as $row) {
+                $value = (string) $row['value'];
+                if ($value === '' || strpos($value, $oldName) === false) {
+                    continue;
+                }
+                $db->query(
+                    "UPDATE settings SET `value` = ? WHERE `key` = ?",
+                    array(str_replace($oldName, $newName, $value), $row['key'])
+                );
+                $changed[] = $row['key'];
+            }
+        } catch (Throwable $e) {
+            // non-critical
+        }
+
+        // 2. static pages written from the seed templates
+        try {
+            $pages = $db->fetchAll("SELECT id, slug, content_ar FROM pages WHERE content_ar LIKE ?", array('%' . $oldName . '%'));
+            foreach ($pages as $page) {
+                $content = (string) $page['content_ar'];
+                $db->query(
+                    "UPDATE pages SET content_ar = ? WHERE id = ?",
+                    array(str_replace($oldName, $newName, $content), $page['id'])
+                );
+                $changed[] = 'page:' . $page['slug'];
+            }
+        } catch (Throwable $e) {
+            // non-critical
+        }
+
+        return $changed;
+    }
+
+    /**
      * Rewrite the static brand files (PWA manifest + service worker) so they
      * follow the saved name too. Static files cannot read the database, so they
      * are regenerated whenever the settings change.
