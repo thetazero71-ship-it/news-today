@@ -170,7 +170,7 @@ class SearchQuery
      * Every token must appear in at least one field (AND across tokens, OR across
      * fields) - that is what makes multi-word queries precise.
      *
-     * @return array{0:string,1:array,2:string} [sql, params, relevanceSql]
+     * @return array{0:string,1:array,2:string,3:array} [sql, paramsWhere, relevanceSql, paramsMain]
      */
     public static function buildWhere(array $tokens): array
     {
@@ -185,7 +185,8 @@ class SearchQuery
         $tokens = array_slice(array_values($tokens), 0, self::MAX_MATCH_TOKENS);
 
         $clauses = array();
-        $params = array();
+        $paramsWhere = array();
+        $paramsMain = array();
         $relevance = array();
 
         foreach ($tokens as $i => $token) {
@@ -196,7 +197,8 @@ class SearchQuery
             $relevanceTerms = array();
             foreach ($fields as $column => $weight) {
                 $p = ':' . $name . substr(md5($column), 0, 5);
-                $params[$p] = $like;
+                $paramsWhere[$p] = $like;
+                $paramsMain[$p] = $like;
                 $folded = self::foldExpr($column);
                 $orParts[] = "$folded LIKE $p ESCAPE '\\\\'";
                 if (isset($ranked[$column])) {
@@ -207,9 +209,9 @@ class SearchQuery
             $clauses[] = '(' . implode(' OR ', $orParts) . ')';
 
             // exact normalized title match is the strongest signal
-            // (":$eqName" must stay a literal placeholder for PDO)
+            // (":" must stay literal so PDO sees a real placeholder)
             $eqName = 'eq' . $name;
-            $params[$eqName] = $token;
+            $paramsMain[$eqName] = $token;
             $relevanceTerms[] = 'IF(' . self::foldExpr('a.title') . ' = :' . $eqName . ', 130, 0)';
             $relevanceTerms[] = 'IF(' . self::foldExpr('a.title_ar') . ' = :' . $eqName . ', 130, 0)';
             $relevance[] = '(' . implode(' + ', $relevanceTerms) . ')';
@@ -217,8 +219,9 @@ class SearchQuery
 
         return array(
             '(' . implode(' AND ', $clauses) . ')',
-            $params,
+            $paramsWhere,
             '(' . implode(' + ', $relevance) . ')',
+            $paramsMain,
         );
     }
 

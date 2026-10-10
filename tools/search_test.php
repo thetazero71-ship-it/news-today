@@ -125,17 +125,32 @@ t('highlight handles empty text', SearchQuery::highlight('x', ''), '');
 t('min length', SearchQuery::MIN_LENGTH, 2);
 t('max length', SearchQuery::MAX_LENGTH, 120);
 
-// every :placeholder in the SQL must have a bound param, and vice versa
+// every :placeholder in the SQL must have a bound param, and vice versa.
+// (checked against the MAIN param set - the one that also drives relevance)
+list($sql, $whereParams, $relevance, $mainParams) = SearchQuery::buildWhere(array('الجيش'));
 $all = $sql . ' ' . $relevance;
 preg_match_all('/:([a-zA-Z0-9_]+)/', $all, $m);
 $placeholders = array_unique($m[1]);
 $bound = array_map(function ($k) {
     return ltrim($k, ':');
-}, array_keys($params));
+}, array_keys($mainParams));
 $missing = array_diff($placeholders, $bound);
 $extra = array_diff($bound, $placeholders);
 t('no placeholder without a bound param', array_values($missing), array());
 t('no bound param without a placeholder', array_values($extra), array());
+
+// the WHERE-only set must NOT contain the relevance placeholders (HY093 crash)
+$whereBound = array_map(function ($k) {
+    return ltrim($k, ':');
+}, array_keys($whereParams));
+$leaked = array();
+foreach ($whereBound as $k) {
+    if (strpos($k, 'eq') === 0) {
+        $leaked[] = $k;
+    }
+}
+t('WHERE-only params exclude relevance placeholders', $leaked, array());
+t('relevance params present in main set', in_array('eqt0', array_keys($mainParams), true), true);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

@@ -24,12 +24,17 @@ class SearchController extends Controller
         $db = new Database();
         $where = array("a.status = 'published'");
         $params = array();
+        $paramsMain = array();
         $relevanceSql = '0';
 
         if (!empty($tokens)) {
-            list($searchSql, $searchParams, $relevanceSql) = SearchQuery::buildWhere($tokens);
+            // 4th element = params that also cover the relevance expression.
+            // The COUNT query must use the WHERE-only set, otherwise PDO throws
+            // HY093 "invalid parameter number".
+            list($searchSql, $whereParams, $relevanceSql, $mainParams) = SearchQuery::buildWhere($tokens);
             $where[] = $searchSql;
-            $params = array_merge($params, $searchParams);
+            $params = array_merge($params, $whereParams);
+            $paramsMain = array_merge($paramsMain, $mainParams);
         } elseif ($q !== '' && $tooShort) {
             // single character / punctuation-only query: show nothing yet
             $where[] = '1 = 0';
@@ -72,7 +77,7 @@ class SearchController extends Controller
             . $relevanceSql . ' AS relevance'
             . $fromSql . ' WHERE ' . $condition
             . ' ORDER BY ' . $order . ' LIMIT ' . (int) $perPage . ' OFFSET ' . (int) $offset,
-            $params
+            $paramsMain ?: $params
         );
 
         $categories = $db->fetchAll('SELECT id, name, slug FROM categories ORDER BY name');
@@ -128,6 +133,7 @@ class SearchController extends Controller
         }
 
         $db = new Database();
+        // WHERE-only params (no relevance placeholders here)
         list($sql, $params) = SearchQuery::buildWhere($tokens);
 
         try {
