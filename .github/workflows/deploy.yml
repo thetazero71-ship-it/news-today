@@ -121,18 +121,21 @@ jobs:
           if [ ! -f "$LIST" ]; then
             echo "no retired file list"; exit 0
           fi
-          cmds=""
+          failed=0
           while IFS= read -r line || [ -n "$line" ]; do
             case "$line" in
               ''|\#*) continue ;;
             esac
-            cmds="${cmds}rm -f \"${FTP_SERVER_DIR}/${line}\"; "
-            echo "retire: $line"
+            target="${FTP_SERVER_DIR%/}/${line}"
+            echo "retire: $target"
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+              -Q "DELE ${target}" \
+              "ftp://${FTP_SERVER}/" || echo "000")
+            case "$code" in
+              2*|250) echo "  deleted" ;;
+              5*) echo "  absent or not permitted (${code}) - ignoring" ;;
+              *) echo "  unexpected response ${code}"; failed=1 ;;
+            esac
           done < "$LIST"
-          if [ -z "$cmds" ]; then exit 0; fi
-          lftp -u "${FTP_USERNAME},${FTP_PASSWORD}" -e "
-            set ftp:ssl-allow no;
-            open -u \"${FTP_USERNAME}\",\"${FTP_PASSWORD}\" \"${FTP_SERVER}\";
-            ${cmds}
-            bye;
-          "
+          exit $failed
