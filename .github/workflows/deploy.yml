@@ -121,6 +121,10 @@ jobs:
           if [ ! -f "$LIST" ]; then
             echo "no retired file list"; exit 0
           fi
+          # Some shared hosts refuse FTP deletes. In that case the file is
+          # neutralised with a harmless stub so it can never expose anything.
+          STUB="$RUNNER_TEMP/retired_stub.php"
+          printf '%s\n' '<?php http_response_code(404); header("Content-Type: text/plain; charset=utf-8"); exit;' > "$STUB"
           failed=0
           while IFS= read -r line || [ -n "$line" ]; do
             case "$line" in
@@ -133,9 +137,20 @@ jobs:
               -Q "DELE ${target}" \
               "ftp://${FTP_SERVER}/" || echo "000")
             case "$code" in
-              2*|250) echo "  deleted" ;;
-              5*) echo "  absent or not permitted (${code}) - ignoring" ;;
-              *) echo "  unexpected response ${code}"; failed=1 ;;
+              2*|250)
+                echo "  deleted" ;;
+              5*)
+                echo "  delete refused (${code}) -> neutralising with stub"
+                up=$(curl -s -o /dev/null -w '%{http_code}' \
+                  --user "${FTP_USERNAME}:${FTP_PASSWORD}" \
+                  -T "$STUB" \
+                  "ftp://${FTP_SERVER}/${target}" || echo "000")
+                case "$up" in
+                  2*|250) echo "  stub uploaded" ;;
+                  *) echo "  STUB UPLOAD FAILED (${up})"; failed=1 ;;
+                esac ;;
+              *)
+                echo "  unexpected response ${code}"; failed=1 ;;
             esac
           done < "$LIST"
           exit $failed
