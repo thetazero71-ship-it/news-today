@@ -1110,7 +1110,12 @@ html.admin-dark .btn-outline-info {
   }
 
   $adminNavSections = class_exists('AdminNav') ? AdminNav::sections() : array();
+  $navUser = class_exists('Auth') ? Auth::user() : null;
   foreach ($adminNavSections as $section):
+      // a role may restrict which whole sections appear (roles screen)
+      if (class_exists('Permissions') && !Permissions::canSeeSection($navUser, $section['key'])) {
+          continue;
+      }
       $groupKey = htmlspecialchars($section['key'], ENT_QUOTES, 'UTF-8');
       $visible = array();
       foreach ($section['items'] as $item) {

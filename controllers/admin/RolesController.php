@@ -43,6 +43,7 @@ class RolesController extends AdminController
                 'total'       => count(Permissions::all()),
                 'tokens'      => array_keys($tokens),
                 'summary'     => Permissions::describe(array('role_name' => $role['name'], 'permissions' => $role['permissions'])),
+                'sections'    => Permissions::sectionAccess(array('role_name' => $role['name'], 'permissions' => $role['permissions'])),
             );
         }
 
@@ -72,6 +73,11 @@ class RolesController extends AdminController
                 'role_name'   => $role['name'],
                 'permissions' => $role['permissions'],
             ))),
+            'sections'  => Permissions::sectionAccess(array(
+                'role_name'   => $role['name'],
+                'permissions' => $role['permissions'],
+            )),
+            'navGroups'  => class_exists('AdminNav') ? AdminNav::sections() : array(),
             'users'     => (int) ($db->fetch('SELECT COUNT(*) AS c FROM users WHERE role_id = :id', array(':id' => (int) $id))['c'] ?? 0),
             'success'   => Session::getFlash('success'),
             'error'     => Session::getFlash('error'),
@@ -96,6 +102,18 @@ class RolesController extends AdminController
 
         $submitted = isset($_POST['permissions']) ? (array) $_POST['permissions'] : array();
         $permissions = RoleSeeder::fromCheckboxList($submitted);
+
+        // Sidebar section control: empty selection = derive from permissions,
+        // a non-empty list hides every other section from this role.
+        if (isset($_POST['sections'])) {
+            $sections = array_values(array_filter(array_map(function ($s) {
+                return mb_strtolower(trim((string) $s));
+            }, (array) $_POST['sections']), function ($s) {
+                return $s !== '';
+            }));
+            $permissions['_sections'] = $sections;
+        }
+
         $encoded = RoleSeeder::encodeManual($permissions);
 
         $old = (string) ($role['permissions'] ?? '');

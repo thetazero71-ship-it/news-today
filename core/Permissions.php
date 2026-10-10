@@ -270,6 +270,49 @@ class Permissions
     }
 
     /**
+ * Sections the role may see in the sidebar.
+ *
+ * Returns null when the role does not restrict sections (then visibility is
+ * derived from the permissions themselves), otherwise a list of section keys.
+ */
+    public static function sectionAccess(?array $user): ?array
+    {
+        if (!$user) {
+            return array();
+        }
+        if (mb_strtolower(trim((string) ($user['role_name'] ?? ''))) === mb_strtolower(self::superRole())) {
+            return null; // super role sees everything
+        }
+
+        $raw = $user['permissions'] ?? null;
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            $raw = (json_last_error() === JSON_ERROR_NONE) ? $decoded : null;
+        }
+        if (!is_array($raw) || !isset($raw['_sections']) || !is_array($raw['_sections'])) {
+            return null; // derive from permissions
+        }
+
+        return array_values(array_filter(array_map(function ($s) {
+            return mb_strtolower(trim((string) $s));
+        }, $raw['_sections']), function ($s) {
+            return $s !== '';
+        }));
+    }
+
+    /**
+     * Is this sidebar section allowed for the role?
+     */
+    public static function canSeeSection(?array $user, string $section): bool
+    {
+        $allowed = self::sectionAccess($user);
+        if ($allowed === null) {
+            return true;
+        }
+        return in_array(mb_strtolower($section), $allowed, true);
+    }
+
+    /**
      * Do the given user hold the permission?
      */
     public static function can(?array $user, string $permission): bool

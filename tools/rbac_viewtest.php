@@ -14,6 +14,7 @@ $root = dirname(__DIR__);
 define('RBAC_ENFORCE', false);
 define('RBAC_SUPER_ROLE', 'admin');
 require_once $root . '/core/Permissions.php';
+require_once $root . '/core/AdminNav.php';
 
 // ---- minimal stubs for the helpers the views use ----
 if (!function_exists('app_url')) {
@@ -125,6 +126,8 @@ expect('index: no warning when enforced', strpos($htmlOn, 'إلغاء الصلا
 // ================= edit view =================
 $role = array('id' => 11, 'name' => 'author', 'name_ar' => 'كاتب ومحرر محتوى', 'permissions' => '{"articles":["view","create","edit_own"],"_v2":1}');
 $tokens = array_keys(Permissions::grantedTokens(array('role_name' => 'author', 'permissions' => $role['permissions'])));
+$sections = array('general', 'content');
+$navGroups = AdminNav::sections();
 $users = 3;
 $success = null;
 $error = null;
@@ -149,6 +152,10 @@ expect('edit: author articles.edit is NOT checked', preg_match('/value="articles
 expect('edit: shows sensitive group (backup)', strpos($editHtml, 'backup.export') !== false);
 expect('edit: has select-all buttons', strpos($editHtml, 'data-toggle-all="1"') !== false);
 expect('edit: shows entity labels arabic', strpos($editHtml, 'النسخ الاحتياطي') !== false);
+expect('edit: renders sidebar section checkboxes', substr_count($editHtml, 'type="checkbox" name="sections[]"') === count($navGroups));
+expect('edit: marks restricted sections as checked', preg_match('/name="sections\[\]"\s+value="content"[^>]*\schecked/', $editHtml) === 1);
+expect('edit: leaves other sections unchecked', preg_match('/value="system"[^>]*checked/', $editHtml) === 0);
+expect('edit: shows restricted section count', strpos($editHtml, '2 من 6') !== false);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

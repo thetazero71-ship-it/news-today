@@ -66,9 +66,12 @@
               <?php if ($role['is_super']): ?>
                 <span class="badge bg-primary-subtle text-primary">دور خارق — كل الصلاحيات</span>
               <?php elseif ((int) $role['granted'] >= (int) $role['total']): ?>
-                <span class="badge bg-warning-subtle text-warning">وصول كامل (49/49)</span>
+                <span class="badge bg-warning-subtle text-warning">وصول كامل (<?= (int) $role['total'] ?>/<?= (int) $role['total'] ?>)</span>
               <?php else: ?>
                 <span class="badge bg-light text-dark"><?= (int) $role['granted'] ?> / <?= (int) $role['total'] ?></span>
+              <?php endif; ?>
+              <?php if (isset($role['sections']) && is_array($role['sections'])): ?>
+                <div class="small mt-1"><span class="badge bg-secondary-subtle text-secondary">أقسام القائمة: <?= count($role['sections']) ?> محدَّد</span></div>
               <?php endif; ?>
             </td>
             <td class="pe-4 text-end">

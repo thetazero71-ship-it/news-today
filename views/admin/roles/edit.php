@@ -26,6 +26,41 @@
     </div>
   </div>
 
+  <div class="card border-0 shadow-sm rounded-4 mb-3">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>
+        <span class="fw-bold">أقسام القائمة الجانبية</span>
+        <div class="text-muted small">
+          <?php if ($sections === null): ?>
+            تُعرض تلقائياً حسب صلاحيات الدور (لا يوجد تقييد يدوي).
+          <?php else: ?>
+            معروض لهذا الدور: <?= count($sections) ?> من <?= count($navGroups) ?> — أي قسم غير محدَّد يختفي بالكامل.
+          <?php endif; ?>
+        </div>
+      </div>
+      <?php if ($sections !== null): ?>
+        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" id="clearSections">إلغاء التقييد (حسب الصلاحيات)</button>
+      <?php endif; ?>
+    </div>
+    <div class="card-body">
+      <div class="row g-2">
+      <?php foreach ($navGroups as $g): ?>
+        <?php $checked = ($sections === null) ? true : in_array($g['key'], $sections, true); ?>
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="form-check border rounded-3 px-3 py-2 bg-light">
+            <input class="form-check-input ms-2" type="checkbox" name="sections[]" value="<?= htmlspecialchars($g['key']) ?>"
+                   id="sec_<?= htmlspecialchars($g['key']) ?>" <?= $checked ? 'checked' : '' ?>>
+            <label class="form-check-label" for="sec_<?= htmlspecialchars($g['key']) ?>">
+              <i class="bi <?= htmlspecialchars($g['icon']) ?>"></i>
+              <?= htmlspecialchars($g['label']) ?>
+            </label>
+          </div>
+        </div>
+      <?php endforeach; ?>
+      </div>
+    </div>
+  </div>
+
   <?php foreach (Permissions::groups() as $groupName => $entities): ?>
     <div class="card border-0 shadow-sm rounded-4 mb-3">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -75,4 +110,13 @@ document.querySelectorAll('[data-toggle-all]').forEach(function (btn) {
     });
   });
 });
+
+var clearBtn = document.getElementById('clearSections');
+if (clearBtn) {
+  clearBtn.addEventListener('click', function () {
+    document.querySelectorAll('input[name="sections[]"]').forEach(function (box) {
+      box.checked = true;
+    });
+  });
+}
 </script>
