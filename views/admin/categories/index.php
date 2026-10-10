@@ -1,12 +1,27 @@
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
- <div>
- <h2 class="h3 fw-bold mb-1"><i class="bi bi-tags text-primary me-2"></i>إدارة التصنيفات</h2>
- <p class="text-muted mb-0">إنشاء وتعديل تصنيفات الأخبار التقنية وترتيب ظهورها في الموقع.</p>
+  <div>
+  <h2 class="h3 fw-bold mb-1"><i class="bi bi-tags text-primary me-2"></i>إدارة التصنيفات</h2>
+  <p class="text-muted mb-0">إنشاء وتعديل تصنيفات الأخبار التقنية وترتيب ظهورها في الموقع.</p>
+  </div>
+  <a href="<?= admin_e(app_url('admin/categories/create')) ?>" class="btn btn-primary fw-bold shadow-sm">
+  <i class="bi bi-plus-lg me-1"></i> إضافة تصنيف جديد
+  </a>
  </div>
- <a href="<?= admin_e(app_url('admin/categories/create')) ?>" class="btn btn-primary fw-bold shadow-sm">
- <i class="bi bi-plus-lg me-1"></i> إضافة تصنيف جديد
- </a>
-</div>
+
+ <?php if (!empty($flashSuccess)): ?>
+ <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2">
+ <i class="bi bi-check-circle-fill"></i>
+ <span><?= admin_e($flashSuccess) ?></span>
+ <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+ </div>
+ <?php endif; ?>
+ <?php if (!empty($flashError)): ?>
+ <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2">
+ <i class="bi bi-exclamation-triangle-fill"></i>
+ <span><?= admin_e($flashError) ?></span>
+ <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+ </div>
+ <?php endif; ?>
 
 <div class="card border-0 shadow-sm rounded-4 bg-white">
  <div class="table-responsive">
