@@ -64,6 +64,21 @@ if (isset($_GET['set'])) {
     exit;
 }
 
+if (isset($_GET['migrate'])) {
+    require_once __DIR__ . '/core/Brand.php';
+    $old = (string) $_GET['migrate'];
+    $new = currentName($db);
+    Brand::flush();
+    $changed = Brand::migrateReferences($db, $old, $new);
+    Settings::clear();
+    Brand::flush();
+    Brand::syncStaticFiles(__DIR__);
+    echo "from=" . base64_encode($old) . "\n";
+    echo "to=" . base64_encode($new) . "\n";
+    echo "changed=" . json_encode($changed, JSON_UNESCAPED_UNICODE) . "\n";
+    exit;
+}
+
 if (isset($_GET['sync'])) {
     require_once __DIR__ . '/core/Brand.php';
     Brand::flush();

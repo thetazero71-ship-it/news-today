@@ -116,6 +116,8 @@ class Brand
             'mail_from_name',
             'site_description_ar',
             'site_tagline',
+            'meta_description',
+            'meta_description_default',
         );
         try {
             $rows = $db->fetchAll(

@@ -15,12 +15,12 @@ if (!isset($categories)) {
 }
 
 $siteName       = Brand::name();
-$siteTagline    = Settings::get('site_tagline', 'نبض التكنولوجيا والذكاء الاصطناعي');
+$siteTagline    = Settings::get('site_tagline', '') ?: Brand::tagline();
 $cookieTheme    = $_COOKIE['site_theme'] ?? null;
 $themeDefault   = in_array($cookieTheme, ['dark', 'light'], true) ? $cookieTheme : Settings::get('theme_default', 'dark');
 $activeTemplate = Settings::get('site_theme_template', 'editorial_verge');
 $pageTitle      = $pageTitle ?? ($siteName . ' | ' . $siteTagline);
-$pageDesc       = $pageDesc ?? Settings::get('meta_description_default', Settings::get('meta_description', 'منصة عربية رائدة متخصصة في تغطية أحدث الأخبار والتحليلات التقنية والذكاء الاصطناعي.'));
+$pageDesc       = $pageDesc ?? (Settings::get('meta_description_default', '') ?: (Settings::get('meta_description', '') ?: Brand::description()));
 $metaKeywords   = $metaKeywords ?? Settings::get('meta_keywords', 'أخبار تقنية, ذكاء اصطناعي, أمن سيبراني, برمجة, تقارير تكنولوجية');
 $currentUri     = trim(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
 $canonicalUrl   = $canonicalUrl ?? (rtrim(app_url(), '/') . ($currentUri ? '/' . $currentUri : ''));
