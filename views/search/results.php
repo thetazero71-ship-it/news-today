@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'محرك البحث الذكي | ' . Settings::get('site_name_ar', 'عصب التقنية');
+$pageTitle = 'محرك البحث الذكي | ' . Brand::name();
 $pageDesc  = 'ابحث في كافة أخبار وتحليلات وشروحات المنصة التقنية.';
 
 $isSearching = ($q !== '');

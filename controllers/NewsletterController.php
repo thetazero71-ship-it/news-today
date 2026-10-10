@@ -106,13 +106,12 @@ class NewsletterController extends Controller
             if ($welcomeEnabled === false || $welcomeEnabled === '0' || $welcomeEnabled === 0 || $welcomeEnabled === '') {
                 return;
             }
-            $subject = (string) Settings::get('newsletter_welcome_subject', 'مرحباً بك في نشرة عصب التقنية 🎉');
+            $siteName = Brand::name();
+            $subject = (string) Settings::get('newsletter_welcome_subject', 'مرحباً بك في نشرة ' . $siteName . ' 🎉');
             $rawBody = (string) Settings::get(
                 'newsletter_welcome_body',
-                "شكراً لاشتراكك في نشرة عصب التقنية البريدية 🌟\n\nستصلك أهم أخبار التقنية والذكاء الاصطناعي والهواتف والأمن السيبراني مباشرة إلى بريدك."
+                "شكراً لاشتراكك في نشرة " . $siteName . " البريدية 🌟\n\nستصلك أهم أخبار التقنية والذكاء الاصطناعي والهواتف والأمن السيبراني مباشرة إلى بريدك."
             );
-
-            $siteName = (string) Settings::get('site_name', 'عصب التقنية');
             $loginUrl = app_url('login');
             $unsubscribeUrl = app_url('newsletter/unsubscribe/' . base64_encode($email));
 

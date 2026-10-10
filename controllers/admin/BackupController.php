@@ -562,7 +562,7 @@ $this->guardPermission('backup.export');
  echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
  echo '<opml version="2.0">' . "\n";
  echo " <head>\n";
- echo " <title>مصادر الأخبار التقنية - عصب التقنية</title>\n";
+ echo " <title>مصادر الأخبار التقنية - " . Brand::name() . "</title>\n";
  echo " <dateCreated>" . date('r') . "</dateCreated>\n";
  echo " </head>\n";
  echo " <body>\n";

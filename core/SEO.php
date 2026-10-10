@@ -4,9 +4,9 @@ class SEO
 {
     public static function renderMeta($title, $description = '', $image = '', $url = '', $type = 'article')
     {
-        $siteName = 'عصب التقنية';
-        $titleFormatted = $title ? "{$title} | {$siteName}" : $siteName;
-        $description = $description ?: 'عصب التقنية (AsabTech) | منصة عربية رائدة في تغطية أخبار التقنية والذكاء الاصطناعي والعتاد والبرمجيات.';
+        $siteName = Brand::name();
+        $titleFormatted = Brand::titleWith((string) $title);
+        $description = $description ?: Brand::description();
         $url = $url ?: app_url();
         $image = $image ? app_url($image) : app_url('assets/images/og-default.jpg');
 

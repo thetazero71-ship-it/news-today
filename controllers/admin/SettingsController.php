@@ -59,6 +59,46 @@ $this->renderAdmin('admin/settings/index', [
 private function ensureCoreRows($db)
   {
   $core = [
+  'site_name_ar' => [
+  'group' => 'general',
+  'value' => Brand::DEFAULT_NAME_AR,
+  'value_type' => 'text',
+  'label_ar' => 'اسم المنصة',
+  'label_en' => 'Platform Name',
+  'description_ar' => 'الحقل الوحيد لاسم المنصة: تعديله هنا يغيّر الاسم في كل الصفحات والعناوين والبريد والنشرة ونتائج البحث وملفات التطبيق فوراً.',
+  'description_en' => 'The single platform-name field. Changing it updates every page title, email, newsletter, search result and app file.',
+  'sort_order' => 0,
+  ],
+  'site_name_en' => [
+  'group' => 'general',
+  'value' => Brand::DEFAULT_NAME_EN,
+  'value_type' => 'text',
+  'label_ar' => 'اسم المنصة بالإنجليزية',
+  'label_en' => 'Platform Name (English)',
+  'description_ar' => 'يظهر في أسماء ملفات التطبيق والنسخة الإنجليزية.',
+  'description_en' => 'Used by the app manifest and the English side.',
+  'sort_order' => 1,
+  ],
+  'site_tagline' => [
+  'group' => 'general',
+  'value' => Brand::DEFAULT_TAGLINE,
+  'value_type' => 'text',
+  'label_ar' => 'الشعار النصي',
+  'label_en' => 'Tagline',
+  'description_ar' => 'جملة قصيرة تصف المنصة، تُستخدم في الوصف التقني ووصف الصفحة.',
+  'description_en' => 'Short line used in meta description and page description.',
+  'sort_order' => 2,
+  ],
+  'site_description_ar' => [
+  'group' => 'general',
+  'value' => '',
+  'value_type' => 'textarea',
+  'label_ar' => 'وصف المنصة (SEO)',
+  'label_en' => 'Site Description (SEO)',
+  'description_ar' => 'الوصف الذي تظهره محركات البحث ومنصات التواصل. اتركه فارغاً ليستخدم اسم المنصة تلقائياً.',
+  'description_en' => 'Description used by search engines and social cards. Leave empty to build it from the platform name.',
+  'sort_order' => 3,
+  ],
   'breaking_ticker_enabled' => [
   'group' => 'appearance',
   'value' => '1',
@@ -135,7 +175,7 @@ private function ensureCoreRows($db)
   'value_type' => 'boolean',
   'label_ar' => 'تفعيل المحادث الذكي',
   'label_en' => 'Enable AI Assistant',
-  'description_ar' => 'إظهار نافذة «مرشد عصب التقنية» العائمة التي تجيب الزوار من محتوى مقالات المنصة',
+  'description_ar' => 'إظهار نافذة «مرشد ' . Brand::name() . '» العائمة التي تجيب الزوار من محتوى مقالات المنصة',
   'description_en' => 'Show the floating AsabTech AI chat assistant that answers from site articles.',
   'sort_order' => 1,
   ],
@@ -231,7 +271,7 @@ private function ensureCoreRows($db)
   ],
   'ai_assistant_welcome_message' => [
   'group' => 'ai_assistant',
-  'value' => 'مرحباً 👋 أنا مرشد عصب التقنية. اسألني عن آخر أخبار التقنية والمقالات المنشورة في المنصة.',
+  'value' => 'مرحباً 👋 أنا مرشد ' . Brand::name() . '. اسألني عن آخر أخبار التقنية والمقالات المنشورة في المنصة.',
   'value_type' => 'text',
   'label_ar' => 'رسالة الترحيب',
   'label_en' => 'Welcome Message',
@@ -241,7 +281,7 @@ private function ensureCoreRows($db)
   ],
   'ai_assistant_placeholder' => [
   'group' => 'ai_assistant',
-  'value' => 'اسأل مرشد عصب التقنية...',
+  'value' => 'اسأل مرشد ' . Brand::name() . '...',
   'value_type' => 'text',
   'label_ar' => 'نص حقل الإدخال',
   'label_en' => 'Input Placeholder',
@@ -301,7 +341,7 @@ private function ensureCoreRows($db)
   ],
   'ai_assistant_privacy_note' => [
   'group' => 'ai_assistant',
-  'value' => 'يعتمد مرشد عصب التقنية على المقالات المنشورة محلياً.',
+  'value' => 'يعتمد مرشد ' . Brand::name() . ' على المقالات المنشورة محلياً.',
   'value_type' => 'text',
   'label_ar' => 'ملاحظة أسفل المحادث',
   'label_en' => 'Footer Note',
@@ -529,7 +569,7 @@ private function ensureCoreRows($db)
   ],
   'newsletter_welcome_subject' => [
   'group' => 'newsletter',
-  'value' => 'مرحباً بك في نشرة عصب التقنية 🎉',
+  'value' => 'مرحباً بك في نشرة ' . Brand::name() . ' 🎉',
   'value_type' => 'text',
   'label_ar' => 'موضوع رسالة الترحيب',
   'label_en' => 'Welcome Subject',
@@ -539,13 +579,13 @@ private function ensureCoreRows($db)
   ],
   'newsletter_welcome_body' => [
   'group' => 'newsletter',
-  'value' => 'شكراً لاشتراكك في نشرة عصب التقنية البريدية 🌟
+  'value' => 'شكراً لاشتراكك في نشرة ' . Brand::name() . ' البريدية 🌟
 
 سجل لك أهم أخبار التقنية والذكاء الاصطناعي والهواتف والأمن السيبراني مباشرة إلى بريدك، بملخصات واضحة ودقيقة.
 
 ستصلك أول نشرة في موعدها، وإذا أردت إلغاء الاشتراك في أي وقت يمكنك استخدام رابط الإلغاء أسفل أي بريد نرسله.
 
-مع تحيات فريق عصب التقنية.',
+مع تحيات فريق ' . Brand::name() . '.',
   'value_type' => 'textarea',
   'label_ar' => 'محتوى رسالة الترحيب',
   'label_en' => 'Welcome Body',
@@ -567,7 +607,7 @@ private function ensureCoreRows($db)
   "INSERT INTO settings (`group`, `key`, `value`, `value_type`, `label_ar`, `label_en`, `description_ar`, `description_en`, `sort_order`)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
   );
-  $stmt->execute([
+$stmt->execute([
   $row['group'],
   $key,
   $row['value'],
@@ -578,7 +618,20 @@ private function ensureCoreRows($db)
   $row['description_en'],
   $row['sort_order']
   ]);
-  continue;
+  } else {
+  // keep the label/description fresh without ever touching the saved value
+  $upd = $db->prepare(
+  "UPDATE settings SET `label_ar` = ?, `label_en` = ?, `description_ar` = ?, `description_en` = ?, `value_type` = ?
+  WHERE `key` = ? AND (`label_ar` IS NULL OR `label_ar` = '')"
+  );
+  $upd->execute([
+  $row['label_ar'],
+  $row['label_en'],
+  $row['description_ar'],
+  $row['description_en'],
+  $row['value_type'],
+  $key
+  ]);
   }
 
   // Keep the row already in the target group (else the first one) …
@@ -634,9 +687,39 @@ exit;
  if (is_array($value)) {
  $value = json_encode($value, JSON_UNESCAPED_UNICODE);
  }
- $stmt = $db->prepare("UPDATE settings SET `value` = ? WHERE `group` = ? AND `key` = ?");
- $stmt->execute([(string) $value, $group, $key]);
+ $value = (string) $value;
+
+ // brand fields: never allow a blank value, it would blank the whole platform
+ if (in_array($key, ['site_name_ar', 'site_name_en'], true) && trim($value) === '') {
+ continue;
  }
+
+ // upsert: a key that does not exist yet must still be savable from the form
+ $stmt = $db->prepare("INSERT INTO settings (`group`, `key`, `value`) VALUES (?, ?, ?)
+ ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)");
+ try {
+ $stmt->execute([$group, $key, $value]);
+ } catch (Throwable $e) {
+ $stmt = $db->prepare("UPDATE settings SET `value` = ? WHERE `group` = ? AND `key` = ?");
+ $stmt->execute([$value, $group, $key]);
+ }
+ }
+ }
+
+ // 1b. The platform name is one field: keep the legacy aliases in sync so any
+ // reader that still asks for "site_name" gets the same brand.
+ try {
+ $brandName = Brand::name();
+ $stmt = $db->prepare("INSERT INTO settings (`group`, `key`, `value`) VALUES ('general', 'site_name', ?)
+ ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)");
+ $stmt->execute([$brandName]);
+
+ if (trim((string) Settings::get('mail_from_name', '')) === '') {
+ $stmt = $db->prepare("UPDATE settings SET `value` = ? WHERE `key` = 'mail_from_name'");
+ $stmt->execute([$brandName]);
+ }
+ } catch (Throwable $e) {
+ // non-critical: brand alias sync
  }
 
  // 2. Process file uploads for brand assets (site_logo, site_favicon, og_image)
@@ -667,6 +750,11 @@ exit;
  // Clear runtime settings cache
  if (class_exists('Settings')) {
  Settings::clear();
+ }
+ if (class_exists('Brand')) {
+ Brand::flush();
+ // static brand files (PWA manifest / service worker) cannot read the DB
+ Brand::syncStaticFiles(APP_ROOT);
  }
 
  // Flush System Cache

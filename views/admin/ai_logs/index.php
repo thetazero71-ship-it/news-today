@@ -9,7 +9,7 @@ if ($_msg = Session::getFlash('success')): ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
  <div>
- <h2 class="h3 fw-bold mb-1"><i class="bi bi-robot text-info me-2"></i>سجلات محادثات المرشد (عصب التقنية)</h2>
+ <h2 class="h3 fw-bold mb-1"><i class="bi bi-robot text-info me-2"></i>سجلات محادثات المرشد (<?= admin_e(Brand::name()) ?>)</h2>
  <p class="text-muted mb-0">مراجعة محادثات الأعضاء مع المرشد الذكي، وتصحيح الأخطاء، وإدارة حصص الأسئلة اليومية.</p>
  </div>
  <a href="<?= admin_e(app_url('admin/settings?group=ai_assistant')) ?>" class="btn btn-primary fw-bold shadow-sm">

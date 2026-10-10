@@ -974,7 +974,7 @@
     const banner = document.getElementById('pwa-install-banner');
     if (banner) banner.remove();
     if (window.showToast) {
-      showToast('🎉 تهانينا! تم تثبيت تطبيق عصب التقنية بنجاح.', '🚀');
+      showToast('🎉 تهانينا! تم تثبيت تطبيق ' + (window.SITE_NAME || '') + ' بنجاح.', '🚀');
     }
   });
 
@@ -1244,7 +1244,7 @@
   setInterval(() => { processReaderTargets(); readerRefreshTimes(); }, 30000);
 
   // ====================================================================
-  // 14. AI Assistant Chat Widget («مرشد عصب التقنية»)
+  // 14. AI Assistant Chat Widget («مرشد <?= e(Brand::name()) ?>»)
   // ====================================================================
   (function initAiAssistant() {
     const wrapper = document.getElementById('aiAssistant');

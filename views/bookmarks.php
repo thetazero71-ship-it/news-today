@@ -1,5 +1,5 @@
 <?php
-$pageTitle = $pageTitle ?? 'المقالات المحفوظة والمفضلة | ' . Settings::get('site_name_ar', 'عصب التقنية');
+$pageTitle = $pageTitle ?? 'المقالات المحفوظة والمفضلة | ' . Brand::name();
 $pageDesc  = 'قائمة مقالاتك وأخبارك التقنية المحفوظة للرجوع إليها في أي وقت.';
 
 require_once APP_ROOT . '/views/partials/header.php';

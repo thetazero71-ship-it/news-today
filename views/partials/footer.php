@@ -14,7 +14,7 @@ if (!isset($categories)) {
     }
 }
 
-$siteName = Settings::get('site_name_ar', 'عصب التقنية');
+$siteName = Brand::name();
 $siteDesc = Settings::get('meta_description', 'منصة عربية رائدة في تغطية الأخبار التقنية، أحدث تطورات الذكاء الاصطناعي، الأجهزة الذكية، والأمن السيبراني.');
 ?>
 
@@ -31,7 +31,7 @@ $siteDesc = Settings::get('meta_description', 'منصة عربية رائدة ف
         </div>
         <div class="cmd-footer">
             <span>استخدم <b>↑</b> <b>↓</b> للتنقل و <b>Enter</b> للاختيار</span>
-            <span>عصب التقنية</span>
+            <span><?= e(Brand::name()) ?></span>
         </div>
     </div>
 </div>
@@ -131,6 +131,7 @@ window.TNP_READER = <?= json_encode([
     'timeAgoMode'   => (string) Settings::get('reader_time_ago_mode', 'relative'),
     'newHours'      => max(1, (int) Settings::get('reader_new_badge_hours', 24)),
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.SITE_NAME = <?= json_encode(Brand::name(), JSON_UNESCAPED_UNICODE) ?>;
 </script>
 <script src="<?= view_e(app_url('assets/js/tech-platform.js') . '?v=' . @filemtime(__DIR__ . '/../../assets/js/tech-platform.js')) ?>"></script>
 <?= site_footer_injections() ?>

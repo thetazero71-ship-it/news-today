@@ -125,7 +125,7 @@ self.addEventListener('fetch', (event) => {
 // 4. Push Notification Event
 self.addEventListener('push', (event) => {
   let data = {
-    title: 'عصب التقنية',
+    title: '{SITE_NAME}',
     body: 'لديك خبر تقني عاجل جديد!',
     url: '/',
     icon: '/assets/images/icons/icon-192x192.png',

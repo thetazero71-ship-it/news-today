@@ -7,7 +7,7 @@ if (!function_exists('e')) {
 }
 
 // Read live settings from DB
-$siteName       = Settings::get('site_name_ar', 'عصب التقنية');
+$siteName       = Brand::name();
 $siteTagline    = Settings::get('site_tagline', 'نبض التكنولوجيا والذكاء الاصطناعي');
 $siteDesc       = Settings::get('meta_description', 'منصة عربية رائدة في تغطية الأخبار التقنية، أحدث تطورات الذكاء الاصطناعي، الأجهزة الذكية، والأمن السيبراني.');
 $siteLogo       = Settings::get('site_logo', '');
@@ -60,7 +60,7 @@ require_once APP_ROOT . '/views/partials/header.php';
 
 <!-- Main Page Body -->
 <main class="container page-shell">
-    <h1 class="visually-hidden"><?= e(Settings::get('site_name_ar', 'عصب التقنية')) ?> - أحدث مستجدات التكنولوجيا والذكاء الاصطناعي</h1>
+    <h1 class="visually-hidden"><?= e(Brand::name()) ?> - أحدث مستجدات التكنولوجيا والذكاء الاصطناعي</h1>
 
     <?php if ($activeTemplate === 'classic_techwd'): ?>
         <!-- ================= 🗞️ TEMPLATE 2: AUTHENTIC TECH-WD MAGAZINE LAYOUT ================= -->
@@ -313,7 +313,7 @@ require_once APP_ROOT . '/views/partials/header.php';
         <section class="broadsheet-header-banner" style="margin-top:20px;margin-bottom:30px;padding-bottom:16px;border-bottom:3px double var(--border-medium)">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <span style="font-size:0.85rem;color:var(--text-muted);font-weight:700">🗞️ النشرة الرقمية الموثوقة</span>
-                <span class="text-muted small"><?= site_today() ?> · <?= e(Settings::get('site_name_ar', 'عصب التقنية')) ?></span>
+                <span class="text-muted small"><?= site_today() ?> · <?= e(Brand::name()) ?></span>
                 <span style="font-size:0.85rem;color:var(--accent-primary);font-weight:700">تغطية مباشرة 24/7</span>
             </div>
         </section>
@@ -648,7 +648,7 @@ require_once APP_ROOT . '/views/partials/header.php';
         </div>
         <div class="cmd-footer">
             <span>استخدم <b>↑</b> <b>↓</b> للتنقل و <b>Enter</b> للاختيار</span>
-            <span>عصب التقنية</span>
+            <span><?= e(Brand::name()) ?></span>
         </div>
     </div>
 </div>
