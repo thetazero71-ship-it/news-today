@@ -65,7 +65,22 @@ class Auth
     public static function isAdmin()
     {
         $user = self::user();
-        return $user && in_array($user['role_name'], array('admin', 'editor'), true);
+        if (!$user) {
+            return false;
+        }
+
+        // Legacy behaviour: the two original staff roles always reach the panel.
+        if (in_array($user['role_name'], array('admin', 'editor'), true)) {
+            return true;
+        }
+
+        // Any role that holds at least one admin-area permission may enter
+        // (managing_editor, publisher, author, moderator, translator, analyst...).
+        if (class_exists('Permissions')) {
+            return Permissions::canEnterAdmin($user);
+        }
+
+        return false;
     }
 
     public static function hasPermission($permission)

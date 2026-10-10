@@ -227,8 +227,50 @@ class Permissions
         return explode('.', $permission, 2);
     }
 
+/**
+     * Permissions that belong to the public site, not to the admin panel.
+     * Holding one of these alone does NOT grant entry to the admin area.
+     */
+    private static $frontendOnly = array(
+        'comments.create',
+        'articles.premium',
+    );
+
     /**
-     * Does the given user hold the permission?
+     * Every permission that unlocks something inside the admin panel.
+     */
+    public static function adminAreaPermissions(): array
+    {
+        $out = array();
+        foreach (array_keys(self::all()) as $perm) {
+            if (!in_array($perm, self::$frontendOnly, true)) {
+                $out[$perm] = true;
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * May this user reach the admin panel at all?
+     */
+    public static function canEnterAdmin(?array $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+        if (mb_strtolower(trim((string) ($user['role_name'] ?? ''))) === mb_strtolower(self::superRole())) {
+            return true;
+        }
+        foreach (array_keys(self::adminAreaPermissions()) as $perm) {
+            if (self::can($user, $perm)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Do the given user hold the permission?
      */
     public static function can(?array $user, string $permission): bool
     {

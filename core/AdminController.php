@@ -23,15 +23,20 @@ class AdminController extends Controller
     {
         Auth::requireLogin();
 
-        if (!class_exists('Permissions') || !Permissions::enforced()) {
+        $permissions = is_array($permission) ? $permission : array($permission);
+        $user = Auth::user();
+        $role = mb_strtolower(trim((string) ($user['role_name'] ?? '')));
+
+        // The two original staff roles keep their access until enforcement is on,
+        // so switching the engine on later cannot surprise anybody.
+        $legacyStaff = in_array($role, array('admin', 'editor'), true);
+
+        if (!class_exists('Permissions') || (!Permissions::enforced() && $legacyStaff)) {
             if (!Auth::isAdmin()) {
                 $this->denyPermission($permission);
             }
             return;
         }
-
-        $permissions = is_array($permission) ? $permission : array($permission);
-        $user = Auth::user();
 
         foreach ($permissions as $perm) {
             if (Permissions::can($user, (string) $perm)) {
