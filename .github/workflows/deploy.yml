@@ -102,3 +102,32 @@ jobs:
             scratch/**
             uploads/**
             docs/**
+
+      - name: Delete retired files from the server
+        # An FTP upload never removes files, so anything deleted from git would
+        # stay live forever. The list is explicit and reviewed in the repo.
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_SERVER_DIR: ${{ secrets.FTP_SERVER_DIR }}
+        run: |
+          set -euo pipefail
+          if [ ! -f .github/retired-files.txt ]; then
+            echo "no retired file list"; exit 0
+          fi
+          cmds=""
+          while IFS= read -r line; do
+            case "$line" in
+              ''|\#*) continue ;;
+            esac
+            cmds="${cmds}rm -f \"${FTP_SERVER_DIR}/${line}\"; "
+            echo "retire: $line"
+          done < .github/retired-files.txt
+          if [ -z "$cmds" ]; then exit 0; fi
+          lftp -u "${FTP_USERNAME},${FTP_PASSWORD}" -e "
+            set ftp:ssl-allow no;
+            open -u \"${FTP_USERNAME}\",\"${FTP_PASSWORD}\" \"${FTP_SERVER}\";
+            ${cmds}
+            bye;
+          "
