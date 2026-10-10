@@ -64,4 +64,14 @@ if (isset($_GET['set'])) {
     exit;
 }
 
+if (isset($_GET['sync'])) {
+    require_once __DIR__ . '/core/Brand.php';
+    Brand::flush();
+    $sync = Brand::syncStaticFiles(__DIR__);
+    echo "sync=" . json_encode($sync, JSON_UNESCAPED_UNICODE) . "\n";
+    echo "mf=" . base64_encode((string) @file_get_contents(__DIR__ . '/manifest.json')) . "\n";
+    echo "sw=" . base64_encode((string) @file_get_contents(__DIR__ . '/sw.js')) . "\n";
+    exit;
+}
+
 echo "current:" . base64_encode(currentName($db)) . "\n";

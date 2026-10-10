@@ -126,6 +126,14 @@ t('manifest short_name rewritten', strpos($mf, '"short_name":"اسم محدَّ�
 t('sw placeholder replaced', strpos($sw, "'{SITE_NAME}'") === false && strpos($sw, 'اسم محدَّث') !== false);
 t('sw cache label rewritten', strpos($sw, 'TestHub') !== false || strpos($sw, 'old-v1') === false);
 t('sync reports updated files', in_array('/manifest.json', $res['updated'], true));
+
+// a previously baked-in name must be refreshed too, not only the placeholder
+file_put_contents($tmp . '/sw.js', "const CACHE_NAME = 'x-v1';\ntitle: 'اسم قديم جدا',\n");
+Brand::flush();
+Brand::syncStaticFiles($tmp);
+$sw2 = (string) file_get_contents($tmp . '/sw.js');
+t('stale sw title is refreshed on sync', strpos($sw2, 'اسم قديم جدا') === false && strpos($sw2, "title: 'اسم محدَّث'") !== false);
+
 array_map('unlink', glob($tmp . '/*'));
 @rmdir($tmp);
 

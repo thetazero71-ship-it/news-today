@@ -200,6 +200,8 @@ class Brand
         if (is_file($swPath) && is_writable($swPath)) {
             $raw = (string) file_get_contents($swPath);
             $new = preg_replace("/(const\\s+CACHE_NAME\\s*=\\s*')[^']*(')/u", '$1' . self::escapeJs($nameEn) . '-v1' . '$2', $raw, 1);
+            // notification title keeps whatever was written before: always refresh it
+            $new = preg_replace("/(title\\s*:\\s*')[^']*(')/u", '$1' . self::escapeJs($nameAr) . '$2', (string) $new, 1);
             $new = str_replace('{SITE_NAME}', self::escapeJs($nameAr), (string) $new);
             if (is_string($new) && $new !== '' && @file_put_contents($swPath, $new) !== false) {
                 $updated[] = '/sw.js';
