@@ -75,7 +75,7 @@ class ArchiveController extends Controller
              LIMIT 24"
         );
 
-        $categories = $db->fetchAll("SELECT id, name, slug FROM categories ORDER BY name ASC");
+        $categories = $db->fetchAll("SELECT id, name, slug FROM categories WHERE is_visible = 1 ORDER BY name ASC");
 
         $this->view('archive', [
             'articles'    => $articles,

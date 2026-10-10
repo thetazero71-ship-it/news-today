@@ -842,11 +842,16 @@ html.admin-dark .btn-outline-info {
  color: #e11d48;
  border-color: #fb7185;
  }
- .btn-action-activate:hover {
- background: rgba(16,185,129,0.1);
- color: #059669;
- border-color: #34d399;
- }
+.btn-action-activate:hover {
+  background: rgba(16,185,129,0.1);
+  color: #059669;
+  border-color: #34d399;
+  }
+  .btn-action-hide:hover {
+  background: rgba(100,116,139,0.12);
+  color: #334155;
+  border-color: #94a3b8;
+  }
 
  /* ============================================================
  Responsive Mobile & Tablet Admin Layout (< 992px)

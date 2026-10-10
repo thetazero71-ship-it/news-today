@@ -20,7 +20,7 @@ class FeedController extends Controller
     public function rssByCategory($slug)
     {
         $db = new Database();
-        $category = $db->fetch("SELECT * FROM categories WHERE slug = :slug LIMIT 1", array(':slug' => $slug));
+        $category = $db->fetch("SELECT * FROM categories WHERE slug = :slug AND is_visible = 1 LIMIT 1", array(':slug' => $slug));
         if (!$category) { http_response_code(404); return $this->view('errors/404'); }
         $freshDays = $this->freshDays();
         $articles = $db->fetchAll("SELECT a.*, c.name AS category_name FROM articles a LEFT JOIN categories c ON c.id = a.category_id WHERE a.status = 'published' AND a.category_id = :cat_id AND COALESCE(a.published_at, a.created_at) >= (NOW() - INTERVAL {$freshDays} DAY) ORDER BY a.published_at DESC LIMIT 20", array(':cat_id' => $category['id']));

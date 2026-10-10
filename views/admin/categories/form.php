@@ -63,11 +63,22 @@ $editing = !empty($category);
  <input type="number" class="form-control" id="sort_order" name="sort_order" value="<?= (int) ($category['sort_order'] ?? 0) ?>">
  </div>
 
- <div class="col-12">
- <label class="form-label small text-muted" for="description_ar">الوصف والتعريف</label>
- <textarea class="form-control" id="description_ar" name="description_ar" rows="3" placeholder="وصف موجز للمواضيع المندرجة تحت هذا القسم..."><?= admin_e($category['description_ar'] ?? ($category['description'] ?? '')) ?></textarea>
- </div>
- </div>
+<div class="col-12">
+  <label class="form-label small text-muted" for="description_ar">الوصف والتعريف</label>
+  <textarea class="form-control" id="description_ar" name="description_ar" rows="3" placeholder="وصف موجز للمواضيع المندرجة تحت هذا القسم..."><?= admin_e($category['description_ar'] ?? ($category['description'] ?? '')) ?></textarea>
+  </div>
+
+  <?php $visible = !array_key_exists('is_visible', (array) $category) || (int) $category['is_visible'] === 1; ?>
+  <div class="col-12">
+  <div class="form-check form-switch border rounded-3 p-3 bg-light">
+  <input class="form-check-input" type="checkbox" role="switch" name="is_visible" id="is_visible" value="1" <?= $visible ? 'checked' : '' ?>>
+  <label class="form-check-label fw-bold" for="is_visible">ظاهر في الموقع</label>
+  <div class="form-text">
+  عند الإيقاف يختفي التصنيف من قائمة الأقسام والأرشيف والبحث والـsitemap، ويبقى محفوظاً بكل أخباره — يمكنك إظهاره في أي وقت دون فقدان أي بيانات.
+  </div>
+  </div>
+  </div>
+  </div>
 
  <hr class="my-4">
  <div class="d-flex justify-content-end gap-2">

@@ -26,7 +26,7 @@ class SitemapController extends Controller
         $articles = $artStmt->fetchAll(PDO::FETCH_ASSOC);
 
         // 2. Categories
-        $categories = $db->fetchAll("SELECT slug, name FROM categories ORDER BY name ASC");
+        $categories = $db->fetchAll("SELECT slug, name FROM categories WHERE is_visible = 1 ORDER BY name ASC");
 
         // 3. Static & Dynamic Pages
         $pages = $db->fetchAll("SELECT slug, created_at FROM pages WHERE status = 'published'");

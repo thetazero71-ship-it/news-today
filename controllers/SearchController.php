@@ -80,7 +80,7 @@ class SearchController extends Controller
             $paramsMain ?: $params
         );
 
-        $categories = $db->fetchAll('SELECT id, name, slug FROM categories ORDER BY name');
+        $categories = $db->fetchAll('SELECT id, name, slug FROM categories WHERE is_visible = 1 ORDER BY name');
 
         // only offer alternatives when the search itself found nothing
         $suggestions = array();

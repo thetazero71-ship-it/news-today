@@ -272,7 +272,7 @@ if (!function_exists('site_favicon_tag')) {
 if (!function_exists('site_brand_logo_html')) {
     function site_brand_logo_html($imgHeight = 38, $showTagline = true)
     {
-        $siteName = Settings::get('site_name_ar', 'عصب التقنية');
+        $siteName = Brand::name();
         $siteTagline = Settings::get('site_tagline', 'نبض التكنولوجيا والذكاء الاصطناعي');
         $siteLogo = Settings::get('site_logo', '');
 
@@ -694,6 +694,7 @@ $router->post('/admin/categories/store', 'CategoriesController@store');
 $router->get('/admin/categories/{id}/edit', 'CategoriesController@edit');
 $router->post('/admin/categories/{id}/update', 'CategoriesController@update');
 $router->post('/admin/categories/{id}/delete', 'CategoriesController@delete');
+$router->post('/admin/categories/{id}/toggle-visibility', 'CategoriesController@toggleVisibility');
 
 // Live Blog Moderation
 $router->get('/admin/live-blog', 'AdminLiveBlogController@index');

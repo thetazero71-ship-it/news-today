@@ -8,7 +8,7 @@ class TutorialController extends Controller
         $tutorials = $tutorialModel->getPublished(30);
 
         $db = Database::getInstance();
-        $categories = $db->fetchAll("SELECT * FROM categories ORDER BY name ASC");
+        $categories = $db->fetchAll("SELECT * FROM categories WHERE is_visible = 1 ORDER BY name ASC");
 
         $this->view('tutorials/index', [
             'tutorials'  => $tutorials,

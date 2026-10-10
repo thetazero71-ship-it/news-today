@@ -18,49 +18,75 @@
  <th>الاسم بالعربية</th>
  <th>الاسم بالإنجليزية</th>
  <th>الرابط (Slug)</th>
- <th>الترتيب</th>
- <th class="text-end" style="width:120px">الإجراءات</th>
- </tr>
- </thead>
- <tbody>
- <?php if (empty($categories)): ?>
- <tr>
- <td colspan="7" class="text-center py-5 text-muted">
- <i class="bi bi-tags d-block mb-2" style="font-size:2rem"></i>
- لا توجد تصنيفات بعد.
- </td>
- </tr>
- <?php else: ?>
- <?php foreach ($categories as $cat): ?>
- <tr>
- <td><span class="text-muted small">#<?= (int) $cat['id'] ?></span></td>
- <td>
- <div class="d-flex align-items-center gap-2">
- <span class="badge" style="background:<?= admin_e($cat['color'] ?: '#00f2fe') ?>;width:12px;height:12px;padding:0;border-radius:50%"></span>
- <strong class="text-dark"><?= admin_e($cat['name']) ?></strong>
- </div>
- </td>
- <td><span><?= admin_e($cat['name_ar'] ?: $cat['name']) ?></span></td>
- <td><span class="text-muted small"><?= admin_e($cat['name_en'] ?: '-') ?></span></td>
- <td><code class="text-primary"><?= admin_e($cat['slug']) ?></code></td>
- <td><span class="badge bg-light text-dark border"><?= (int) ($cat['sort_order'] ?? 0) ?></span></td>
- <td class="text-end">
- <div class="d-inline-flex gap-1">
- <a class="btn-action-icon btn-action-edit" href="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/edit')) ?>" title="تعديل التصنيف">
- <i class="bi bi-pencil"></i>
- </a>
- <form method="post" action="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/delete')) ?>" class="d-inline" onsubmit="return confirm('هل تريد بالتأكيد حذف هذا التصنيف؟')">
- <?= CSRF::field() ?>
- <button type="submit" class="btn-action-icon btn-action-delete" title="حذف التصنيف">
- <i class="bi bi-trash3"></i>
- </button>
- </form>
- </div>
- </td>
- </tr>
- <?php endforeach; ?>
- <?php endif; ?>
- </tbody>
+<th>الترتيب</th>
+  <th class="text-center">الحالة</th>
+  <th class="text-center">الأخبار</th>
+  <th class="text-end" style="width:170px">الإجراءات</th>
+  </tr>
+  </thead>
+  <tbody>
+  <?php if (empty($categories)): ?>
+  <tr>
+  <td colspan="9" class="text-center py-5 text-muted">
+  <i class="bi bi-tags d-block mb-2" style="font-size:2rem"></i>
+  لا توجد تصنيفات بعد.
+  </td>
+  </tr>
+  <?php else: ?>
+  <?php foreach ($categories as $cat): ?>
+  <?php
+  $isHidden = array_key_exists('is_visible', $cat) && (int) $cat['is_visible'] === 0;
+  $count = (int) ($cat['articles_count'] ?? 0);
+  $label = $cat['name_ar'] ?: $cat['name'];
+  ?>
+  <tr class="<?= $isHidden ? 'table-secondary opacity-75' : '' ?>">
+  <td><span class="text-muted small">#<?= (int) $cat['id'] ?></span></td>
+  <td>
+  <div class="d-flex align-items-center gap-2">
+  <span class="badge" style="background:<?= admin_e($cat['color'] ?: '#00f2fe') ?>;width:12px;height:12px;padding:0;border-radius:50%"></span>
+  <strong class="text-dark"><?= admin_e($cat['name']) ?></strong>
+  </div>
+  </td>
+  <td><span><?= admin_e($label) ?></span></td>
+  <td><span class="text-muted small"><?= admin_e($cat['name_en'] ?: '-') ?></span></td>
+  <td><code class="text-primary"><?= admin_e($cat['slug']) ?></code></td>
+  <td><span class="badge bg-light text-dark border"><?= (int) ($cat['sort_order'] ?? 0) ?></span></td>
+  <td class="text-center">
+  <?php if ($isHidden): ?>
+  <span class="badge bg-secondary" title="مخفي من الموقع"><i class="bi bi-eye-slash me-1"></i> مخفي</span>
+  <?php else: ?>
+  <span class="badge bg-success" title="ظاهر في الموقع"><i class="bi bi-eye me-1"></i> ظاهر</span>
+  <?php endif; ?>
+  </td>
+  <td class="text-center">
+  <span class="badge bg-light text-dark border"><?= $count ?></span>
+  </td>
+  <td class="text-end">
+  <div class="d-inline-flex gap-1">
+  <a class="btn-action-icon btn-action-edit" href="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/edit')) ?>" title="تعديل التصنيف">
+  <i class="bi bi-pencil"></i>
+  </a>
+  <form method="post" action="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/toggle-visibility')) ?>" class="d-inline">
+  <?= CSRF::field() ?>
+  <button type="submit" class="btn-action-icon <?= $isHidden ? 'btn-action-edit' : 'btn-action-hide' ?>" title="<?= $isHidden ? 'إظهار التصنيف في الموقع' : 'إخفاء التصنيف دون حذفه' ?>">
+  <i class="bi <?= $isHidden ? 'bi-eye' : 'bi-eye-slash' ?>"></i>
+  </button>
+  </form>
+  <form method="post" action="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/delete')) ?>" class="d-inline" onsubmit="return confirm('<?= $count > 0 ? 'التصنيف يحتوي على ' . $count . ' خبر.\nسيتم فصلها عنه (تبقى محفوظة بدون تصنيف) ثم حذف التصنيف.\n' : '' ?>هل تريد حذف هذا التصنيف نهائياً؟')">
+  <?= CSRF::field() ?>
+  <?php if ($count > 0): ?>
+  <input type="hidden" name="detach_articles" value="1">
+  <?php endif; ?>
+  <button type="submit" class="btn-action-icon btn-action-delete" title="حذف التصنيف نهائياً<?= $count > 0 ? ' (مع فصل ' . $count . ' خبر)' : '' ?>">
+  <i class="bi bi-trash3"></i>
+  </button>
+  </form>
+  </div>
+  </td>
+  </tr>
+  <?php endforeach; ?>
+  <?php endif; ?>
+  </tbody>
  </table>
  </div>
 </div>

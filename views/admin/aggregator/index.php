@@ -625,11 +625,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <div class="d-flex gap-1 flex-wrap">
   <?php $itemPublished = ($item['import_status'] ?? '') === 'published'; ?>
+  <?php $editUrl = !empty($item['article_id']) ? app_url('admin/articles/' . (int) $item['article_id'] . '/edit') : null; ?>
   <?php if ($itemPublished): ?>
-  <!-- Already published: no publish actions, only a link to the live article -->
+  <!-- Already published: status + a direct way to edit the live article -->
   <span class="btn btn-sm btn-success disabled" aria-disabled="true" title="هذا الخبر منشور بالفعل">
   <i class="bi bi-check-circle-fill"></i> منشور
   </span>
+  <?php if ($editUrl): ?>
+  <a href="<?= admin_e($editUrl) ?>" class="btn btn-sm btn-outline-primary fw-semibold" title="تعديل الخبر المنشور في المحرر الكامل">
+  <i class="bi bi-pencil-square"></i> تعديل
+  </a>
+  <?php else: ?>
+  <span class="btn btn-sm btn-light border disabled" aria-disabled="true" title="لم يتم العثور على المقال في قاعدة البيانات">
+  <i class="bi bi-pencil-square"></i> تعديل
+  </span>
+  <?php endif; ?>
   <?php else: ?>
   <!-- 1. Translate & Publish Form (For Foreign News) -->
   <form method="post" action="<?= admin_e(app_url('admin/news-feeds/translate-publish')) ?>" class="d-inline publish-ajax-form" data-action="translate">
@@ -743,13 +753,15 @@ document.addEventListener('DOMContentLoaded', function () {
     showToast('<i class="bi bi-check-circle-fill me-1"></i> ' + esc(data.message || 'تم النشر بنجاح.'));
 
 const bar = form.closest('.d-flex.gap-1.flex-wrap');
-    if (bar) {
-      let link = '';
-      if (data.edit_url) link = ' <a class="btn btn-sm btn-light border fw-semibold" href="' + esc(data.edit_url) + '">فتح المقال</a>';
+     if (bar) {
       // same markup the server renders for an already published item, so the
       // card looks identical before and after a page refresh
-      bar.innerHTML = '<span class="btn btn-sm btn-success disabled" aria-disabled="true"><i class="bi bi-check-circle-fill"></i> منشور</span>' + link;
-    }
+      let edit = '';
+      if (data.edit_url) {
+        edit = ' <a class="btn btn-sm btn-outline-primary fw-semibold" href="' + esc(data.edit_url) + '" title="تعديل الخبر المنشور في المحرر الكامل"><i class="bi bi-pencil-square"></i> تعديل</a>';
+      }
+      bar.innerHTML = '<span class="btn btn-sm btn-success disabled" aria-disabled="true"><i class="bi bi-check-circle-fill"></i> منشور</span>' + edit;
+     }
 
     const card = form.closest('.news-item-col');
     const statusBadge = card ? card.querySelector('.badge.position-absolute.top-0.end-0') : null;

@@ -126,6 +126,12 @@ class ArticleController extends Controller
             return $this->view('errors/404');
         }
 
+        // a category the editor hid is not public any more
+        if ($categoryModel->isHidden($category)) {
+            http_response_code(404);
+            return $this->view('errors/404');
+        }
+
         $this->view('category', array(
             'category'   => $category,
             'articles'   => $articleModel->getByCategory($category['id']),

@@ -141,15 +141,17 @@ if ($fallbackCatId > 0) {
  $feedData = $this->fetchRss($activeFeedUrl);
  if ($feedData['success']) {
  $items = $feedData['items'];
- // Check against existing articles in DB with real status
- $existingArticles = $db->fetchAll("SELECT source_url, status FROM articles WHERE source_url IS NOT NULL");
- $urlStatusMap = [];
- foreach ($existingArticles as $row) {
- $urlStatusMap[$row['source_url']] = $row['status'];
- }
+// Check against existing articles in DB with real status
+  $existingArticles = $db->fetchAll("SELECT id, source_url, status FROM articles WHERE source_url IS NOT NULL");
+  $urlStatusMap = [];
+  foreach ($existingArticles as $row) {
+  $urlStatusMap[$row['source_url']] = $row['status'];
+  $urlStatusMap[$row['source_url'] . '#id'] = (int) $row['id'];
+  }
 
  foreach ($items as &$it) {
  $it['import_status'] = $urlStatusMap[$it['link']] ?? null;
+ $it['article_id'] = $urlStatusMap[$it['link'] . '#id'] ?? null;
  $it['is_imported'] = !empty($it['import_status']);
  $it['source_name'] = $activeSourceName;
  $it['category_id'] = $activeCategoryId;
