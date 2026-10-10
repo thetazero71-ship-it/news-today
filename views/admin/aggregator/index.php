@@ -623,49 +623,57 @@ document.addEventListener('DOMContentLoaded', function () {
  <i class="bi bi-box-arrow-up-right"></i> المصدر
  </a>
 
- <div class="d-flex gap-1 flex-wrap">
- <!-- 1. Translate & Publish Form (For Foreign News) -->
- <form method="post" action="<?= admin_e(app_url('admin/news-feeds/translate-publish')) ?>" class="d-inline publish-ajax-form" data-action="translate">
- <?= CSRF::field() ?>
- <input type="hidden" name="title" value="<?= admin_e($item['title']) ?>">
- <input type="hidden" name="excerpt" value="<?= admin_e($item['excerpt']) ?>">
- <input type="hidden" name="content" value="<?= admin_e($item['content']) ?>">
- <input type="hidden" name="source_url" value="<?= admin_e($item['link']) ?>">
- <input type="hidden" name="source_name" value="<?= admin_e($activeSourceName) ?>">
- <input type="hidden" name="featured_image" value="<?= admin_e($item['featured_image']) ?>">
- <button type="submit" class="btn btn-sm btn-success fw-bold shadow-sm" title="ترجمة فورية بالذكاء الاصطناعي ونشر باللغة العربية">
- ترجمة ونشر
- </button>
- </form>
+<div class="d-flex gap-1 flex-wrap">
+  <?php $itemPublished = ($item['import_status'] ?? '') === 'published'; ?>
+  <?php if ($itemPublished): ?>
+  <!-- Already published: no publish actions, only a link to the live article -->
+  <span class="btn btn-sm btn-success disabled" aria-disabled="true" title="هذا الخبر منشور بالفعل">
+  <i class="bi bi-check-circle-fill"></i> منشور
+  </span>
+  <?php else: ?>
+  <!-- 1. Translate & Publish Form (For Foreign News) -->
+  <form method="post" action="<?= admin_e(app_url('admin/news-feeds/translate-publish')) ?>" class="d-inline publish-ajax-form" data-action="translate">
+  <?= CSRF::field() ?>
+  <input type="hidden" name="title" value="<?= admin_e($item['title']) ?>">
+  <input type="hidden" name="excerpt" value="<?= admin_e($item['excerpt']) ?>">
+  <input type="hidden" name="content" value="<?= admin_e($item['content']) ?>">
+  <input type="hidden" name="source_url" value="<?= admin_e($item['link']) ?>">
+  <input type="hidden" name="source_name" value="<?= admin_e($activeSourceName) ?>">
+  <input type="hidden" name="featured_image" value="<?= admin_e($item['featured_image']) ?>">
+  <button type="submit" class="btn btn-sm btn-success fw-bold shadow-sm" title="ترجمة فورية بالذكاء الاصطناعي ونشر باللغة العربية">
+  ترجمة ونشر
+  </button>
+  </form>
 
- <!-- 2. Direct Instant Publish Form (For Arabic/Direct News - No Translation) -->
- <form method="post" action="<?= admin_e(app_url('admin/news-feeds/fast-publish')) ?>" class="d-inline publish-ajax-form" data-action="fast">
- <?= CSRF::field() ?>
- <input type="hidden" name="title" value="<?= admin_e($item['title']) ?>">
- <input type="hidden" name="excerpt" value="<?= admin_e($item['excerpt']) ?>">
- <input type="hidden" name="content" value="<?= admin_e($item['content']) ?>">
- <input type="hidden" name="source_url" value="<?= admin_e($item['link']) ?>">
- <input type="hidden" name="source_name" value="<?= admin_e($activeSourceName) ?>">
- <input type="hidden" name="featured_image" value="<?= admin_e($item['featured_image']) ?>">
- <button type="submit" class="btn btn-sm btn-primary fw-bold shadow-sm" title="نشر مباشر بدون ترجمة (للأخبار العربية)">
- نشر فوري
- </button>
- </form>
+  <!-- 2. Direct Instant Publish Form (For Arabic/Direct News - No Translation) -->
+  <form method="post" action="<?= admin_e(app_url('admin/news-feeds/fast-publish')) ?>" class="d-inline publish-ajax-form" data-action="fast">
+  <?= CSRF::field() ?>
+  <input type="hidden" name="title" value="<?= admin_e($item['title']) ?>">
+  <input type="hidden" name="excerpt" value="<?= admin_e($item['excerpt']) ?>">
+  <input type="hidden" name="content" value="<?= admin_e($item['content']) ?>">
+  <input type="hidden" name="source_url" value="<?= admin_e($item['link']) ?>">
+  <input type="hidden" name="source_name" value="<?= admin_e($activeSourceName) ?>">
+  <input type="hidden" name="featured_image" value="<?= admin_e($item['featured_image']) ?>">
+  <button type="submit" class="btn btn-sm btn-primary fw-bold shadow-sm" title="نشر مباشر بدون ترجمة (للأخبار العربية)">
+  نشر فوري
+  </button>
+  </form>
 
- <!-- 3. Draft in Full Editor -->
- <form method="post" action="<?= admin_e(app_url('admin/news-feeds/draft-article')) ?>" class="d-inline publish-ajax-form" data-action="draft">
- <?= CSRF::field() ?>
- <input type="hidden" name="title" value="<?= admin_e($item['title']) ?>">
- <input type="hidden" name="excerpt" value="<?= admin_e($item['excerpt']) ?>">
- <input type="hidden" name="content" value="<?= admin_e($item['content']) ?>">
- <input type="hidden" name="source_url" value="<?= admin_e($item['link']) ?>">
- <input type="hidden" name="source_name" value="<?= admin_e($activeSourceName) ?>">
- <input type="hidden" name="featured_image" value="<?= admin_e($item['featured_image']) ?>">
- <button type="submit" class="btn btn-sm btn-light border fw-semibold" title="تعديل في المحرر الكامل قبل النشر">
- تحرير
- </button>
- </form>
- </div>
+  <!-- 3. Draft in Full Editor -->
+  <form method="post" action="<?= admin_e(app_url('admin/news-feeds/draft-article')) ?>" class="d-inline publish-ajax-form" data-action="draft">
+  <?= CSRF::field() ?>
+  <input type="hidden" name="title" value="<?= admin_e($item['title']) ?>">
+  <input type="hidden" name="excerpt" value="<?= admin_e($item['excerpt']) ?>">
+  <input type="hidden" name="content" value="<?= admin_e($item['content']) ?>">
+  <input type="hidden" name="source_url" value="<?= admin_e($item['link']) ?>">
+  <input type="hidden" name="source_name" value="<?= admin_e($activeSourceName) ?>">
+  <input type="hidden" name="featured_image" value="<?= admin_e($item['featured_image']) ?>">
+  <button type="submit" class="btn btn-sm btn-light border fw-semibold" title="تعديل في المحرر الكامل قبل النشر">
+  تحرير
+  </button>
+  </form>
+  <?php endif; ?>
+  </div>
  </div>
  </div>
  </div>
@@ -734,11 +742,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     showToast('<i class="bi bi-check-circle-fill me-1"></i> ' + esc(data.message || 'تم النشر بنجاح.'));
 
-    const bar = form.closest('.d-flex.gap-1.flex-wrap');
+const bar = form.closest('.d-flex.gap-1.flex-wrap');
     if (bar) {
-     let link = '';
-     if (data.edit_url) link = ' <a class="text-white fw-bold me-2" href="' + esc(data.edit_url) + '">فتح المقال</a>';
-     bar.innerHTML = '<span class="badge bg-success px-3 py-2 shadow-sm"><i class="bi bi-check-circle-fill me-1"></i> تم النشر</span>' + link;
+      let link = '';
+      if (data.edit_url) link = ' <a class="btn btn-sm btn-light border fw-semibold" href="' + esc(data.edit_url) + '">فتح المقال</a>';
+      // same markup the server renders for an already published item, so the
+      // card looks identical before and after a page refresh
+      bar.innerHTML = '<span class="btn btn-sm btn-success disabled" aria-disabled="true"><i class="bi bi-check-circle-fill"></i> منشور</span>' + link;
     }
 
     const card = form.closest('.news-item-col');
