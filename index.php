@@ -572,6 +572,7 @@ $router->get('/article/{slug}', 'ArticleController@show');
 $router->get('/p/{id}', 'ArticleController@shortlink');
 $router->get('/category/{slug}', 'ArticleController@category');
 $router->get('/search', 'SearchController@index');
+$router->get('/search/suggest', 'SearchController@suggest');
 
 // Tutorials & How-To Guides
 $router->get('/tutorials', 'TutorialController@index');
