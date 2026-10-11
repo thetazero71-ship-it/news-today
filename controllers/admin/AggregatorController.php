@@ -142,16 +142,23 @@ if ($fallbackCatId > 0) {
  if ($feedData['success']) {
  $items = $feedData['items'];
 // Check against existing articles in DB with real status
+  // المطابقة على الرابط المُطبَّع (لا حرفياً): الخلاصات تضيف sometimes
+  // معاملات تتبّع أو / أو www، فيظهر الخبر المنشور تلقائياً كأنه "جديد".
   $existingArticles = $db->fetchAll("SELECT id, source_url, status FROM articles WHERE source_url IS NOT NULL");
   $urlStatusMap = [];
   foreach ($existingArticles as $row) {
-  $urlStatusMap[$row['source_url']] = $row['status'];
-  $urlStatusMap[$row['source_url'] . '#id'] = (int) $row['id'];
+  $key = $this->normaliseItemUrl((string) $row['source_url']);
+  if ($key === '') {
+  continue;
+  }
+  $urlStatusMap[$key] = $row['status'];
+  $urlStatusMap[$key . '#id'] = (int) $row['id'];
   }
 
  foreach ($items as &$it) {
- $it['import_status'] = $urlStatusMap[$it['link']] ?? null;
- $it['article_id'] = $urlStatusMap[$it['link'] . '#id'] ?? null;
+ $key = $this->normaliseItemUrl((string) ($it['link'] ?? ''));
+ $it['import_status'] = $urlStatusMap[$key] ?? null;
+ $it['article_id'] = $urlStatusMap[$key . '#id'] ?? null;
  $it['is_imported'] = !empty($it['import_status']);
  $it['source_name'] = $activeSourceName;
  $it['category_id'] = $activeCategoryId;
@@ -258,6 +265,7 @@ $featuredImage = trim($data['featured_image'] ?? '');
  $existing = null;
  if (!empty($sourceUrl)) {
  $existing = $db->fetch("SELECT id, slug, title, status FROM articles WHERE source_url = :url LIMIT 1", [':url' => $sourceUrl]);
+ $existing = $existing ?: $this->findArticleByNormalisedUrl($db, $sourceUrl);
  }
  if (!$existing && !empty($title)) {
  $existing = $db->fetch("SELECT id, slug, title, status FROM articles WHERE title_en = :t1 OR title = :t2 LIMIT 1", [
@@ -402,6 +410,7 @@ $featuredImage = trim($data['featured_image'] ?? '');
  $existing = null;
  if (!empty($sourceUrl)) {
  $existing = $db->fetch("SELECT id, slug, title, status FROM articles WHERE source_url = :url LIMIT 1", [':url' => $sourceUrl]);
+ $existing = $existing ?: $this->findArticleByNormalisedUrl($db, $sourceUrl);
  }
  if (!$existing && !empty($title)) {
  $existing = $db->fetch("SELECT id, slug, title, status FROM articles WHERE title = :t LIMIT 1", [':t' => $title]);
@@ -630,8 +639,45 @@ public function addSource()
  return $this->redirect('admin/news-feeds');
  }
 
- /**
- * فحص صحة كل مصادر RSS المسجلة (أو مصدر واحد) وتخزين النتيجة في قاعدة البيانات.
+/**
+  * Canonical form of an article URL so the same story is recognised whatever
+  * tracking parameters, scheme, www or trailing slash the feed used.
+  */
+private function normaliseItemUrl(string $url): string
+ {
+  $url = trim($url);
+  if ($url === '') {
+  return '';
+  }
+  $url = preg_replace('#^https?://#i', '', $url);
+  $url = preg_replace('#^www\.#i', '', $url);
+  $url = preg_replace('/[?&](utm_[^=]+|fbclid|gclid|ref|source|feed)=[^&]*/i', '', $url);
+  $url = preg_replace('/[?&]$/', '', $url);
+  $url = rtrim($url, '/');
+  return strtolower($url);
+ }
+
+ /** يعثر على مقال بنفس الرابط حتى لو اختلفت طريقة كتابته */
+ private function findArticleByNormalisedUrl($db, string $url): ?array
+ {
+  $want = $this->normaliseItemUrl($url);
+  if ($want === '') {
+  return null;
+  }
+  try {
+  foreach ($db->fetchAll("SELECT id, slug, title, status, source_url FROM articles WHERE source_url IS NOT NULL") as $row) {
+  if ($this->normaliseItemUrl((string) $row['source_url']) === $want) {
+  return $row;
+  }
+  }
+  } catch (Throwable $e) {
+  // لا نمنع النشر إن فشل الفحص
+  }
+  return null;
+ }
+
+  /**
+  * فحص صحة كل مصادر RSS المسجلة (أو مصدر واحد) وتخزين النتيجة في قاعدة البيانات.
  * يُرجع JSON لاستهلاكه من واجهة لوحة التحكم.
  */
 public function healthCheck()

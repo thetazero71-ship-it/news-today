@@ -151,6 +151,19 @@
  </div>
  </div>
 
+ <!-- Sources Tabs: all / favourites -->
+ <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+ <button type="button" class="btn btn-sm btn-dark source-tab-btn active" data-tab="all" onclick="switchSourceTab('all')">
+ <i class="bi bi-collection me-1"></i> كل المصادر
+ <span class="badge bg-light text-dark ms-1"><?= count($sources) ?></span>
+ </button>
+ <button type="button" class="btn btn-sm btn-outline-dark source-tab-btn" data-tab="fav" onclick="switchSourceTab('fav')">
+ <i class="bi bi-pin-angle-fill me-1"></i> المفضلة
+ <span class="badge bg-warning text-dark ms-1" id="favTabCount">0</span>
+ </button>
+ <span class="text-muted small ms-auto" id="sourcesTabHint"></span>
+ </div>
+
  <!-- All Sources Chips Grid -->
  <div id="sourcesChipsGrid" class="d-flex align-items-center gap-2 flex-wrap" style="max-height:220px;overflow-y:auto;padding:6px 2px">
  <?php foreach ($sources as $src): ?>
@@ -367,6 +380,48 @@ function renderPinnedSources() {
  });
 
  container.innerHTML = html;
+  applySourceTab();
+}
+
+// ============ Sources tabs: all / favourites ============
+let activeSourceTab = 'all';
+
+function switchSourceTab(tab) {
+  activeSourceTab = (tab === 'fav') ? 'fav' : 'all';
+  applySourceTab();
+}
+
+function applySourceTab() {
+  const grid = document.getElementById('sourcesChipsGrid');
+  if (!grid) return;
+
+  document.querySelectorAll('.source-tab-btn').forEach(btn => {
+    const isOn = btn.getAttribute('data-tab') === activeSourceTab;
+    btn.classList.toggle('active', isOn);
+    btn.classList.toggle('btn-dark', isOn);
+    btn.classList.toggle('btn-outline-dark', !isOn);
+  });
+
+  const pinned = getPinnedSources().map(item => Number(item.id));
+  const counter = document.getElementById('favTabCount');
+  if (counter) counter.textContent = String(pinned.length);
+
+  let visible = 0;
+  grid.querySelectorAll('.source-chip-wrapper').forEach(chip => {
+    const id = Number(chip.getAttribute('data-source-id'));
+    const show = (activeSourceTab === 'all') || pinned.includes(id);
+    chip.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  const hint = document.getElementById('sourcesTabHint');
+  if (hint) {
+    if (activeSourceTab === 'fav' && visible === 0) {
+      hint.innerHTML = '<span class="text-warning fw-semibold">لا يوجد مصدر في المفضلة — انقر على أيقونة الدبوس بجانب أي مصدر لإضافته.</span>';
+    } else {
+      hint.textContent = 'المعروض: ' + visible + ' مصدر';
+    }
+  }
 }
 
 // Search text normalizer (handles Arabic letters, diacritics & accents)
@@ -489,9 +544,10 @@ function clearNewsSearch() {
 
 // Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', function () {
- renderPinnedSources();
- 
- // Attach independent event listeners
+renderPinnedSources();
+  applySourceTab();
+
+  // Attach independent event listeners
  const sInput = document.getElementById('sourceSearchInput');
  if (sInput) {
  sInput.addEventListener('input', filterSourcesLive);

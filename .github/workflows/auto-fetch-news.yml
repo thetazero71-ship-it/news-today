@@ -9,8 +9,9 @@ name: Auto-fetch news
 
 on:
   schedule:
-    # every 30 minutes
-    - cron: '13,43 * * * *'
+    # every 5 minutes - the shortest interval GitHub Actions allows.
+    # This runs on GitHub's servers, not on the shared host.
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       sources:
