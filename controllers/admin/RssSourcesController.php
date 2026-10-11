@@ -87,9 +87,20 @@ class RssSourcesController extends AdminController
  }
 
  $db = new Database();
+
+ if ($err = self::validateUrl($url)) {
+ Session::flash('error', $err);
+ return $this->redirect('admin/rss-sources/create');
+ }
+
+ if ($dup = self::findDuplicate($db, $url, 0)) {
+ Session::flash('error', 'هذا الرابط مسجّل مسبقاً باسم «' . $dup['name'] . '». لا يمكن إضافة نفس الخلاصة مرتين.');
+ return $this->redirect('admin/rss-sources/create');
+ }
+
  $db->query("INSERT INTO rss_sources (name, url, category_id, auto_fetch) VALUES (:name, :url, :category_id, :auto_fetch)", [
  ':name' => $name,
- ':url' => $url,
+ ':url' => self::normalise($url),
  ':category_id' => $categoryId,
  ':auto_fetch' => $autoFetch
  ]);
@@ -132,9 +143,19 @@ class RssSourcesController extends AdminController
  $categoryId = (int) ($data['category_id'] ?? 0) ?: null;
  $autoFetch = empty($data['auto_fetch']) ? 0 : 1;
 
+ if ($err = self::validateUrl($url)) {
+ Session::flash('error', $err);
+ return $this->redirect('admin/rss-sources/' . (int) $id . '/edit');
+ }
+
+ if ($dup = self::findDuplicate($db, $url, (int) $id)) {
+ Session::flash('error', 'هذا الرابط مسجّل مسبقاً باسم «' . $dup['name'] . '». اختر رابطاً مختلفاً.');
+ return $this->redirect('admin/rss-sources/' . (int) $id . '/edit');
+ }
+
  $db->query("UPDATE rss_sources SET name = :name, url = :url, category_id = :category_id, auto_fetch = :auto_fetch WHERE id = :id", [
  ':name' => $name,
- ':url' => $url,
+ ':url' => self::normalise($url),
  ':category_id' => $categoryId,
  ':auto_fetch' => $autoFetch,
  ':id' => (int) $id
@@ -154,5 +175,117 @@ class RssSourcesController extends AdminController
  $this->audit('delete', 'rss_source', $id, $old, null);
  Session::flash('success', 'تم حذف المصدر من القائمة نهائياً.');
  return $this->redirect('admin/rss-sources');
+ }
+
+ /**
+  * عملية جماعية على المصادر المحددة (حذف / تفعيل / تعطيل / نقل).
+  */
+ public function bulk()
+ {
+ $this->postGuardPermission('sources.manage');
+ $db = new Database();
+ $action = (string) ($_POST['bulk_action'] ?? '');
+
+ $ids = $_POST['ids'] ?? [];
+ if (is_string($ids)) {
+ $ids = array_filter(explode(',', $ids));
+ }
+ $ids = array_values(array_unique(array_filter(array_map('intval', (array) $ids))));
+ if (!$ids) {
+ Session::flash('error', 'لم يتم تحديد أي مصدر. فعّل مربع الاختيار 옆 المصدر أولاً.');
+ return $this->redirect('admin/rss-sources');
+ }
+ if (count($ids) > 200) {
+ $ids = array_slice($ids, 0, 200);
+ }
+ $marks = implode(',', $ids);
+
+ switch ($action) {
+ case 'delete':
+ $db->query("DELETE FROM rss_sources WHERE id IN ({$marks})");
+ Session::flash('success', 'تم حذف ' . count($ids) . ' مصدراً.');
+ break;
+
+ case 'enable':
+ case 'disable':
+ $on = $action === 'enable' ? 1 : 0;
+ $db->query("UPDATE rss_sources SET auto_fetch = {$on} WHERE id IN ({$marks})");
+ Session::flash('success', ($on ? 'تم تفعيل' : 'تم تعطيل') . ' ' . count($ids) . ' مصدراً.');
+ break;
+
+ case 'category':
+ $cat = (int) ($_POST['bulk_category_id'] ?? 0);
+ if ($cat <= 0) {
+ Session::flash('error', 'اختر القسم أولاً.');
+ break;
+ }
+ $db->query("UPDATE rss_sources SET category_id = :cat WHERE id IN ({$marks})", [':cat' => $cat]);
+ Session::flash('success', 'تم نقل ' . count($ids) . ' مصدراً إلى القسم المحدد.');
+ break;
+
+ case 'check':
+ $db->query("UPDATE rss_sources SET last_checked_at = NULL, fail_count = 0 WHERE id IN ({$marks})");
+ Session::flash('success', 'تم وضع ' . count($ids) . ' مصدراً في قائمة الفحص القادمة.');
+ break;
+
+ default:
+ Session::flash('error', 'إجراء غير معروف.');
+ }
+
+ $this->audit('bulk', 'rss_source', null, null, ['action' => $action, 'ids' => $ids]);
+ return $this->redirect('admin/rss-sources');
+ }
+
+ /**
+  * Canonical form of a feed URL, so the same feed typed in different ways
+  * is recognised as one source.
+  */
+ public static function normalise(string $url): string
+ {
+ $url = trim($url);
+ $url = preg_replace('#^(https?)://#i', '', $url);
+ $url = preg_replace('#^www\.#i', '', $url);
+ $url = preg_replace('/[?#].*$/', '', $url);
+ $url = rtrim($url, '/');
+ return 'https://' . strtolower($url);
+ }
+
+ /** @return string|null error message when the URL is not usable */
+ private static function validateUrl(string $url): ?string
+ {
+ if ($url === '') {
+ return 'رابط الخلاصة مطلوب.';
+ }
+ if (!preg_match('#^https?://#i', $url)) {
+ return 'الرابط يجب أن يبدأ بـ https:// أو http://';
+ }
+ if (mb_strlen($url) > 500) {
+ return 'الرابط طويل جداً (الحد 500 حرف).';
+ }
+ $host = parse_url($url, PHP_URL_HOST);
+ if (!$host || strpos($host, '.') === false) {
+ return 'الرابط غير صالح — تأكد من كتابة نطاق صحيح.';
+ }
+ return null;
+ }
+
+ /** @return array|null the row of an already registered source */
+ private static function findDuplicate($db, string $url, int $ignoreId = 0): ?array
+ {
+ $want = self::normalise($url);
+ try {
+ $rows = $db->fetchAll('SELECT id, name, url FROM rss_sources');
+ } catch (Throwable $e) {
+ return null;
+ }
+ foreach ($rows as $row) {
+ if ((int) $row['id'] === $ignoreId) {
+ continue;
+ }
+ if (self::normalise((string) $row['url']) === $want) {
+ return $row;
+ }
+ }
+ return null;
  }
 }

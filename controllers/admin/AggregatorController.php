@@ -572,7 +572,7 @@ if (empty($title)) {
  return $this->redirect('admin/articles/' . (int) $newId . '/edit');
  }
 
- public function addSource()
+public function addSource()
  {
  $this->postGuardPermission('feeds.publish');
  $data = Sanitizer::cleanArray($_POST);
@@ -586,14 +586,39 @@ if (empty($title)) {
  }
 
  $db = new Database();
+
+ require_once __DIR__ . '/RssSourcesController.php';
+
+ if ($dup = $this->findExistingSource($db, $url)) {
+ Session::flash('error', 'هذا الرابط مسجّل مسبقاً باسم «' . $dup['name'] . '». لا يمكن إضافة نفس الخلاصة مرتين.');
+ return $this->redirect('admin/news-feeds');
+ }
+
  $db->query("INSERT INTO rss_sources (name, url, category_id) VALUES (:name, :url, :category_id)", [
  ':name' => $name,
- ':url' => $url,
+ ':url' => RssSourcesController::normalise($url),
  ':category_id' => $categoryId
  ]);
 
-  Session::flash('success', "تمت إضافة المصدر التقني \"{$name}\" بنجاح.");
+ Session::flash('success', "تمت إضافة المصدر التقني \"{$name}\" بنجاح.");
  return $this->redirect('admin/news-feeds');
+ }
+
+ /** @return array|null the already registered source holding this url */
+ private function findExistingSource($db, string $url): ?array
+ {
+ $want = RssSourcesController::normalise($url);
+ try {
+ $rows = $db->fetchAll('SELECT id, name, url FROM rss_sources');
+ } catch (Throwable $e) {
+ return null;
+ }
+ foreach ($rows as $row) {
+ if (RssSourcesController::normalise((string) $row['url']) === $want) {
+ return $row;
+ }
+ }
+ return null;
  }
 
  public function deleteSource($id)

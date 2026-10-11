@@ -120,12 +120,50 @@ return date('Y-m-d', $ts);
  </div>
 </div>
 
+<!-- Bulk actions bar (appears once sources are ticked) -->
+<form method="post" action="<?= admin_e(app_url('admin/rss-sources/bulk')) ?>" id="bulkSourcesForm">
+<?= CSRF::field() ?>
+<input type="hidden" name="ids[]" id="bulkIdsHolder" value="">
+<div class="card border-0 shadow-sm rounded-4 bg-white mb-3 d-none" id="bulkBar">
+<div class="card-body d-flex flex-wrap align-items-center gap-2">
+ <span class="fw-bold text-dark me-2">
+ <i class="bi bi-check2-square me-1"></i>
+ محدَّد: <span id="bulkCount">0</span> مصدر
+ </span>
+ <select name="bulk_action" id="bulkAction" class="form-select form-select-sm w-auto" onchange="bulkActionChanged()">
+  <option value="">— اختر عملية —</option>
+  <option value="delete">حذف نهائي</option>
+  <option value="enable">تفعيل الجلب التلقائي</option>
+  <option value="disable">تعطيل الجلب التلقائي</option>
+  <option value="check">إعادة وضعها في قائمة الفحص</option>
+  <option value="category">نقل إلى قسم…</option>
+ </select>
+ <select name="bulk_category_id" id="bulkCategory" class="form-select form-select-sm w-auto d-none">
+  <option value="">— اختر القسم —</option>
+  <?php foreach (($categories ?? []) as $c): ?>
+  <option value="<?= (int) $c['id'] ?>"><?= admin_e($c['name']) ?></option>
+  <?php endforeach; ?>
+ </select>
+ <button type="submit" class="btn btn-primary btn-sm fw-bold" id="bulkSubmit" disabled>
+ <i class="bi bi-check-lg me-1"></i> تنفيذ
+ </button>
+ <button type="button" class="btn btn-light btn-sm border" onclick="clearBulkSelection()">
+ <i class="bi bi-x-lg me-1"></i> إلغاء التحديد
+ </button>
+ <span class="text-muted small ms-auto" id="bulkHint">اختر «تنفيذ» بعد تحديد العملية</span>
+</div>
+</div>
+</form>
+
 <!-- Sources Table -->
 <div class="card border-0 shadow-sm rounded-4 bg-white">
  <div class="table-responsive">
  <table class="table table-hover align-middle mb-0">
  <thead class="table-light">
  <tr>
+ <th style="width:36px">
+  <input type="checkbox" class="form-check-input" id="checkAllSources" title="تحديد/إلغاء الكل">
+ </th>
  <th style="width:60px">#</th>
  <th>اسم المصدر</th>
  <th>رابط خلاصة الـ RSS</th>
@@ -141,14 +179,18 @@ return date('Y-m-d', $ts);
  <tbody>
  <?php if (empty($sources)): ?>
  <tr>
-  <td colspan="8" class="text-center py-5 text-muted">
- <i class="bi bi-rss d-block mb-2" style="font-size:2rem"></i>
- لا توجد مصادر مطابقة لبحثك.
- </td>
+  <td colspan="9" class="text-center py-5 text-muted">
+  <i class="bi bi-rss d-block mb-2" style="font-size:2rem"></i>
+  لا توجد مصادر مطابقة لبحثك.
+  </td>
  </tr>
  <?php else: ?>
  <?php foreach ($sources as $s): ?>
- <tr>
+ <tr data-source-id="<?= (int) $s['id'] ?>">
+ <td>
+  <input type="checkbox" class="form-check-input source-check" value="<?= (int) $s['id'] ?>"
+  title="تحديد <?= admin_e($s['name']) ?>">
+ </td>
  <td><span class="text-muted small">#<?= (int) $s['id'] ?></span></td>
  <td>
  <strong class="text-dark d-block"><?= admin_e($s['name']) ?></strong>
@@ -416,5 +458,110 @@ function run(url, btn, originalHtml) {
    run(HEALTH_URL + '?id=' + b.dataset.id, b, original);
   });
  });
+})();
+</script>
+
+// ============ Selection multiple pour les sources RSS ============
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.source-check'));
+  var checkAll = document.getElementById('checkAllSources');
+  var bar = document.getElementById('bulkBar');
+  var countEl = document.getElementById('bulkCount');
+  var actionEl = document.getElementById('bulkAction');
+  var catEl = document.getElementById('bulkCategory');
+  var submitEl = document.getElementById('bulkSubmit');
+  var hintEl = document.getElementById('bulkHint');
+  var form = document.getElementById('bulkSourcesForm');
+  if (!boxes.length || !bar) return;
+
+  function checked() {
+    return boxes.filter(function (b) { return b.checked; });
+  }
+
+  function refresh() {
+    var list = checked();
+    var n = list.length;
+    if (countEl) countEl.textContent = String(n);
+    if (bar) bar.classList.toggle('d-none', n === 0);
+
+    if (checkAll) {
+      checkAll.checked = n > 0 && n === boxes.length;
+      checkAll.indeterminate = n > 0 && n < boxes.length;
+    }
+
+    if (form) {
+      // send one hidden input per selected source
+      form.querySelectorAll('input[data-bulk-id]').forEach(function (el) { el.remove(); });
+      list.forEach(function (b) {
+        var hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'ids[]';
+        hidden.value = b.value;
+        hidden.setAttribute('data-bulk-id', '1');
+        form.appendChild(hidden);
+      });
+    }
+
+    var action = actionEl ? actionEl.value : '';
+    var needCat = action === 'category';
+    if (catEl) catEl.classList.toggle('d-none', !needCat);
+
+    if (submitEl) submitEl.disabled = n === 0 || action === '';
+
+    if (hintEl) {
+      if (n === 0) {
+        hintEl.textContent = 'اختر «تنفيذ» بعد تحديد العملية';
+      } else if (action === '') {
+        hintEl.textContent = 'محدَّد ' + n + ' مصدر — اختر العملية ثم «تنفيذ»';
+      } else if (needCat && (!catEl || !catEl.value)) {
+        hintEl.textContent = 'اختر القسم أولاً';
+      } else {
+        hintEl.textContent = 'جاهز للتنفيذ على ' + n + ' مصدر';
+      }
+    }
+  }
+
+  window.bulkActionChanged = refresh;
+  window.clearBulkSelection = function () {
+    boxes.forEach(function (b) { b.checked = false; });
+    if (actionEl) actionEl.value = '';
+    refresh();
+  };
+
+  boxes.forEach(function (b) { b.addEventListener('change', refresh); });
+
+  if (checkAll) {
+    checkAll.addEventListener('change', function () {
+      boxes.forEach(function (b) { b.checked = checkAll.checked; });
+      refresh();
+    });
+  }
+
+  if (actionEl) actionEl.addEventListener('change', refresh);
+  if (catEl) catEl.addEventListener('change', refresh);
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      var n = checked().length;
+      var action = actionEl ? actionEl.value : '';
+      if (n === 0 || action === '') {
+        e.preventDefault();
+        return;
+      }
+      var label = actionEl.options[actionEl.selectedIndex] ? actionEl.options[actionEl.selectedIndex].text : '';
+      var extra = '';
+      if (action === 'delete') {
+        extra = '\n\nسيتم حذف ' + n + ' مصدراً نهائياً من القائمة.';
+      } else if (action === 'category') {
+        var c = catEl && catEl.options[catEl.selectedIndex] ? catEl.options[catEl.selectedIndex].text : '';
+        extra = '\n\nإلى القسم: ' + c;
+      }
+      if (!confirm('تأكيد: ' + label + ' — ' + n + ' مصدر؟' + extra)) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  refresh();
 })();
 </script>
