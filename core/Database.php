@@ -7,6 +7,11 @@ class Database
 
     public function __construct()
     {
+        $this->connect();
+    }
+
+    private function connect(): void
+    {
         $charset = defined('DB_CHARSET') ? DB_CHARSET : 'utf8mb4';
         $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . $charset;
 
@@ -45,9 +50,47 @@ class Database
 
     public function query($sql, array $params = array())
     {
-        $statement = $this->prepare($sql);
-        $statement->execute($params);
-        return $statement;
+        return $this->run($sql, $params);
+    }
+
+    /**
+     * Executes a statement and transparently reconnects once.
+     *
+     * Shared hosting closes the MySQL connection after a few seconds of
+     * inactivity. A long AI translation call in the middle of the auto-publish
+     * job is exactly such a pause, and the next query dies with
+     * "MySQL server has gone away" — so we reconnect and retry once.
+     */
+    private function run($sql, array $params, int $attempt = 0)
+    {
+        try {
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute($params);
+            return $statement;
+        } catch (PDOException $e) {
+            if ($attempt === 0 && $this->isConnectionLost($e)) {
+                $this->pdo = null;
+                $this->connect();
+                return $this->run($sql, $params, 1);
+            }
+            throw $e;
+        }
+    }
+
+    private function isConnectionLost(PDOException $e): bool
+    {
+        $code = (string) $e->getCode();
+        if ($code === '2006' || $code === '2013' || $code === 'HY000') {
+            $msg = $e->getMessage();
+            if (stripos($msg, 'gone away') !== false
+                || stripos($msg, 'lost connection') !== false
+                || stripos($msg, 'server has gone') !== false
+                || stripos($msg, 'closed') !== false
+                || stripos($msg, 'timed out') !== false) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function fetch($sql, array $params = array())
