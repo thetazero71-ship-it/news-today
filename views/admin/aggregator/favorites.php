@@ -3,6 +3,11 @@
  * تبويب المفضلة — كل المصادر المفضلة وأحدث أخبارها في مكان واحد.
  */
 ?>
+<style>
+.fav-thumb { width: 72px; height: 54px; border-radius: 10px; overflow: hidden; background: #eef2f7; display: flex; align-items: center; justify-content: center; }
+.fav-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fav-thumb-ph { color: #94a3b8; font-size: 1.1rem; }
+</style>
 <div class="container-fluid">
 
  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
@@ -67,14 +72,14 @@
     <i class="bi bi-broadcast me-1"></i>تلقائي
     </span>
     <?php endif; ?>
-    <form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . (int) $src['id'] . '/toggle-favorite')) ?>"
-    onsubmit="return adminConfirm('إزالة «<?= admin_e(addslashes($src['name'])) ?>» من المفضلة؟', {title:'إزالة من المفضلة', danger:true}).then(function(ok){ if(!ok){ var f=this; return false; } return true; }.bind(this))">
-    <?= CSRF::field() ?>
-    <input type="hidden" name="back" value="favorites">
-    <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="إزالة من المفضلة">
-    <i class="bi bi-x-circle-fill"></i>
-    </button>
-    </form>
+<form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . (int) $src['id'] . '/toggle-favorite')) ?>"
+ id="pinForm_<?= (int) $src['id'] ?>" class="d-inline">
+ <?= CSRF::field() ?>
+ <input type="hidden" name="back" value="favorites">
+ <button type="submit" class="btn btn-sm btn-link text-danger p-0 is-pinned" title="إزالة من المفضلة">
+ <i class="bi bi-pin-angle-fill text-warning"></i>
+ </button>
+ </form>
    </div>
 
    <div class="card-body p-0">
@@ -87,8 +92,22 @@
     <?php else: ?>
     <ul class="list-group list-group-flush">
     <?php foreach ($group['items'] as $item): ?>
-    <?php $published = ($item['import_status'] ?? '') === 'published'; ?>
-    <li class="list-group-item d-flex align-items-start gap-2">
+    <?php
+    $published = ($item['import_status'] ?? '') === 'published';
+    $thumb = trim((string) ($item['featured_image'] ?? ''));
+    if ($thumb !== '' && !preg_match('#^https?://#i', $thumb)) {
+     $thumb = '';
+    }
+    ?>
+    <li class="list-group-item d-flex align-items-center gap-3 fav-item" data-url="<?= admin_e($item['link'] ?? '') ?>">
+     <div class="fav-thumb flex-shrink-0">
+      <?php if ($thumb !== ''): ?>
+      <img src="<?= admin_e($thumb) ?>" alt="" loading="lazy" width="72" height="54"
+      onerror="this.outerHTML='<span class=&quot;fav-thumb-ph&quot;><i class=&quot;bi bi-image&quot;></i></span>'">
+      <?php else: ?>
+      <span class="fav-thumb-ph"><i class="bi bi-image"></i></span>
+      <?php endif; ?>
+     </div>
      <div class="flex-grow-1">
       <div class="fw-semibold" style="line-height:1.5"><?= admin_e($item['title']) ?></div>
       <div class="small text-muted"><?= admin_e($item['pubDate'] ?? '') ?></div>
@@ -126,3 +145,19 @@
  </div>
  <?php endif; ?>
 </div>
+<script>
+document.addEventListener('admin:favorite-changed', function (e) {
+  // removed from favourites: the card goes away without touching the page
+  if (e.detail && e.detail.favorite === false) {
+    var form = document.querySelector('form[id^="pinForm_"] button.is-pinned');
+    if (form) { /* keep going */ }
+    document.querySelectorAll('.card').forEach(function (card) {
+      var f = card.querySelector('form[id^="pinForm_"]');
+      if (f && f.contains(document.activeElement)) {
+        var col = card.closest('.col-12');
+        if (col) { col.style.transition = 'opacity .2s'; col.style.opacity = '0'; setTimeout(function () { col.remove(); }, 200); }
+      }
+    });
+  }
+});
+</script>

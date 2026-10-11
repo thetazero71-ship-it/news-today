@@ -299,9 +299,10 @@ title="<?= admin_e($thirdParty['warning']) ?>">
   </td>
   <td class="text-end">
 <div class="d-inline-flex gap-1">
- <form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . (int) $s['id'] . '/toggle-favorite')) ?>" class="d-inline">
+ <form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . (int) $s['id'] . '/toggle-favorite')) ?>"
+ id="pinForm_src_<?= (int) $s['id'] ?>" class="d-inline">
  <?= CSRF::field() ?>
- <button type="submit" class="btn-action-icon btn-action-view" title="<?= !empty($s['is_favorite']) ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة' ?>">
+ <button type="submit" class="btn-action-icon btn-action-view <?= !empty($s['is_favorite']) ? 'is-pinned' : '' ?>" title="<?= !empty($s['is_favorite']) ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة' ?>">
  <i class="bi <?= !empty($s['is_favorite']) ? 'bi-pin-angle-fill text-warning' : 'bi-pin-angle' ?>"></i>
  </button>
  </form>
@@ -315,7 +316,8 @@ title="<?= admin_e($thirdParty['warning']) ?>">
  <a href="<?= admin_e(app_url('admin/rss-sources/' . $s['id'] . '/edit')) ?>" class="btn-action-icon btn-action-edit" title="تعديل بيانات المصدر">
  <i class="bi bi-pencil"></i>
  </a>
- <form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . $s['id'] . '/delete')) ?>" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المصدر من القائمة؟')">
+<form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . $s['id'] . '/delete')) ?>" class="d-inline"
+ data-ajax-delete="1" data-confirm="هل تريد حذف «<?= admin_e(addslashes($s['name'])) ?>» نهائياً من قائمة المصادر؟">
  <?= CSRF::field() ?>
  <button type="submit" class="btn-action-icon btn-action-delete" title="حذف المصدر">
  <i class="bi bi-trash3"></i>

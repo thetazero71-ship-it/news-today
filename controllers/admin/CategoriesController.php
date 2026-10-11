@@ -71,9 +71,24 @@ class CategoriesController extends AdminController
    return $this->redirect('admin/categories');
   }
 
-  $this->audit('delete','category',$cid,$old);
-  Session::flash('success', 'تم حذف التصنيف «' . $label . '»' . ($articles > 0 ? '، وفُصلت ' . $articles . ' خبر منه.' : '.'));
-  return $this->redirect('admin/categories');
+$this->audit('delete','category',$cid,$old);
+ $message = 'تم حذف التصنيف «' . $label . '»' . ($articles > 0 ? '، وفُصلت ' . $articles . ' خبر منه.' : '.');
+ $this->jsonOrFlash($message, $cid);
+ return $this->redirect('admin/categories');
+ }
+
+ /** استجابة فورية للواجهة، وإلا رسالة عادية */
+ private function jsonOrFlash(string $message, $cid)
+ {
+  $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+  && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+  || ($_POST['respond_with'] ?? '') === 'json';
+  if ($isAjax) {
+  header('Content-Type: application/json; charset=utf-8');
+  echo json_encode(['ok' => true, 'id' => $cid, 'message' => $message], JSON_UNESCAPED_UNICODE);
+  exit;
+ }
+ Session::flash('success', $message);
  }
 
  /** Empty category_id in every table that points at categories. */

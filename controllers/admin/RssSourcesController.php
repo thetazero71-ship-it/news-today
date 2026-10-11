@@ -209,6 +209,11 @@ class RssSourcesController extends AdminController
  }
  $marks = implode(',', $ids);
 
+ // استجابة فورية للواجهة: بلا إعادة تحميل الصفحة
+ if ($this->wantsJson()) {
+ return $this->bulkJson($db, $action, $ids, $marks);
+ }
+
  switch ($action) {
  case 'delete':
  $db->query("DELETE FROM rss_sources WHERE id IN ({$marks})");
@@ -307,6 +312,17 @@ class RssSourcesController extends AdminController
  $now = (int) ($src['auto_publish'] ?? 0) === 1 ? 0 : 1;
  $db->query('UPDATE rss_sources SET auto_publish = :v WHERE id = :id', array(':v' => $now, ':id' => $cid));
 
+ if ($this->wantsJson()) {
+ return $this->json(array(
+  'ok' => true,
+  'auto_publish' => (bool) $now,
+  'name' => $src['name'],
+  'message' => $now
+  ? 'النشر التلقائي مفعّل لـ«' . $src['name'] . '» — سيظهر خبره في الموقع فور وصوله.'
+  : 'تم إيقاف النشر التلقائي لـ«' . $src['name'] . '» — سيبقى يحتاج موافقتك.',
+ ));
+ }
+
  $this->audit($now ? 'auto-on' : 'auto-off', 'rss_source', $cid, $src, null);
  Session::flash('success', $now
  ? 'النشر التلقائي مفعّل لـ«' . $src['name'] . '» — سيظهر خبره في الموقع فور وصوله.'
@@ -331,6 +347,10 @@ class RssSourcesController extends AdminController
  $db->query('UPDATE rss_sources SET is_favorite = :v WHERE id = :id', array(':v' => $now, ':id' => $cid));
  $this->audit($now ? 'favourite' : 'unfavourite', 'rss_source', $cid, $src, null);
 
+ if ($this->wantsJson()) {
+ return $this->json(array('ok' => true, 'favorite' => (bool) $now, 'name' => $src['name']));
+ }
+
  $back = ($_POST['back'] ?? '') === 'favorites'
   ? 'admin/news-feeds?tab=favorites'
   : 'admin/rss-sources';
@@ -338,6 +358,83 @@ class RssSourcesController extends AdminController
  ? 'أُضيف «' . $src['name'] . '» إلى المفضلة.'
  : 'أُزيل «' . $src['name'] . '» من المفضلة.');
  return $this->redirect($back);
+ }
+
+ /** طلب من الواجهة لا من نموذج كامل */
+ private function wantsJson(): bool
+ {
+  if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+  && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+  return true;
+  }
+  return ($_POST['respond_with'] ?? '') === 'json';
+ }
+
+ /** تنفيذ عملية جماعية وإرجاع JSON (لا إعادة تحميل) */
+ private function bulkJson($db, string $action, array $ids, string $marks)
+ {
+  $n = count($ids);
+  $reply = function ($type, $message) use ($action, $ids) {
+  return $this->json([
+  'ok' => $type === 'success',
+  'type' => $type,
+  'message' => $message,
+  'action' => $action,
+  'ids' => $ids,
+  ]);
+  };
+
+  switch ($action) {
+  case 'delete':
+  $db->query("DELETE FROM rss_sources WHERE id IN ({$marks})");
+  $msg = 'تم حذف ' . $n . ' مصدراً.';
+  break;
+
+  case 'enable':
+  case 'disable':
+  $on = $action === 'enable' ? 1 : 0;
+  $db->query("UPDATE rss_sources SET auto_fetch = {$on} WHERE id IN ({$marks})");
+  $msg = ($on ? 'تم تفعيل' : 'تم تعطيل') . ' ' . $n . ' مصدراً.';
+  break;
+
+  case 'category':
+  $cat = (int) ($_POST['bulk_category_id'] ?? 0);
+  if ($cat <= 0) {
+  return $reply('error', 'اختر القسم أولاً.');
+  }
+  $db->query("UPDATE rss_sources SET category_id = :cat WHERE id IN ({$marks})", [':cat' => $cat]);
+  $msg = 'تم نقل ' . $n . ' مصدراً إلى القسم المحدد.';
+  break;
+
+  case 'check':
+  $db->query("UPDATE rss_sources SET last_checked_at = NULL, fail_count = 0 WHERE id IN ({$marks})");
+  $msg = 'تم وضع ' . $n . ' مصدراً في قائمة الفحص القادمة.';
+  break;
+
+  case 'auto-on':
+  $db->query("UPDATE rss_sources SET auto_publish = 1 WHERE id IN ({$marks})");
+  $msg = 'تم تفعيل النشر التلقائي لـ' . $n . ' مصدراً.';
+  break;
+
+  case 'auto-off':
+  $db->query("UPDATE rss_sources SET auto_publish = 0 WHERE id IN ({$marks})");
+  $msg = 'تم إيقاف النشر التلقائي لـ' . $n . ' مصدراً.';
+  break;
+
+  default:
+  return $reply('error', 'إجراء غير معروف.');
+  }
+
+  $this->audit('bulk', 'rss_source', null, null, ['action' => $action, 'ids' => $ids]);
+  return $reply('success', $msg);
+ }
+
+ /** @param array $payload */
+ private function json(array $payload)
+ {
+  header('Content-Type: application/json; charset=utf-8');
+  echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+  return null;
  }
 
  /**

@@ -81,21 +81,22 @@
   <a class="btn-action-icon btn-action-edit" href="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/edit')) ?>" title="تعديل التصنيف">
   <i class="bi bi-pencil"></i>
   </a>
-  <form method="post" action="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/toggle-visibility')) ?>" class="d-inline">
-  <?= CSRF::field() ?>
-  <button type="submit" class="btn-action-icon <?= $isHidden ? 'btn-action-edit' : 'btn-action-hide' ?>" title="<?= $isHidden ? 'إظهار التصنيف في الموقع' : 'إخفاء التصنيف دون حذفه' ?>">
-  <i class="bi <?= $isHidden ? 'bi-eye' : 'bi-eye-slash' ?>"></i>
-  </button>
-  </form>
-  <form method="post" action="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/delete')) ?>" class="d-inline" onsubmit="return confirm('<?= $count > 0 ? 'التصنيف يحتوي على ' . $count . ' خبر.\nسيتم فصلها عنه (تبقى محفوظة بدون تصنيف) ثم حذف التصنيف.\n' : '' ?>هل تريد حذف هذا التصنيف نهائياً؟')">
-  <?= CSRF::field() ?>
-  <?php if ($count > 0): ?>
-  <input type="hidden" name="detach_articles" value="1">
-  <?php endif; ?>
-  <button type="submit" class="btn-action-icon btn-action-delete" title="حذف التصنيف نهائياً<?= $count > 0 ? ' (مع فصل ' . $count . ' خبر)' : '' ?>">
-  <i class="bi bi-trash3"></i>
-  </button>
-  </form>
+<form method="post" action="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/toggle-visibility')) ?>" class="d-inline">
+ <?= CSRF::field() ?>
+ <button type="submit" class="btn-action-icon <?= $isHidden ? 'btn-action-edit' : 'btn-action-hide' ?>" title="<?= $isHidden ? 'إظهار التصنيف في الموقع' : 'إخفاء التصنيف دون حذفه' ?>">
+ <i class="bi <?= $isHidden ? 'bi-eye' : 'bi-eye-slash' ?>"></i>
+ </button>
+ </form>
+ <form method="post" action="<?= admin_e(app_url('admin/categories/' . $cat['id'] . '/delete')) ?>" class="d-inline"
+ data-ajax-delete="1" data-confirm="<?= $count > 0 ? "سيُحذف التصنيف «{$label}» نهائياً وسيُفصل عنه {$count} خبر (تبقى محفوظة)." : "هل تريد حذف التصنيف «{$label}» نهائياً؟" ?>">
+ <?= CSRF::field() ?>
+ <?php if ($count > 0): ?>
+ <input type="hidden" name="detach_articles" value="1">
+ <?php endif; ?>
+ <button type="submit" class="btn-action-icon btn-action-delete" title="حذف التصنيف نهائياً<?= $count > 0 ? ' (مع فصل ' . $count . ' خبر)' : '' ?>">
+ <i class="bi bi-trash3"></i>
+ </button>
+ </form>
   </div>
   </td>
   </tr>

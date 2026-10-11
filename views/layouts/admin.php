@@ -1273,6 +1273,7 @@ html.admin-dark .btn-outline-info {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?= admin_e(app_url('assets/js/admin-toast.js') . '?v=' . @filemtime(APP_ROOT . '/assets/js/admin-toast.js')) ?>"></script>
+<script src="<?= admin_e(app_url('assets/js/admin-ajax.js') . '?v=' . @filemtime(APP_ROOT . '/assets/js/admin-ajax.js')) ?>"></script>
 <script>
 // Notifications never block the page: a leftover native alert() anywhere in a
 // panel becomes a toast instead of a dialog the admin has to dismiss.
