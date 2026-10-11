@@ -2,6 +2,7 @@
 /**
  * فحص مؤقت: تصدير مخطط قاعدة البيانات الحي (إنشاء فقط، بدون ALTER).
  * يُرجع النص بترميز base64 حتى لا يتلف أثناء النقل.
+ * v2 - force re-upload after the 404 stub.
  */
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/core/Database.php';
