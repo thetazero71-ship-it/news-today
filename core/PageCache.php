@@ -108,17 +108,11 @@ class PageCache
     {
         $uri = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         parse_str((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_QUERY), $q);
-        unset($q['__pc']); // the rebuild ping shares the same cache entry
+        unset($q['__pc']);
         ksort($q);
         $qs = http_build_query($q);
         $key = md5($uri . '?' . $qs . '|v' . self::version());
         return self::dir() . '/page_' . $key . '.html';
-    }
-
-    /** Is this the background refresh of an expired page? */
-    public static function isRebuildRequest(): bool
-    {
-        return isset($_GET['__pc']) && (string) $_GET['__pc'] === '1';
     }
 
     /**
@@ -128,9 +122,6 @@ class PageCache
      */
     public static function serve(): bool
     {
-        if (self::isRebuildRequest()) {
-            return false; // let it through so it refreshes the entry
-        }
         $file = self::path();
         if (!is_file($file)) {
             return false;
@@ -149,11 +140,9 @@ class PageCache
             return false;
         }
 
-        // a queued rebuild keeps visitors on the (slightly older) fast page
-        if ($age > self::TTL) {
-            self::rebuildAsync();
-        }
-
+        // لا إعادة بناء من داخل طلب الزائر: الطلب الذاتي يجمّد العامل الحالي
+        // حتى 8 ثوانٍ ويُنتج 502. بدل ذلك تُخدم الصفحة القديمة الآن وتُبنى
+        // زاحفة عند أول طلب يتجاوز مدة الصلاحية.
         header('X-Page-Cache: ' . ($age <= self::TTL ? 'HIT' : 'STALE'));
         header('X-Page-Cache-Age: ' . $age);
         header('Content-Type: text/html; charset=UTF-8');
@@ -212,38 +201,5 @@ class PageCache
         }
 
         @file_put_contents(self::path(), $html, LOCK_EX);
-    }
-
-    /**
-     * Refreshes an expired page after the visitor already got the answer.
-     * Uses a non-blocking POST so the current request ends immediately.
-     */
-    private static function rebuildAsync(): void
-    {
-        $lock = self::dir() . '/rebuild.lock';
-        $fh = @fopen($lock, 'c');
-        if ($fh && flock($fh, LOCK_EX | LOCK_NB)) {
-            $url = (string) app_url(ltrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/'));
-            parse_str((string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_QUERY), $q);
-            unset($q['__pc']);
-            $qs = http_build_query($q);
-            if ($qs !== '') {
-                $url .= '?' . $qs;
-            }
-            $url .= (strpos($url, '?') === false ? '?' : '&') . '__pc=1';
-            $opts = [
-                'http' => [
-                    'method'  => 'GET',
-                    'header'  => "X-Pagecache-Rebuild: 1\r\n",
-                    'timeout' => 8,
-                    'ignore_errors' => true,
-                ],
-            ];
-            @file_get_contents($url, false, stream_context_create($opts));
-            flock($fh, LOCK_UN);
-        }
-        if ($fh) {
-            @fclose($fh);
-        }
     }
 }

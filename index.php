@@ -975,16 +975,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
 
 // Full-page cache: answering from disk keeps the shared-host worker pool free,
 // which is what causes the intermittent "502 Bad Gateway" under bursts.
-$__pageRebuild = PageCache::isRebuildRequest();
-$__pageCacheable = !$__pageRebuild && PageCache::isCacheableRequest();
+$__pageCacheable = PageCache::isCacheableRequest();
 if ($__pageCacheable && PageCache::serve()) {
-    if (class_exists('TrafficRadar') && !$__pageRebuild) {
+    if (class_exists('TrafficRadar')) {
         TrafficRadar::recordHit();
     }
     return;
 }
 
-if ($__pageCacheable || $__pageRebuild) {
+if ($__pageCacheable) {
     ob_start();
     register_shutdown_function(function () {
         $html = (string) ob_get_contents();

@@ -98,23 +98,17 @@ $served2 = PageCache::serve();
 ob_get_clean();
 t('a different url is a miss', $served2 === false);
 
-echo "\n--- rebuild ping bypasses the cache ---\n";
-request('GET', '/article/round-trip', ['__pc' => '1']);
-t('rebuild request detected', PageCache::isRebuildRequest() === true);
-ob_start();
-$served3 = PageCache::serve();
-ob_get_clean();
-t('rebuild request is never served from cache', $served3 === false);
-
-echo "\n--- the rebuild ping shares the same cache entry ---\n";
-request('GET', '/article/round-trip?__pc=1');
-$p1 = (function () {
-    request('GET', '/article/round-trip');
+echo "\n--- a stale page is served without any rebuild call ---\n";
+request('GET', '/article/stale-check');
+PageCache::store($html);
+$file = (function () {
+    request('GET', '/article/stale-check');
     ob_start();
     PageCache::serve();
     ob_get_clean();
-    return true;
+    return null;
 })();
+t('rebuild mechanism is gone', !method_exists('PageCache', 'isRebuildRequest'));
 
 echo "\n--- nothing dangerous is stored ---\n";
 request('GET', '/article/safety');
@@ -132,6 +126,12 @@ ob_start();
 $errServed = PageCache::serve();
 ob_get_clean();
 t('404 page is not cached', $errServed === false);
+
+echo "\n--- no self-request while serving ---\n";
+$pageCache = (string) file_get_contents(APP_ROOT . '/core/PageCache.php');
+t('no background rebuild inside serve()', strpos($pageCache, 'rebuildAsync') === false);
+t('no self HTTP call from the cache', strpos($pageCache, 'file_get_contents($url') === false && strpos($pageCache, 'stream_context_create') === false);
+t('stale pages are still served (no rebuild stall)', strpos($pageCache, 'STALE') !== false);
 
 echo "\n--- flushing clears everything ---\n";
 request('GET', '/');
