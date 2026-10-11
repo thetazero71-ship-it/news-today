@@ -282,13 +282,20 @@ try {
 
         // ─── معالجة المقالات ──────────────────────────────────
         $publishedInSource = 0;
-        foreach ($feedItems as $itemIndex => $item) {
-            $checkAbortSignal($sourceName);
+foreach ($feedItems as $itemIndex => $item) {
+         $checkAbortSignal($sourceName);
 
-            if ($publishedInSource >= MAX_PER_SOURCE) {
-                logMsg("  ⏸️  وصلنا للحد الأقصى (" . MAX_PER_SOURCE . ") من هذا المصدر");
-                break;
-            }
+         // ترجمة خبر واحد قد تستغرق ثوانٍ، فتحقّق من الميزانية قبل كل عنصر
+         // لا بين المصادر فقط، وإلا طالت الدورة دقائق وتستنزف عامّل PHP.
+         if ((microtime(true) - CRON_START) > CRON_BUDGET_SECONDS) {
+         logMsg("  ⏱️ انتهت الميزانية الزمنية أثناء هذا المصدر — تكمل الدورة القادمة.");
+         break 2;
+         }
+
+         if ($publishedInSource >= MAX_PER_SOURCE) {
+         logMsg("  ⏸️  وصلنا للحد الأقصى (" . MAX_PER_SOURCE . ") من هذا المصدر");
+         break;
+         }
 
             $itemUrl   = trim($item['link'] ?? '');
             $titleEn   = trim($item['title'] ?? '');
@@ -354,18 +361,27 @@ try {
                 $featuredImage = '';
             }
 
-            // ─── الإدراج في قاعدة البيانات ────────────────────
-            try {
-                $db->query("
-                    INSERT INTO articles
-                    (title, title_ar, title_en, slug, excerpt, content, content_ar, content_en,
-                     featured_image, category_id, author_id, status, source_name, source_url,
-                     allow_comments, reading_time_minutes, published_at, created_at)
-                    VALUES
-                    (:title, :title_ar, :title_en, :slug, :excerpt, :content, :content_ar, :content_en,
-                     :featured_image, :category_id, 1, 'published', :source_name, :source_url,
-                     1, :reading_time, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                ", [
+// ─── الإدراج في قاعدة البيانات ────────────────────
+ try {
+ // صاحب المقال: أول مدير نشط. الرقم 1 ليس مضموناً الوجود (حذف أو تغيير)،
+ // وإسناد خبر إلى مستخدم غير موجود يُسقطه عبر المفتاح الأجنبية.
+ $authorId = $db->fetch("SELECT id FROM users WHERE role = 'admin' AND status = 'active' ORDER BY id ASC LIMIT 1");
+ $authorId = (int) ($authorId['id'] ?? 0);
+ if ($authorId <= 0) {
+ $anyUser = $db->fetch("SELECT id FROM users ORDER BY id ASC LIMIT 1");
+ $authorId = (int) ($anyUser['id'] ?? 0);
+ }
+
+ $db->query("
+     INSERT INTO articles
+     (title, title_ar, title_en, slug, excerpt, content, content_ar, content_en,
+      featured_image, category_id, author_id, status, source_name, source_url,
+      allow_comments, reading_time_minutes, published_at, created_at)
+     VALUES
+     (:title, :title_ar, :title_en, :slug, :excerpt, :content, :content_ar, :content_en,
+      :featured_image, :category_id, :author_id, 'published', :source_name, :source_url,
+      1, :reading_time, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    ", [
                     ':title'          => $arabicTitle,
                     ':title_ar'       => $arabicTitle,
                     ':title_en'       => $titleEn,
@@ -374,9 +390,10 @@ try {
                     ':content'        => $arabicContent,
                     ':content_ar'     => $arabicContent,
                     ':content_en'     => $contentEn,
-                    ':featured_image' => $featuredImage,
-                    ':category_id'    => $finalCategoryId,
-                    ':source_name'    => $sourceName,
+':featured_image' => $featuredImage,
+     ':category_id'    => $finalCategoryId,
+     ':author_id'      => $authorId > 0 ? $authorId : null,
+     ':source_name'    => $sourceName,
                     ':source_url'     => $itemUrl,
                     ':reading_time'   => $readingTime,
                 ]);
