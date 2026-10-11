@@ -1,39 +1,13 @@
 <?php
 /**
  * فحص مؤقت: قياس حدود الاستضافة (مهلة الطلب + التزامن).
- * يُحذف فور انتهاء الفحص.
- * v3
+ * v4
  */
-require_once __DIR__ . '/config/database.php';
-
 header('Content-Type: text/plain; charset=utf-8');
 
-$db = (new ReflectionClass('Database'))->getName();
-$pdo = null;
-try {
-    $d = new Database();
-    $pdo = $d->pdo ?? null;
-} catch (Throwable $e) {
-}
-
-$info = [
-    'php'        => PHP_VERSION,
-    'max_exec'   => ini_get('max_execution_time'),
-    'memory'     => ini_get('memory_limit'),
-    'loaded_cfg' => php_ini_loaded_file(),
-    'disable_fn' => ini_get('disable_functions'),
-    'sapi'       => PHP_SAPI,
-];
-
-echo "== info ==\n";
-foreach ($info as $k => $v) {
-    echo "$k: $v\n";
-}
-
 if (isset($_GET['sleep'])) {
-    $seconds = max(1, min(120, (int) $_GET['sleep']));
+    $seconds = max(1, min(150, (int) $_GET['sleep']));
     $started = microtime(true);
-    // نبضة心跳 كل 5 ثوانٍ حتى لا تبتلع الواجهة الاتصال
     for ($i = 0; $i < $seconds; $i++) {
         sleep(1);
         if (connection_aborted()) {
@@ -45,13 +19,14 @@ if (isset($_GET['sleep'])) {
     exit;
 }
 
-if (isset($_GET['db'])) {
-    $t = microtime(true);
-    try {
-        $pdo->query('SELECT 1');
-        echo "db ok in " . round((microtime(true) - $t) * 1000) . "ms\n";
-    } catch (Throwable $e) {
-        echo "db error: " . $e->getMessage() . "\n";
-    }
-    exit;
-}
+echo "php: " . PHP_VERSION . "\n";
+echo "sapi: " . PHP_SAPI . "\n";
+echo "max_execution_time: " . ini_get('max_execution_time') . "\n";
+echo "max_input_time: " . ini_get('max_input_time') . "\n";
+echo "memory_limit: " . ini_get('memory_limit') . "\n";
+echo "ini file: " . php_ini_loaded_file() . "\n";
+echo "disable_functions: " . ini_get('disable_functions') . "\n";
+echo "opcache: " . (function_exists('opcache_get_status') && @opcache_get_status() ? 'on' : 'off/none') . "\n";
+echo "output_buffering: " . ini_get('output_buffering') . "\n";
+echo "server load avg: " . (function_exists('sys_getloadavg') ? implode(', ', sys_getloadavg()) : 'n/a') . "\n";
+echo "disk_free_hdd: " . (function_exists('disk_free_space') ? round(@disk_free_space(APP_ROOT ?? __DIR__) / 1048576) . ' MB' : 'n/a') . "\n";
