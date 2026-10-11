@@ -426,7 +426,39 @@ try {
         ':by'     => $triggeredBy,
     ]);
 } catch (Throwable $e) {
-    logMsg("⚠️ لم يمكن تسجيل السجل: " . $e->getMessage());
+    // سجل واحد سابق يمكن أن يفسد الحفظ (اتصال مقطوع مثلاً) — لا نُسقط النتيجة
+    logMsg("⚠️ فشل حفظ السجل، تُعاد المحاولة: " . $e->getMessage());
+    try {
+        $db->query("
+            INSERT INTO cron_logs
+            (job_name, status, message, articles_published, articles_skipped, articles_failed, sources_processed, execution_time_ms, triggered_by)
+            VALUES ('rss_auto_publish', :status, :msg, :pub, :skip, :fail, :src, :ms, :by)
+        ", [
+            ':status' => $stats['status'],
+            ':msg'    => $summary,
+            ':pub'    => $stats['articles_published'],
+            ':skip'   => $stats['articles_skipped'],
+            ':fail'   => $stats['articles_failed'],
+            ':src'    => $stats['sources_processed'],
+            ':ms'     => $elapsedMs,
+            ':by'     => $triggeredBy,
+        ]);
+        logMsg("✅ تم حفظ السجل بعد إعادة المحاولة");
+    } catch (Throwable $e2) {
+        // الملاذ الأخير: نكتب السجل على القرص حتى لا يضيع
+        @file_put_contents($root . '/storage/cron_last_run.json', json_encode([
+            'status'      => $stats['status'],
+            'published'   => $stats['articles_published'],
+            'skipped'     => $stats['articles_skipped'],
+            'failed'      => $stats['articles_failed'],
+            'sources'     => $stats['sources_processed'],
+            'execution_ms'=> $elapsedMs,
+            'triggered_by'=> $triggeredBy,
+            'log'         => $log,
+            'at'          => date('c'),
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        logMsg("⚠️ تعذّر الحفظ في قاعدة البيانات — كُتب السجل على القرص");
+    }
 }
 
 // ─── 5. أرشفة الأخبار المتقادمة تلقائياً ──────────────────────

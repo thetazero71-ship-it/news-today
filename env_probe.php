@@ -33,3 +33,13 @@ foreach ((array) glob($logDir . '/*.log') as $lf) {
   $tail = array_slice(file($lf, FILE_IGNORE_NEW_LINES) ?: [], -6);
   foreach ($tail as $line) { echo "    " . mb_substr($line, 0, 190) . "\n"; }
 }
+
+echo "\n== سجل آخر دورة (من القرص) ==\n";
+$lastRun = __DIR__ . '/storage/cron_last_run.json';
+if (is_file($lastRun)) {
+  $d = json_decode((string) file_get_contents($lastRun), true);
+  echo '  published=' . ($d['published'] ?? '?') . ' failed=' . ($d['failed'] ?? '?') . ' at=' . ($d['at'] ?? '?') . "\n";
+  foreach ((array) ($d['log'] ?? []) as $line) {
+    if (strpos($line, '❌') !== false || strpos($line, '⚠️') !== false) { echo '    ' . mb_substr($line, 0, 200) . "\n"; }
+  }
+} else { echo "  لا يوجد\n"; }
