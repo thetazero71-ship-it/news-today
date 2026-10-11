@@ -1,0 +1,54 @@
+# ط¬ظ„ط¨ ط§ظ„ط£ط®ط¨ط§ط± طھظ„ظ‚ط§ط¦ظٹط§ظ‹ ظ…ظ† ط®ظ„ط§طµط§طھ RSS
+#
+# ط§ظ„ط§ط³طھط¶ط§ظپط© ط§ظ„ظ…ط¬طھط±ظƒط© ظ„ط§ طھط¯ط¹ظ… CronطŒ ظ„ط°ظ„ظƒ ظٹطھظˆظ„ظ‘ظ‰ GitHub Actions ط¥ط·ظ„ط§ظ‚
+# ط§ظ„ط¯ظˆط±ط© ظƒظ„ 30 ط¯ظ‚ظٹظ‚ط© ط¹ط¨ط± ط±ط§ط¨ط· ظ…ط­ظ…ظٹظ‘ ط¨ظ…ظپطھط§ط­ ط³ط±ظ‘ظٹ.
+#
+# ظ…ظ„ط§ط­ط¸ط©: ظƒظ„ ط¯ظˆط±ط© طھط¹ط§ظ„ط¬ ط¹ط¯ط¯ط§ظ‹ ظ…ط­ط¯ظˆط¯ط§ظ‹ ظ…ظ† ط§ظ„ظ…طµط§ط¯ط± (ط§ظ„ط£ظ‚ط¯ظ… ط¬ظ„ط¨ط§ظ‹ ط£ظˆظ„ط§ظ‹)طŒ
+# ظپظ…ط¹ 145 ظ…طµط¯ط±ط§ظ‹ ظٹظƒطھظ…ظ„ الدَّوران ط®ظ„ط§ظ„ ط³ط§ط¹ط§طھ ط¯ظˆظ† ط¥ط±ظ‡ط§ظ‚ ط§ظ„ط§ط³طھط¶ط§ظپط©.
+name: Auto-fetch news
+
+on:
+  schedule:
+    # every 30 minutes
+    - cron: '13,43 * * * *'
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: 'Source ids separated by commas (empty = automatic selection)'
+        required: false
+        type: string
+
+concurrency:
+  group: news-auto-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    name: Fetch RSS feeds
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run one fetch cycle
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SOURCE_IDS: ${{ github.event.inputs.sources }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SITE_URL}" ] || [ -z "${CRON_SECRET}" ]; then
+            echo "SITE_URL / CRON_SECRET secret is missing - skipping"
+            exit 0
+          fi
+
+          url="${SITE_URL%/}/cron/rss_auto_publish.php?secret=${CRON_SECRET}&max_sources=12"
+          if [ -n "${SOURCE_IDS:-}" ]; then
+            url="${url}&sources=${SOURCE_IDS}"
+          fi
+
+          echo "GET ${url%%secret=*}secret=***"
+          code=$(curl -sS -o /tmp/fetch.log -w '%{http_code}' --max-time 120 "$url" || echo 000)
+          echo "HTTP ${code}"
+          tail -n 25 /tmp/fetch.log || true
+
+          if [ "$code" != "200" ]; then
+            echo "::warning::fetch cycle returned HTTP ${code}"
+          fi

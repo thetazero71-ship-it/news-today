@@ -103,19 +103,16 @@ try {
 
     // ─── فحص ما إذا تم تحديد مصادر معينة للتشغيل ───────────────────
     $filterSourceIds = [];
-    if (!empty($_GET['sources'])) {
-        $raw = trim((string)$_GET['sources']);
-        if ($raw !== 'all' && !empty($raw)) {
-            $filterSourceIds = array_filter(array_map('intval', explode(',', $raw)));
+    $maxSources = 0;
+    foreach (array_merge($_GET, ($argv && is_array($argv)) ? $argv : array()) as $key => $value) {
+        $key = is_int($key) ? (string) $value : $key;
+        if (strpos($key, 'max_sources') === 0) {
+            $maxSources = max(1, (int) substr($key, strlen('max_sources')));
         }
-    }
-    if (empty($filterSourceIds) && !empty($argv) && is_array($argv)) {
-        foreach ($argv as $arg) {
-            if (str_starts_with($arg, '--sources=')) {
-                $raw = substr($arg, 10);
-                if ($raw !== 'all' && !empty($raw)) {
-                    $filterSourceIds = array_filter(array_map('intval', explode(',', $raw)));
-                }
+        if (strpos($key, 'sources') === 0) {
+            $raw = trim((string) $value);
+            if ($raw !== 'all' && $raw !== '') {
+                $filterSourceIds = array_filter(array_map('intval', explode(',', $raw)));
             }
         }
     }
@@ -134,8 +131,14 @@ try {
         $sources = $db->fetchAll("SELECT * FROM rss_sources WHERE id IN ($cleanIds) ORDER BY ISNULL(last_fetched_at) DESC, last_fetched_at ASC");
         logMsg("\n🎯 تم تحديد مصادر مخصصة للدورة: " . count($sources) . " مصدر");
     } else {
-        $sources = $db->fetchAll("SELECT * FROM rss_sources ORDER BY ISNULL(last_fetched_at) DESC, last_fetched_at ASC");
-        logMsg("\n📡 مصادر RSS المتاحة: " . count($sources));
+        // الأقدم جلباً أولاً: هكذا تكمل كل المصادر على دفعات دون تكرار
+        $sources = $db->fetchAll("SELECT * FROM rss_sources ORDER BY ISNULL(last_fetched_at) DESC, last_fetched_at ASC, id ASC");
+        if ($maxSources > 0 && count($sources) > $maxSources) {
+            $sources = array_slice($sources, 0, $maxSources);
+            logMsg("\n📦 دورة مجدولة: " . $maxSources . ' مصدر من ' . count($sources) . ' (الأقدم جلباً أولاً)');
+        } else {
+            logMsg("\n📡 مصادر RSS المتاحة: " . count($sources));
+        }
     }
 
     // ─── تحميل التصنيفات الصحيحة مسبقاً ──────────────────────────
