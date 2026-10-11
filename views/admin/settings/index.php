@@ -685,7 +685,7 @@ function uploadBrandAssetInstant(key, inputElement) {
  } else {
  labelBtn.className = 'btn btn-sm btn-danger mb-0 w-100 text-truncate';
  labelBtn.innerHTML = 'خطأ: ' + (data.message || 'فشل الرفع');
- alert(data.message || 'حدث خطأ أثناء رفع الصورة');
+ adminToast(data.message || 'حدث خطأ أثناء رفع الصورة', 'error');
  }
  })
  .catch(err => {
@@ -850,11 +850,11 @@ document.addEventListener('DOMContentLoaded', () => {
  btn.innerHTML = `<span class="refresh-spinner spinner-border spinner-border-sm me-1 d-none"></span><i class="bi bi-arrow-repeat"></i> فحص النماذج المباشرة`;
  }, 3000);
  } else {
- alert('تعذر جلب النماذج الحية: تحقق من صحة المفتاح ورابط المزود.');
+ adminToast('تعذر جلب النماذج الحية: تحقق من صحة المفتاح ورابط المزود.', 'error');
  }
  } catch (e) {
  console.error('Fetch models error:', e);
- alert('حدث خطأ أثناء فحص النماذج المباشرة.');
+ adminToast('حدث خطأ أثناء فحص النماذج المباشرة.', 'error');
  } finally {
  btn.disabled = false;
  if (spinner) spinner.classList.add('d-none');

@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function() {
  if (e.target.classList.contains('btn-remove-option')) {
  const rows = container.querySelectorAll('.option-row');
  if (rows.length <= 2) {
- alert('يجب الإبقاء على خيارين على الأقل للاستطلاع.');
+ adminToast('يجب الإبقاء على خيارين على الأقل للاستطلاع.', 'error');
  return;
  }
  e.target.closest('.option-row').remove();

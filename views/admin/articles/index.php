@@ -239,12 +239,12 @@ function quickChangeCategory(articleId, categoryId, clickedEl) {
  setTimeout(() => badgeBtn.style.transform = 'scale(1)', 300);
  } else {
  badgeBtn.innerHTML = prevHtml;
- alert(data.error || 'حدث خطأ أثناء تحديث التصنيف.');
+ adminToast(data.error || 'حدث خطأ أثناء تحديث التصنيف.', 'error');
  }
  })
  .catch(() => {
  badgeBtn.innerHTML = prevHtml;
- alert('حدث خطأ في الاتصال بالخادم.');
+ adminToast('حدث خطأ في الاتصال بالخادم.', 'error');
  });
 }
 </script>

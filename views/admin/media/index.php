@@ -74,7 +74,7 @@
  <a target="_blank" href="<?= admin_e(app_url($item['file_path'])) ?>" class="btn btn-outline-dark" title="عرض ومعاينة">
  <i class="bi bi-eye"></i>
  </a>
- <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText('<?= admin_e(app_url($item['file_path'])) ?>');alert('تم نسخ رابط الملف بنجاح!');" title="نسخ الرابط">
+ <button type="button" class="btn btn-outline-secondary" onclick="navigator.clipboard.writeText('<?= admin_e(app_url($item['file_path'])) ?>');adminToast('تم نسخ رابط الملف بنجاح!', 'success');" title="نسخ الرابط">
  <i class="bi bi-clipboard"></i>
  </button>
  <form method="post" action="<?= admin_e(app_url('admin/media/' . $item['id'] . '/delete')) ?>" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا الملف نهائياً؟')">

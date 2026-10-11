@@ -87,7 +87,7 @@ $title = 'تفاصيل سجل الترجمة #' . $log['id'];
  <div class="mt-3">
  <div class="d-flex justify-content-between align-items-center mb-2">
  <label class="form-label text-muted small fw-bold mb-0">استجابة الخطأ الخام (Raw Error / Payload):</label>
- <button type="button" class="btn btn-xs btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('rawErrorBox').innerText); alert('تم نسخ الاستجابة الخام!');">
+ <button type="button" class="btn btn-xs btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('rawErrorBox').innerText); adminToast('تم نسخ الاستجابة الخام!', 'success');">
  <i class="bi bi-clipboard me-1"></i> نسخ
  </button>
  </div>
@@ -100,7 +100,7 @@ $title = 'تفاصيل سجل الترجمة #' . $log['id'];
  <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
  <div class="d-flex justify-content-between align-items-center mb-2">
  <h5 class="fw-bold mb-0 text-success"><i class="bi bi-check2-square me-2"></i>معاينة الاستجابة (Response Preview)</h5>
- <button type="button" class="btn btn-xs btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('previewBox').innerText); alert('تم نسخ المعاينة!');">
+ <button type="button" class="btn btn-xs btn-outline-secondary" onclick="navigator.clipboard.writeText(document.getElementById('previewBox').innerText); adminToast('تم نسخ المعاينة!', 'success');">
  <i class="bi bi-clipboard me-1"></i> نسخ
  </button>
  </div>

@@ -753,12 +753,12 @@ function quickChangeCategory(articleId, categoryId, clickedEl) {
  setTimeout(() => badgeBtn.style.transform = 'scale(1)', 300);
  } else {
  badgeBtn.innerHTML = prevHtml;
- alert(data.error || 'حدث خطأ أثناء تحديث التصنيف.');
+ adminToast(data.error || 'حدث خطأ أثناء تحديث التصنيف.', 'error');
  }
  })
  .catch(() => {
  badgeBtn.innerHTML = prevHtml;
- alert('حدث خطأ في الاتصال بالخادم.');
+ adminToast('حدث خطأ في الاتصال بالخادم.', 'error');
  });
 }
 
@@ -846,7 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
  e.preventDefault();
  const checkedBoxes = formCustomSources.querySelectorAll('.modal-source-cb:checked');
  if (checkedBoxes.length === 0) {
- alert('يرجى تحديد مصدر واحد على الأقل للبدء.');
+ adminToast('يرجى تحديد مصدر واحد على الأقل للبدء.', 'error');
  return;
  }
 
@@ -940,7 +940,7 @@ function triggerSingleSourceFetch(sourceId, sourceName, btnEl) {
  .catch(() => {
  btnEl.disabled = false;
  btnEl.innerHTML = prevHtml;
- alert('حدث خطأ أثناء محاولة بدء جلب المصدر.');
+ adminToast('حدث خطأ أثناء محاولة بدء جلب المصدر.', 'error');
  });
 }
 

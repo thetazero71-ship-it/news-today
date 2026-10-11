@@ -488,7 +488,7 @@ $currentUser = Auth::user();
                 if (data.success && data.chat) {
                     appendChatMessage(data.chat);
                 } else if (data.message) {
-                    alert(data.message);
+                    adminToast(data.message, 'info');
                 }
             })
             .catch(() => {});

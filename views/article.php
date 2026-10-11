@@ -399,7 +399,7 @@ require_once APP_ROOT . '/views/partials/header.php';
                 <?php endif; ?>
                 <a class="action-btn" target="_blank" rel="noopener" href="https://t.me/share/url?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على تليجرام"><?= ui_icon('link', '', 16) ?></a>
                 <a class="action-btn" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=<?= rawurlencode($shareUrl) ?>" title="مشاركة على لينكد إن" style="font-weight:800;font-size:0.85rem">in</a>
-                <button class="action-btn" type="button" onclick="navigator.clipboard.writeText('<?= article_e($shareUrl) ?>').then(()=>{ if(window.showToast) showToast('تم نسخ رابط المقال بنجاح!','✔️'); else alert('تم نسخ رابط المقال بنجاح!'); })" title="نسخ رابط المقال"><?= ui_icon('link', '', 16) ?></button>
+                <button class="action-btn" type="button" onclick="navigator.clipboard.writeText('<?= article_e($shareUrl) ?>').then(()=>{ if(window.showToast) showToast('تم نسخ رابط المقال بنجاح!','✔️'); else adminToast('تم نسخ رابط المقال بنجاح!', 'success'); })" title="نسخ رابط المقال"><?= ui_icon('link', '', 16) ?></button>
             </div>
         </div>
 

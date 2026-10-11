@@ -1272,6 +1272,14 @@ html.admin-dark .btn-outline-info {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="<?= admin_e(app_url('assets/js/admin-toast.js') . '?v=' . @filemtime(APP_ROOT . '/assets/js/admin-toast.js')) ?>"></script>
+<script>
+// Notifications never block the page: a leftover native alert() anywhere in a
+// panel becomes a toast instead of a dialog the admin has to dismiss.
+window.alert = function (message) {
+ if (window.adminToast) window.adminToast(message, 'info', 5000);
+};
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
  // 1. Maintain and restore sidebar scroll position instantly without any jump or animation
@@ -1611,11 +1619,6 @@ window.showAppModal = function(title, message, type = 'info', details = null, cu
  const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
  modalInstance.show();
  }
-};
-
-// Safe Alert Override: Transform any window.alert() into a clean, modern Bootstrap modal
-window.alert = function(msg) {
- window.showAppModal('تنبيه', String(msg), 'info');
 };
 </script>
 

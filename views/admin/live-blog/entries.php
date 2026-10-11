@@ -545,12 +545,12 @@ document.addEventListener('DOMContentLoaded', function() {
  if (data.success && callback) {
  callback(data.url, data.full_url, 'image');
  } else {
- alert(data.message || 'فشل رفع الصورة الملصقة.');
+ adminToast(data.message || 'فشل رفع الصورة الملصقة.', 'error');
  }
  })
  .catch(() => {
  showMainProgress(false);
- alert('حدث خطأ أثناء رفع الصورة.');
+ adminToast('حدث خطأ أثناء رفع الصورة.', 'error');
  });
  }
 
@@ -570,12 +570,12 @@ document.addEventListener('DOMContentLoaded', function() {
  if (data.success && callback) {
  callback(data.url, data.full_url, data.type);
  } else {
- alert(data.message || 'فشل رفع الملف.');
+ adminToast(data.message || 'فشل رفع الملف.', 'error');
  }
  })
  .catch(() => {
  showMainProgress(false);
- alert('حدث خطأ أثناء رفع الملف.');
+ adminToast('حدث خطأ أثناء رفع الملف.', 'error');
  });
  }
 
@@ -649,12 +649,12 @@ document.addEventListener('DOMContentLoaded', function() {
  if (card) card.classList.remove('border-primary', 'border-2', 'is-pinned-card');
  }
  } else {
- alert(data.message || 'حدث خطأ أثناء تغيير التثبيت.');
+ adminToast(data.message || 'حدث خطأ أثناء تغيير التثبيت.', 'error');
  }
  })
  .catch(() => {
  this.disabled = false;
- alert('فشل الاتصال بالخادم.');
+ adminToast('فشل الاتصال بالخادم.', 'error');
  });
  });
  });
@@ -708,12 +708,12 @@ document.addEventListener('DOMContentLoaded', function() {
  }
  } else {
  this.disabled = false;
- alert(data.message || 'حدث خطأ أثناء الحذف.');
+ adminToast(data.message || 'حدث خطأ أثناء الحذف.', 'error');
  }
  })
  .catch(() => {
  this.disabled = false;
- alert('فشل الاتصال بالخادم.');
+ adminToast('فشل الاتصال بالخادم.', 'error');
  });
  });
  });
@@ -749,12 +749,12 @@ document.addEventListener('DOMContentLoaded', function() {
  }
  } else {
  this.disabled = false;
- alert(data.message || 'حدث خطأ أثناء حذف الرسالة.');
+ adminToast(data.message || 'حدث خطأ أثناء حذف الرسالة.', 'error');
  }
  })
  .catch(() => {
  this.disabled = false;
- alert('فشل الاتصال بالخادم.');
+ adminToast('فشل الاتصال بالخادم.', 'error');
  });
  });
  });

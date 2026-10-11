@@ -439,7 +439,7 @@ function deleteStep(btn) {
  const card = btn.closest('.step-card');
  const container = document.getElementById('stepsContainer');
  if (container.querySelectorAll('.step-card').length <= 1) {
- alert('يجب أن يحتوي الشرح على خطوة واحدة على الأقل.');
+ adminToast('يجب أن يحتوي الشرح على خطوة واحدة على الأقل.', 'error');
  return;
  }
  if (confirm('هل أنت متأكد من حذف هذه الخطوة؟')) {
@@ -542,7 +542,7 @@ function handleStepDrop(e, dropzone) {
  const card = dropzone.closest('.step-card');
  uploadBlobToCard(file, card);
  } else {
- alert('يرجى إفلات ملف صورة صالح (PNG, JPG, WEBP, GIF, SVG).');
+ adminToast('يرجى إفلات ملف صورة صالح (PNG, JPG, WEBP, GIF, SVG).', 'info');
  }
  }
 }
@@ -596,13 +596,13 @@ function uploadBlobToCard(fileBlob, card) {
  showToast('تم رفع ولصق الصورة بنجاح! ', '');
  }
  } else {
- alert(data.message || 'فشل رفع الصورة.');
+ adminToast(data.message || 'فشل رفع الصورة.', 'error');
  updateStepImgPreview(urlInput);
  }
  })
  .catch(err => {
  console.error(err);
- alert('حدث خطأ أثناء الاتصال بالخادم لرفع الصورة.');
+ adminToast('حدث خطأ أثناء الاتصال بالخادم لرفع الصورة.', 'error');
  updateStepImgPreview(urlInput);
  })
  .finally(() => {

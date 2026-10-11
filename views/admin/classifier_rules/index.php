@@ -406,10 +406,10 @@ function saveSourceRuleAjax(sourceName, changedEl) {
  }, 1500);
  }
  } else {
- alert(data.error || 'تعذر حفظ إعدادات المصدر.');
+ adminToast(data.error || 'تعذر حفظ إعدادات المصدر.', 'error');
  }
  })
- .catch(() => alert('حدث خطأ في الاتصال بالخادم.'));
+ .catch(() => adminToast('حدث خطأ في الاتصال بالخادم.', 'error');
 }
 
 function openAddModal(categorySlug) {
@@ -444,9 +444,9 @@ function deleteKeyword(categorySlug, keyword, btnElement) {
  setTimeout(() => tag.remove(), 200);
  }
  } else {
- alert('تعذر حذف المصطلح.');
+ adminToast('تعذر حذف المصطلح.', 'error');
  }
  })
- .catch(() => alert('حدث خطأ في الاتصال بالخادم.'));
+ .catch(() => adminToast('حدث خطأ في الاتصال بالخادم.', 'error');
 }
 </script>

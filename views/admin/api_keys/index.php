@@ -25,7 +25,7 @@
  </div>
  <div class="input-group mt-3">
  <input type="text" id="newTokenInput" class="form-control form-control-lg font-monospace bg-white fw-bold text-primary" value="<?= htmlspecialchars($newToken) ?>" readonly>
- <button class="btn btn-dark px-4 fw-bold" type="button" onclick="navigator.clipboard.writeText(document.getElementById('newTokenInput').value); alert('تم نسخ المفتاح بنجاح!');">
+ <button class="btn btn-dark px-4 fw-bold" type="button" onclick="navigator.clipboard.writeText(document.getElementById('newTokenInput').value); adminToast('تم نسخ المفتاح بنجاح!', 'success');">
  <i class="bi bi-clipboard me-1"></i> نسخ المفتاح
  </button>
  </div>
@@ -224,7 +224,7 @@
  <label class="form-label small fw-bold">الرمز السري الكامل (Secret Token):</label>
  <div class="input-group" dir="ltr">
  <input type="text" id="tokenField_<?= $k['id'] ?>" class="form-control font-monospace bg-light" value="<?= admin_e($k['secret_token']) ?>" readonly>
- <button class="btn btn-primary fw-bold" type="button" onclick="navigator.clipboard.writeText(document.getElementById('tokenField_<?= $k['id'] ?>').value); alert('تم نسخ الرمز السري بنجاح!');">
+ <button class="btn btn-primary fw-bold" type="button" onclick="navigator.clipboard.writeText(document.getElementById('tokenField_<?= $k['id'] ?>').value); adminToast('تم نسخ الرمز السري بنجاح!', 'success');">
  <i class="bi bi-clipboard me-1"></i> نسخ
  </button>
  </div>
