@@ -363,14 +363,24 @@ foreach ($feedItems as $itemIndex => $item) {
 
 // ─── الإدراج في قاعدة البيانات ────────────────────
  try {
- // صاحب المقال: أول مدير نشط. الرقم 1 ليس مضموناً الوجود (حذف أو تغيير)،
- // وإسناد خبر إلى مستخدم غير موجود يُسقطه عبر المفتاح الأجنبية.
- $authorId = $db->fetch("SELECT id FROM users WHERE role = 'admin' AND status = 'active' ORDER BY id ASC LIMIT 1");
- $authorId = (int) ($authorId['id'] ?? 0);
- if ($authorId <= 0) {
- $anyUser = $db->fetch("SELECT id FROM users ORDER BY id ASC LIMIT 1");
- $authorId = (int) ($anyUser['id'] ?? 0);
- }
+// صاحب المقال: أول مدير نشط. الرقم 1 ليس مضموناً الوجود (حذف أو تغيير)،
+// وإسناد خبر إلى مستخدم غير موجود يُسقطه عبر المفتاح الأجنبية.
+// (الدور في جدول roles والربط عبر role_id)
+$authorId = $db->fetch(
+    "SELECT u.id FROM users u
+     LEFT JOIN roles r ON r.id = u.role_id
+     WHERE r.name = 'admin'
+     ORDER BY u.id ASC LIMIT 1"
+);
+$authorId = (int) ($authorId['id'] ?? 0);
+if ($authorId <= 0) {
+    $anyUser = $db->fetch("SELECT id FROM users WHERE status = 'active' ORDER BY id ASC LIMIT 1");
+    $authorId = (int) ($anyUser['id'] ?? 0);
+}
+if ($authorId <= 0) {
+    $anyUser = $db->fetch("SELECT id FROM users ORDER BY id ASC LIMIT 1");
+    $authorId = (int) ($anyUser['id'] ?? 0);
+}
 
  $db->query("
      INSERT INTO articles
