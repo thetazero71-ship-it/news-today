@@ -34,6 +34,47 @@ class FeedFetcher
         'feeds2.feedburner.com',
     ];
 
+    /**
+     * خدمات وسيطة تولّد الخلاصة نيابة عن الموقع. الرابط يعمل، لكنه يتوقف
+     * متى انتهت الفترة المجانية للخدمة — على خلاف خلاصة الموقع الأصلي.
+     */
+    private const THIRD_PARTY_HOSTS = [
+        'rss.app'        => 'الفترة المجانية انتهت وتُرجع خطأ 402',
+        'feedburner.com' => 'وسيط بخدمة مجانية قد تتوقف',
+        'feedproxy.google.com' => 'خدمة ميتة تماماً',
+        'feedly.com'     => 'وسيط يتطلب اشتراكاً',
+        'feedrabbit.com' => 'وسيط بحد يومي للأغذية المجانية',
+        'rss2json.com'   => 'وسيط يوقف الخدمة المجانية',
+        'rsshub.app'     => 'وسيط مجتمعي قد يتوقف',
+        'inoreader.com'  => 'وسيط بحد استخدام',
+        'blogtrottr.com' => 'وسيط يؤخر التحديث',
+        'rssing.com'     => 'وسيط يؤخر التحديث',
+        'morss.com'      => 'وسيط بحد استخدام',
+    ];
+
+    /**
+     * هل رابط الخلاصة يمرّ عبر خدمة وسيطة؟
+     *
+     * @return array{host:string,warning:string}|null
+     */
+    public static function thirdPartyNotice(string $url): ?array
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+        if ($host === '') {
+            return null;
+        }
+        foreach (self::THIRD_PARTY_HOSTS as $needle => $note) {
+            if ($host === $needle || str_ends_with($host, '.' . $needle)) {
+                return [
+                    'host'    => $host,
+                    'warning' => 'هذا الرابط يمرّ عبر «' . $needle . '» — خدمة خارجية ' . $note
+                        . '. الأفضل استخدام خلاصة الموقع الأصلية مباشرةً إن كانت متوفرة.',
+                ];
+            }
+        }
+        return null;
+    }
+
     private const MAX_RETRIES_PER_UA = 2;
 
     /** @var string|null آخر رسالة خطأ مفصّلة */

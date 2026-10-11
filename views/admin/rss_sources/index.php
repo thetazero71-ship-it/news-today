@@ -195,11 +195,20 @@ return date('Y-m-d', $ts);
  <td>
  <strong class="text-dark d-block"><?= admin_e($s['name']) ?></strong>
  </td>
- <td>
- <code class="small text-primary font-monospace text-truncate d-inline-block" style="max-width:300px" title="<?= admin_e($s['url']) ?>">
- <?= admin_e($s['url']) ?>
- </code>
- </td>
+<td>
+<code class="small text-primary font-monospace text-truncate d-inline-block" style="max-width:300px" title="<?= admin_e($s['url']) ?>">
+<?= admin_e($s['url']) ?>
+</code>
+<?php
+$thirdParty = FeedFetcher::thirdPartyNotice((string) $s['url']);
+if ($thirdParty):
+?>
+<span class="badge bg-warning-subtle text-warning border border-warning-subtle d-block mt-1" style="width:fit-content"
+title="<?= admin_e($thirdParty['warning']) ?>">
+<i class="bi bi-exclamation-triangle-fill me-1"></i>خلاصة عبر خدمة خارجية
+</span>
+<?php endif; ?>
+</td>
  <td>
  <span class="badge bg-light text-dark border">
  <?= admin_e($s['category_name'] ?: 'عام') ?>

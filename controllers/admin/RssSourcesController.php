@@ -107,6 +107,7 @@ class RssSourcesController extends AdminController
 
  $id = $db->lastInsertId();
  $this->audit('create', 'rss_source', $id, null, $data);
+ Session::flash('notice', self::thirdPartyWarning($url));
  Session::flash('success', "تمت إضافة المصدر التقني \"{$name}\" بنجاح.");
  return $this->redirect('admin/rss-sources');
  }
@@ -234,6 +235,14 @@ class RssSourcesController extends AdminController
 
  $this->audit('bulk', 'rss_source', null, null, ['action' => $action, 'ids' => $ids]);
  return $this->redirect('admin/rss-sources');
+ }
+
+ /** @return string|null warning when the feed is served by a third party */
+ private static function thirdPartyWarning(string $url): ?string
+ {
+ require_once dirname(__DIR__, 2) . '/core/FeedFetcher.php';
+ $notice = FeedFetcher::thirdPartyNotice($url);
+ return $notice ? $notice['warning'] : null;
  }
 
  /**

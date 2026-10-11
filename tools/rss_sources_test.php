@@ -268,5 +268,37 @@ t('bulk route registered', strpos($routes, '/admin/rss-sources/bulk') !== false 
 $agg = (string) file_get_contents(APP_ROOT . '/controllers/admin/AggregatorController.php');
 t('quick add also blocks duplicates', strpos($agg, 'findExistingSource') !== false);
 
+echo "\n--- third-party feed wrappers are flagged ---\n";
+require_once APP_ROOT . '/core/FeedFetcher.php';
+
+$tps = [
+    ['https://rss.app/feeds/otFEX3xg7hdZae2a.xml', true],
+    ['http://rss.app/feeds/abc.xml', true],
+    ['https://feeds.feedburner.com/Example', true],
+    ['https://morss.com/feed/https://example.com', true],
+    ['https://techcrunch.com/feed/', false],
+    ['https://www.alarabiya.net/rss.xml', false],
+    ['https://arabic.site.com/news?format=rss', false],
+];
+foreach ($tps as $c) {
+    $notice = FeedFetcher::thirdPartyNotice($c[0]);
+    t(($c[1] ? 'flagged  : ' : 'clean    : ') . $c[0], ($notice !== null) === $c[1]);
+}
+$note = FeedFetcher::thirdPartyNotice('https://rss.app/feeds/otFEX3xg7hdZae2a.xml');
+t('the warning explains the risk', $note !== null && strpos($note['warning'], 'خارجية') !== false);
+t('a subdomain of rss.app is caught', FeedFetcher::thirdPartyNotice('https://eu.rss.app/feeds/x.xml') !== null);
+t('a lookalike domain is not flagged', FeedFetcher::thirdPartyNotice('https://rss.app.evil.com/feed') === null);
+
+$_POST = ['name' => 'Via rss.app', 'url' => 'https://rss.app/feeds/otFEX3xg7hdZae2a.xml'];
+Database::$instance = new FakeDb(array());
+$ctrl->store();
+$f = Session::last();
+t('adding a third-party feed is allowed but warned', stripos(Database::$instance->text(), 'INSERT') !== false && !empty($f['notice']));
+
+echo "\n--- the admin page shows the badge ---\n";
+$view = (string) file_get_contents(APP_ROOT . '/views/admin/rss_sources/index.php');
+t('third-party badge rendered in the row', strpos($view, 'thirdPartyNotice') !== false);
+t('badge explains itself in a tooltip', strpos($view, 'خلاصة عبر خدمة خارجية') !== false);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);
