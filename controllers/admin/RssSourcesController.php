@@ -6,6 +6,7 @@ class RssSourcesController extends AdminController
  {
  $this->guardPermission('sources.manage');
  $db = new Database();
+ $this->ensureColumns($db);
 
  $q = trim((string) ($_GET['q'] ?? ''));
  $catId = (int) ($_GET['category_id'] ?? 0);
@@ -87,6 +88,7 @@ class RssSourcesController extends AdminController
  }
 
  $db = new Database();
+ self::ensureColumns($db);
 
  if ($err = self::validateUrl($url)) {
  Session::flash('error', $err);
@@ -98,11 +100,14 @@ class RssSourcesController extends AdminController
  return $this->redirect('admin/rss-sources/create');
  }
 
- $db->query("INSERT INTO rss_sources (name, url, category_id, auto_fetch) VALUES (:name, :url, :category_id, :auto_fetch)", [
+ $db->query("INSERT INTO rss_sources (name, url, category_id, auto_fetch, auto_publish, auto_publish_translate)
+ VALUES (:name, :url, :category_id, :auto_fetch, :auto_publish, :auto_publish_translate)", [
  ':name' => $name,
  ':url' => self::normalise($url),
  ':category_id' => $categoryId,
- ':auto_fetch' => $autoFetch
+ ':auto_fetch' => $autoFetch,
+ ':auto_publish' => empty($data['auto_publish']) ? 0 : 1,
+ ':auto_publish_translate' => empty($data['auto_publish_translate']) ? 0 : 1
  ]);
 
  $id = $db->lastInsertId();
@@ -154,11 +159,14 @@ class RssSourcesController extends AdminController
  return $this->redirect('admin/rss-sources/' . (int) $id . '/edit');
  }
 
- $db->query("UPDATE rss_sources SET name = :name, url = :url, category_id = :category_id, auto_fetch = :auto_fetch WHERE id = :id", [
+ $db->query("UPDATE rss_sources SET name = :name, url = :url, category_id = :category_id, auto_fetch = :auto_fetch,
+ auto_publish = :auto_publish, auto_publish_translate = :auto_publish_translate WHERE id = :id", [
  ':name' => $name,
  ':url' => self::normalise($url),
  ':category_id' => $categoryId,
  ':auto_fetch' => $autoFetch,
+ ':auto_publish' => empty($data['auto_publish']) ? 0 : 1,
+ ':auto_publish_translate' => empty($data['auto_publish_translate']) ? 0 : 1,
  ':id' => (int) $id
  ]);
 
@@ -229,6 +237,16 @@ class RssSourcesController extends AdminController
  Session::flash('success', 'تم وضع ' . count($ids) . ' مصدراً في قائمة الفحص القادمة.');
  break;
 
+ case 'auto-on':
+ $db->query("UPDATE rss_sources SET auto_publish = 1 WHERE id IN ({$marks})");
+ Session::flash('success', 'تم تفعيل النشر التلقائي لـ' . count($ids) . ' مصدراً — ستصل أخبارها الموقع فوراً.');
+ break;
+
+ case 'auto-off':
+ $db->query("UPDATE rss_sources SET auto_publish = 0 WHERE id IN ({$marks})");
+ Session::flash('success', 'تم إيقاف النشر التلقائي لـ' . count($ids) . ' مصدراً — ستبقى الخبر تنتظر موافقتك.');
+ break;
+
  default:
  Session::flash('error', 'إجراء غير معروف.');
  }
@@ -243,6 +261,56 @@ class RssSourcesController extends AdminController
  require_once dirname(__DIR__, 2) . '/core/FeedFetcher.php';
  $notice = FeedFetcher::thirdPartyNotice($url);
  return $notice ? $notice['warning'] : null;
+ }
+
+ /**
+  * أعمدة التحكم بالنشر التلقائي. تُضاف عند الحاجة حتى تعمل المنصة على
+  * قواعد بيانات أُنشئت قبل هذه الميزة.
+  */
+ public static function ensureColumns($db): void
+ {
+ $wanted = array(
+ 'auto_publish' => 'TINYINT(1) NOT NULL DEFAULT 0',
+ 'auto_publish_translate' => 'TINYINT(1) NOT NULL DEFAULT 0',
+ );
+ try {
+ $have = array();
+ foreach ($db->fetchAll('SHOW COLUMNS FROM rss_sources') as $row) {
+ if (!empty($row['Field'])) {
+ $have[strtolower((string) $row['Field'])] = true;
+ }
+ }
+ foreach ($wanted as $col => $definition) {
+ if (!isset($have[$col])) {
+ $db->query("ALTER TABLE rss_sources ADD COLUMN `{$col}` {$definition}");
+ }
+ }
+ } catch (Throwable $e) {
+ // بلا صلاحيات ALTER: تعمل الميزة على ما هو موجود فقط
+ }
+ }
+
+ /** مبدّل سريع: تشغيل/إيقاف النشر التلقائي لمصدر واحد */
+ public function toggleAuto($id)
+ {
+ $this->postGuardPermission('sources.manage');
+ $db = new Database();
+ self::ensureColumns($db);
+ $cid = (int) $id;
+ $src = $db->fetch("SELECT * FROM rss_sources WHERE id = :id", array(':id' => $cid));
+ if (!$src) {
+ Session::flash('error', 'المصدر غير موجود.');
+ return $this->redirect('admin/rss-sources');
+ }
+
+ $now = (int) ($src['auto_publish'] ?? 0) === 1 ? 0 : 1;
+ $db->query('UPDATE rss_sources SET auto_publish = :v WHERE id = :id', array(':v' => $now, ':id' => $cid));
+
+ $this->audit($now ? 'auto-on' : 'auto-off', 'rss_source', $cid, $src, null);
+ Session::flash('success', $now
+ ? 'النشر التلقائي مفعّل لـ«' . $src['name'] . '» — سيظهر خبره في الموقع فور وصوله.'
+ : 'تم إيقاف النشر التلقائي لـ«' . $src['name'] . '» — سيبقى يحتاج موافقتك.');
+ return $this->redirect('admin/rss-sources');
  }
 
  /**

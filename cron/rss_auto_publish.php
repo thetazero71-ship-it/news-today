@@ -126,17 +126,32 @@ try {
     }
 
     // ─── 1. جلب مصادر RSS (الكل أو المحددة فقط) ─────────────────────
+    // mode=auto : الدورة المجدولة — تحترم اختيار المدير وتتجاهل المصادر
+    //              التي لم يفعّل لها النشر التلقائي.
+    // بدون mode : تشغيل يدوي من لوحة التحكم — ينشر كل شيء اختاره المدير.
+    $scheduledRun = (isset($_GET['mode']) && $_GET['mode'] === 'auto');
+
     if (!empty($filterSourceIds)) {
         $cleanIds = implode(',', array_map('intval', $filterSourceIds));
         $sources = $db->fetchAll("SELECT * FROM rss_sources WHERE id IN ($cleanIds) ORDER BY ISNULL(last_fetched_at) DESC, last_fetched_at ASC");
-        logMsg("\n🎯 تم تحديد مصادر مخصصة للدورة: " . count($sources) . " مصدر");
+        logMsg("\n🎯 تم تحديد مصادر مخصصة للدورة: " . count($sources) . ' مصدر');
     } else {
         // الأقدم جلباً أولاً: هكذا تكمل كل المصادر على دفعات دون تكرار
         $sources = $db->fetchAll("SELECT * FROM rss_sources ORDER BY ISNULL(last_fetched_at) DESC, last_fetched_at ASC, id ASC");
+        if ($scheduledRun) {
+            $before = count($sources);
+            $sources = array_values(array_filter($sources, function ($s) {
+                return (int) ($s['auto_publish'] ?? 0) === 1;
+            }));
+            logMsg("\n⏱️ دورة مجدولة: " . count($sources) . ' مصدر مُفعّل للنشر التلقائي من ' . $before);
+            if (!$sources) {
+                logMsg('   لمفعّل مصدر بعد — فعّل «النشر التلقائي» من صفحة إدارة المصادر.');
+            }
+        }
         if ($maxSources > 0 && count($sources) > $maxSources) {
             $sources = array_slice($sources, 0, $maxSources);
-            logMsg("\n📦 دورة مجدولة: " . $maxSources . ' مصدر من ' . count($sources) . ' (الأقدم جلباً أولاً)');
-        } else {
+            logMsg('📦 حصة هذه الدورة: ' . $maxSources . ' مصدر');
+        } elseif (!$scheduledRun) {
             logMsg("\n📡 مصادر RSS المتاحة: " . count($sources));
         }
     }
@@ -319,24 +334,37 @@ foreach ($feedItems as $itemIndex => $item) {
 
             $checkAbortSignal($titleEn);
 
-            // ─── ترجمة بالذكاء الاصطناعي ──────────────────────
-            logMsg("  🤖 ترجمة: " . mb_substr($titleEn, 0, 60) . "...");
-            $updateCronStatus("جاري ترجمة: " . mb_substr($titleEn, 0, 35) . "...", true, 'running');
+// ─── الترجمة: اختيارية حسب إعداد المصدر ──────────────────
+    // المدير يقرر: مصدر بلا ترجمة يُنشر نصّه فوراً (أسرع)،
+    // ومصدر مع الترجمة يمرّ على الذكاء الاصطناعي أولاً (أدقّ للزائر).
+    $translateItem = (int) ($source['auto_publish_translate'] ?? 0) === 1;
 
-            try {
-                $aiResult = AiTranslator::translateArticle($titleEn, $contentEn);
-            } catch (Throwable $e) {
-                logMsg("     ❌ فشل الترجمة: " . $e->getMessage());
-                $stats['articles_failed']++;
-                continue;
-            }
+    if ($translateItem) {
+        logMsg("  🤖 ترجمة: " . mb_substr($titleEn, 0, 60) . "...");
+        $updateCronStatus("جاري ترجمة: " . mb_substr($titleEn, 0, 35) . "...", true, 'running');
 
-            $checkAbortSignal($titleEn);
+        try {
+            $aiResult = AiTranslator::translateArticle($titleEn, $contentEn);
+        } catch (Throwable $e) {
+            logMsg("     ❌ فشل الترجمة: " . $e->getMessage());
+            $stats['articles_failed']++;
+            continue;
+        }
 
-            $arabicTitle   = $aiResult['title_ar']  ?? $titleEn;
-            $arabicContent = $aiResult['content_ar'] ?? "<p>{$contentEn}</p>";
-            $arabicExcerpt = $aiResult['excerpt']    ?? '';
-            $readingTime   = $aiResult['reading_time_minutes'] ?? 2;
+        $checkAbortSignal($titleEn);
+
+        $arabicTitle   = $aiResult['title_ar']  ?? $titleEn;
+        $arabicContent = $aiResult['content_ar'] ?? "<p>{$contentEn}</p>";
+        $arabicExcerpt = $aiResult['excerpt']    ?? '';
+        $readingTime   = $aiResult['reading_time_minutes'] ?? 2;
+    } else {
+        $arabicTitle   = $titleEn;
+        $arabicContent = "<p>" . nl2br(htmlspecialchars($contentEn, ENT_QUOTES, 'UTF-8')) . "</p>";
+        $plainText     = trim(preg_replace('/\s+/u', ' ', strip_tags($contentEn)));
+        $arabicExcerpt = mb_substr($plainText, 0, 220);
+        $readingTime   = max(1, (int) ceil(mb_strlen($plainText) / 900));
+        logMsg("  ⚡ نشر فوري بلا ترجمة: " . mb_substr($titleEn, 0, 60));
+    }
 
             // ─── التصنيف الذكي المتقدم بمراعاة المصدر والمحتوى ────────
             $finalCategoryId = $detectCategory($titleEn, $contentEn, $arabicTitle, $sourceCatId, $sourceName, $itemUrl);

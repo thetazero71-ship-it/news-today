@@ -72,6 +72,7 @@ class FakeDb
 {
     public $rows;
     public $log = array();
+    public $params = array();
     public $lastId = 1;
 
     public function __construct(array $rows = array())
@@ -89,7 +90,19 @@ class FakeDb
     public function query($sql, array $p = array())
     {
         $this->log[] = $sql;
+        if ($p) {
+            $this->params[] = $p;
+        }
         return true;
+    }
+    public function param($key)
+    {
+        foreach ($this->params as $set) {
+            if (array_key_exists($key, $set)) {
+                return $set[$key];
+            }
+        }
+        return null;
     }
     public function lastInsertId()
     {
@@ -299,6 +312,59 @@ echo "\n--- the admin page shows the badge ---\n";
 $view = (string) file_get_contents(APP_ROOT . '/views/admin/rss_sources/index.php');
 t('third-party badge rendered in the row', strpos($view, 'thirdPartyNotice') !== false);
 t('badge explains itself in a tooltip', strpos($view, 'خلاصة عبر خدمة خارجية') !== false);
+
+echo "\n--- per-source auto publish ---\n";
+t('ensureColumns adds the control columns', method_exists('RssSourcesController', 'ensureColumns'));
+t('a quick toggle action exists', method_exists('RssSourcesController', 'toggleAuto'));
+
+$_POST = ['bulk_action' => 'auto-on', 'ids' => [4, 5]];
+Database::$instance = new FakeDb(array());
+$ctrl->bulk();
+t('bulk action can enable auto publishing', strpos(Database::$instance->text(), 'SET auto_publish = 1') !== false);
+t('and reports it', isset(Session::last()['success']));
+
+$_POST = ['bulk_action' => 'auto-off', 'ids' => [4]];
+Database::$instance = new FakeDb(array());
+$ctrl->bulk();
+t('bulk action can disable auto publishing', strpos(Database::$instance->text(), 'SET auto_publish = 0') !== false);
+
+$_POST = ['name' => 'مصدر سريع', 'url' => 'https://fast.example.com/feed', 'auto_publish' => '1'];
+Database::$instance = new FakeDb(array());
+$ctrl->store();
+$db = Database::$instance;
+t('a new source can be created with auto publish on', strpos($db->text(), ':auto_publish') !== false);
+t('and the flag is actually 1', $db->param(':auto_publish') === 1);
+t('translation stays off by default', $db->param(':auto_publish_translate') === 0);
+
+$_POST = ['name' => 'مصدر عادي', 'url' => 'https://plain.example.com/feed'];
+Database::$instance = new FakeDb(array());
+$ctrl->store();
+$db = Database::$instance;
+t('auto publish defaults to off', $db->param(':auto_publish') === 0);
+
+$_POST = ['name' => 'x', 'url' => 'https://x.example.com/feed', 'auto_publish' => '1', 'auto_publish_translate' => '1'];
+Database::$instance = new FakeDb(array());
+$ctrl->store();
+t('translation flag is stored', Database::$instance->param(':auto_publish_translate') === 1);
+
+echo "\n--- the scheduled run respects the manager's choice ---\n";
+$cron = (string) file_get_contents(APP_ROOT . '/cron/rss_auto_publish.php');
+t('mode=auto is understood', strpos($cron, "\$_GET['mode'] === 'auto'") !== false);
+t('a scheduled run filters by auto_publish', strpos($cron, "\$s['auto_publish'] ?? 0") !== false);
+t('a manual run is not filtered', strpos($cron, '$scheduledRun') !== false);
+t('the manager is told when nothing is enabled', strpos($cron, 'فعّل «النشر التلقائي»') !== false);
+t('translation is optional per source', strpos($cron, "auto_publish_translate") !== false);
+t('without translation it publishes immediately', strpos($cron, 'نشر فوري بلا ترجمة') !== false);
+t('reading time is computed without AI', strpos($cron, 'ceil(mb_strlen') !== false);
+
+$workflow = (string) file_get_contents(APP_ROOT . '/.github/workflows/auto-fetch-news.yml');
+t('the schedule passes mode=auto', strpos($workflow, 'mode=auto') !== false);
+
+$listView = (string) file_get_contents(APP_ROOT . '/views/admin/rss_sources/index.php');
+t('the list shows the auto column', strpos($listView, 'auto_publish') !== false);
+t('a quick toggle button is rendered', strpos($listView, 'toggle-auto') !== false);
+t('the form offers the switch', strpos((string) file_get_contents(APP_ROOT . '/views/admin/rss_sources/form.php'), 'name="auto_publish"') !== false);
+t('bulk bar can toggle it', strpos($listView, 'value="auto-on"') !== false && strpos($listView, 'value="auto-off"') !== false);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

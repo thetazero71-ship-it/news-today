@@ -135,7 +135,9 @@ return date('Y-m-d', $ts);
   <option value="delete">حذف نهائي</option>
   <option value="enable">تفعيل الجلب التلقائي</option>
   <option value="disable">تعطيل الجلب التلقائي</option>
-  <option value="check">إعادة وضعها في قائمة الفحص</option>
+<option value="check">إعادة وضعها في قائمة الفحص</option>
+  <option value="auto-on">تفعيل النشر التلقائي</option>
+  <option value="auto-off">إيقاف النشر التلقائي</option>
   <option value="category">نقل إلى قسم…</option>
  </select>
  <select name="bulk_category_id" id="bulkCategory" class="form-select form-select-sm w-auto d-none">
@@ -167,7 +169,8 @@ return date('Y-m-d', $ts);
  <th style="width:60px">#</th>
  <th>اسم المصدر</th>
  <th>رابط خلاصة الـ RSS</th>
- <th>القسم المسند</th>
+<th>القسم المسند</th>
+  <th style="width:130px" title="النشر التلقائي: عند تفعيله يُنشر خبر هذا المصدر في الموقع فور وصوله، دون انتظار موافقتك. المصادر غير المفعّلة تنتظر قرارك في صفحة الخلاصات.">النشر التلقائي</th>
   <th>الحالة</th>
   <th style="width:150px">صحة الخلاصة</th>
   <th style="width:140px" title="عدد الأخبار الجديدة التي وصلت عبر الخلاصة ولم تُنشر بعد (تُحدَّث عند كل جلب فعلي) — اضغط الشارة لعرضها">
@@ -209,11 +212,32 @@ title="<?= admin_e($thirdParty['warning']) ?>">
 </span>
 <?php endif; ?>
 </td>
- <td>
- <span class="badge bg-light text-dark border">
- <?= admin_e($s['category_name'] ?: 'عام') ?>
- </span>
- </td>
+<td>
+  <span class="badge bg-light text-dark border">
+  <?= admin_e($s['category_name'] ?: 'عام') ?>
+  </span>
+  </td>
+  <td class="text-center">
+  <?php $autoOn = (int) ($s['auto_publish'] ?? 0) === 1; ?>
+  <form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . (int) $s['id'] . '/toggle-auto')) ?>" class="d-inline js-auto-toggle">
+  <?= CSRF::field() ?>
+  <input type="hidden" name="back" value="1">
+  <button type="submit" class="btn btn-sm <?= $autoOn ? 'btn-success' : 'btn-outline-secondary' ?> js-auto-btn"
+  title="<?= $autoOn ? 'إيقاف النشر التلقائي لهذا المصدر' : 'نشر أخبار هذا المصدر تلقائياً فور وصولها' ?>">
+  <i class="bi <?= $autoOn ? 'bi-broadcast' : 'bi-broadcast-pin' ?>"></i>
+  <?= $autoOn ? 'مفعّل' : 'يدوي' ?>
+  </button>
+  </form>
+  <?php if ($autoOn && (int) ($s['auto_publish_translate'] ?? 0) === 1): ?>
+  <div class="small text-muted mt-1" title="يُترجم الخبر بالذكاء الاصطناعي قبل النشر (أبطأ لكن بلغة عربية)">
+  <i class="bi bi-translate"></i> مع ترجمة
+  </div>
+  <?php elseif ($autoOn): ?>
+  <div class="small text-muted mt-1" title="يُنشر نص المصدر كما هو — أسرع، وقد يكون بلغة أخرى">
+  <i class="bi bi-lightning-charge"></i> فوري بلا ترجمة
+  </div>
+  <?php endif; ?>
+  </td>
  <td>
  <span class="badge bg-<?= !empty($s['auto_fetch']) ? 'success' : 'secondary' ?>-subtle text-<?= !empty($s['auto_fetch']) ? 'success' : 'secondary' ?>">
  <?= !empty($s['auto_fetch']) ? 'نشط' : 'معطل' ?>

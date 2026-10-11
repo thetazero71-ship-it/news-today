@@ -760,6 +760,7 @@ $router->post('/admin/rss-sources/store', 'RssSourcesController@store');
 $router->get('/admin/rss-sources/{id}/edit', 'RssSourcesController@edit');
 $router->post('/admin/rss-sources/{id}/update', 'RssSourcesController@update');
 $router->post('/admin/rss-sources/{id}/delete', 'RssSourcesController@delete');
+$router->post('/admin/rss-sources/{id}/toggle-auto', 'RssSourcesController@toggleAuto');
 $router->post('/admin/rss-sources/bulk', 'RssSourcesController@bulk');
 
 // Classifier Rules (AI & Source Mapping)

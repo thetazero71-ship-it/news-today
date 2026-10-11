@@ -52,6 +52,32 @@ $title = $editing ? 'تعديل مصدر RSS: ' . ($source['name'] ?? '') : 'إ�
  </div>
  </div>
 
+ <div class="mb-4 p-3 rounded-3 border" style="border-color:#059669 !important;background:rgba(16,185,129,.06)">
+ <div class="form-check form-switch">
+ <input class="form-check-input" type="checkbox" id="auto_publish" name="auto_publish" value="1"
+ <?= !empty($source['auto_publish']) ? 'checked' : '' ?>
+ onchange="document.getElementById('autoPublishOptions').classList.toggle('d-none', !this.checked)">
+ <label class="form-check-label fw-bold" for="auto_publish">
+ <i class="bi bi-broadcast text-success me-1"></i> نشر تلقائي فوري
+ </label>
+ <div class="form-text">
+ عند التفعيل، يُنشر كل خبر جديد من هذا المصدر في الموقع **فور وصوله** دون انتظار موافقتك. اتركه معطّلاً لتبقى تراجع كل خبر قبل نشره.
+ </div>
+ </div>
+
+ <div id="autoPublishOptions" class="mt-3 pt-3 border-top <?= empty($source['auto_publish']) ? 'd-none' : '' ?>">
+ <div class="form-check form-switch mb-2">
+ <input class="form-check-input" type="checkbox" id="auto_publish_translate" name="auto_publish_translate" value="1"
+ <?= !empty($source['auto_publish_translate']) ? 'checked' : '' ?>>
+ <label class="form-check-label fw-semibold" for="auto_publish_translate">ترجمة الخبر قبل النشر</label>
+ </div>
+ <div class="form-text mb-0">
+ <strong>مفعّل:</strong> يُترجم الخبر إلى العربية بالذكاء الاصطناعي قبل النشر — أفضل للزائر، لكنه أبطأ(نحو 6 ثوانٍ لكل خبر).<br>
+ <strong>معطّل:</strong> يُنشر نص المصدر كما هو — فوري جداً، وقد يكون بلغة أخرى.
+ </div>
+ </div>
+ </div>
+
  <div class="d-flex justify-content-end gap-2">
  <a href="<?= admin_e(app_url('admin/rss-sources')) ?>" class="btn btn-light px-4">إلغاء</a>
  <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">

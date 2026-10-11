@@ -39,7 +39,7 @@ jobs:
             exit 0
           fi
 
-          url="${SITE_URL%/}/cron/rss_auto_publish.php?secret=${CRON_SECRET}&max_sources=12"
+          url="${SITE_URL%/}/cron/rss_auto_publish.php?secret=${CRON_SECRET}&max_sources=12&mode=auto"
           if [ -n "${SOURCE_IDS:-}" ]; then
             url="${url}&sources=${SOURCE_IDS}"
           fi
