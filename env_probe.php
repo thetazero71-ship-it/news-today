@@ -20,3 +20,16 @@ echo '  total: ' . $db->fetch("SELECT COUNT(*) c FROM articles")['c'] . "\n";
 
 echo "\n== سجل الكرون ==\n";
 foreach ($db->fetchAll("SELECT * FROM cron_logs ORDER BY id DESC LIMIT 4") as $l) { echo '  ' . substr(json_encode($l, JSON_UNESCAPED_UNICODE), 0, 300) . "\n"; }
+
+echo "\n== إعدادات الذكاء الاصطناعي ==\n";
+foreach ($db->fetchAll("SELECT `key`, LEFT(`value`, 60) v FROM settings WHERE `key` LIKE '%ai_%' OR `key` LIKE '%provider%' OR `key` LIKE '%api_key%' OR `key` LIKE '%translate%' ORDER BY `key`") as $r) {
+  echo "  {$r['key']} = " . ($r['v'] === '' ? '(فارغ)' : $r['v']) . "\n";
+}
+
+echo "\n== آخر سجلات الأخطاء ==\n";
+$logDir = __DIR__ . '/storage/logs';
+foreach ((array) glob($logDir . '/*.log') as $lf) {
+  echo '  ' . basename($lf) . ' (' . date('Y-m-d H:i', filemtime($lf)) . ")\n";
+  $tail = array_slice(file($lf, FILE_IGNORE_NEW_LINES) ?: [], -6);
+  foreach ($tail as $line) { echo "    " . mb_substr($line, 0, 190) . "\n"; }
+}
