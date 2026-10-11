@@ -88,10 +88,15 @@ if ($fallbackCatId > 0) {
  return false;
  }
 
- public function index()
+public function index()
  {
  $this->guardPermission('feeds.view');
  $db = new Database();
+
+ // تبويب المفضلة: صفحة مستقلة تعرض أحدث أخبار كل مصدر مفضّل
+ if (($_GET['tab'] ?? '') === 'favorites') {
+ return $this->favoritesView($db);
+ }
  
  $sources = $db->fetchAll('SELECT s.*, c.name as category_name FROM rss_sources s LEFT JOIN categories c ON c.id = s.category_id ORDER BY s.id ASC');
  $categories = $db->fetchAll('SELECT id, name FROM categories ORDER BY name ASC');
@@ -267,11 +272,25 @@ $featuredImage = trim($data['featured_image'] ?? '');
  $existing = $db->fetch("SELECT id, slug, title, status FROM articles WHERE source_url = :url LIMIT 1", [':url' => $sourceUrl]);
  $existing = $existing ?: $this->findArticleByNormalisedUrl($db, $sourceUrl);
  }
- if (!$existing && !empty($title)) {
+if (!$existing && !empty($title)) {
  $existing = $db->fetch("SELECT id, slug, title, status FROM articles WHERE title_en = :t1 OR title = :t2 LIMIT 1", [
- ':t1' => $title,
- ':t2' => $title
+  ':t1' => $title,
+  ':t2' => $title
  ]);
+ }
+
+ // نفس الخبر من مصدر آخر: ننبّه المدير بدل النشر المكرر
+ if (!$existing && !empty($title)) {
+  $twinned = NewsDeduplicator::findMatch($db, $title, (string) ($content ?? ''));
+  if ($twinned) {
+  $this->ajaxOut([
+  'success' => false,
+  'duplicate' => true,
+  'message' => 'هذا الخبر منشور مسبقاً بعنوان «' . $twinned['title'] . '» (تطابق ' . $twinned['score'] . '%)'
+  . ($twinned['source'] ? ' من المصدر: ' . $twinned['source'] : '') . '.',
+  'edit_url' => app_url('admin/articles/' . $twinned['id'] . '/edit'),
+  ]);
+  }
  }
 
  $slug = strtolower(trim(preg_replace('/[^\p{L}\p{N}]+/u', '-', (string) $titleAr), '-'));
@@ -640,10 +659,67 @@ public function addSource()
  }
 
 /**
-  * Canonical form of an article URL so the same story is recognised whatever
-  * tracking parameters, scheme, www or trailing slash the feed used.
-  */
-private function normaliseItemUrl(string $url): string
+ * Canonical form of an article URL so the same story is recognised whatever
+ * tracking parameters, scheme, www or trailing slash the feed used.
+ */
+/**
+ * تبويب المفضلة: كل مصادر المفضلة في صفحة واحدة، مع أحدث أخبارها،
+ * حتى يتصفحها المدير دون التنقل بين المصادر.
+ */
+ private function favoritesView($db)
+ {
+  require_once __DIR__ . '/RssSourcesController.php';
+  RssSourcesController::ensureColumns($db);
+
+  $favorites = $db->fetchAll(
+   "SELECT s.*, c.name as category_name
+    FROM rss_sources s
+    LEFT JOIN categories c ON c.id = s.category_id
+    WHERE s.is_favorite = 1
+    ORDER BY s.id ASC"
+  );
+
+  $existing = $db->fetchAll("SELECT id, source_url, status FROM articles WHERE source_url IS NOT NULL");
+  $statusMap = array();
+  foreach ($existing as $row) {
+  $key = $this->normaliseItemUrl((string) $row['source_url']);
+  if ($key === '') {
+  continue;
+  }
+  $statusMap[$key] = $row['status'];
+  $statusMap[$key . '#id'] = (int) $row['id'];
+  }
+
+  $perSource = (int) ($_GET['per'] ?? 5);
+  $perSource = max(1, min(10, $perSource));
+
+  $groups = array();
+  $feedErrors = 0;
+  foreach ($favorites as $source) {
+  $feed = $this->fetchRss(trim((string) $source['url']));
+  $items = array();
+  if (!empty($feed['success'])) {
+  foreach (array_slice($feed['items'] ?? array(), 0, $perSource) as $item) {
+  $key = $this->normaliseItemUrl((string) ($item['link'] ?? ''));
+  $item['import_status'] = $statusMap[$key] ?? null;
+  $item['article_id'] = $statusMap[$key . '#id'] ?? null;
+  $items[] = $item;
+  }
+  } else {
+  $feedErrors++;
+  }
+  $groups[] = array('source' => $source, 'items' => $items, 'error' => $feed['error'] ?? null);
+  }
+
+  $this->view('admin/aggregator/favorites', array(
+  'groups' => $groups,
+  'perSource' => $perSource,
+  'feedErrors' => $feedErrors,
+  ));
+  return null;
+ }
+
+ private function normaliseItemUrl(string $url): string
  {
   $url = trim($url);
   if ($url === '') {

@@ -32,6 +32,7 @@ require_once $root . '/core/CategoryClassifier.php';
 require_once $root . '/core/FeedFetcher.php';
 require_once $root . '/core/FallbackImage.php';
 require_once $root . '/core/FetchOg.php';
+require_once $root . '/core/NewsDeduplicator.php';
 
 // Datetimes stored/compared in UTC (see Database.php); keep PHP parsing consistent.
 date_default_timezone_set('UTC');
@@ -325,14 +326,23 @@ foreach ($feedItems as $itemIndex => $item) {
                 $contentEn = $titleEn . '. ' . $contentEn;
             }
 
-            // ─── تحقق من التكرار ──────────────────────────────
-            if (isset($existingUrls[$itemUrl])) {
-                logMsg("  ⏭️  مكرر (موجود مسبقاً): " . mb_substr($titleEn, 0, 60));
-                $stats['articles_skipped']++;
-                continue;
-            }
+// ─── تحقق من التكرار ──────────────────────────────
+ if (isset($existingUrls[$itemUrl])) {
+ logMsg("  ⏭️  مكرر (نفس الرابط): " . mb_substr($titleEn, 0, 60));
+ $stats['articles_skipped']++;
+ continue;
+ }
 
-            $checkAbortSignal($titleEn);
+ // نفس الخبر غالباً يصل من عدة مصادر برابط مختلف — نقارن العنوان
+ $duplicate = NewsDeduplicator::findMatch($db, $titleEn, $contentEn);
+ if ($duplicate) {
+ logMsg("  ⏭️  مكرر من مصدر آخر: «{$duplicate['title']}» (تطابق {$duplicate['score']}%) — المصدر: " . ($duplicate['source'] ?: '—'));
+ $stats['articles_skipped']++;
+ $updateCronStatus('تخطّي خبر مكرر: ' . mb_substr($titleEn, 0, 35) . '...', true, 'running');
+ continue;
+ }
+
+ $checkAbortSignal($titleEn);
 
 // ─── الترجمة: اختيارية حسب إعداد المصدر ──────────────────
     // المدير يقرر: مصدر بلا ترجمة يُنشر نصّه فوراً (أسرع)،

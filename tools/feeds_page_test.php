@@ -39,14 +39,27 @@ t('and after an ajax publish', strpos($view, "edit = ' <a class=\"btn btn-sm btn
 t('the published badge is shown', strpos($view, 'منشور للعامة') !== false);
 
 echo "\n--- favourites tab ---\n";
-t('there are two tabs', strpos($view, 'data-tab="all"') !== false && strpos($view, 'data-tab="fav"') !== false);
-t('a switch function exists', strpos($view, 'function switchSourceTab') !== false);
-t('it filters the chips', strpos($view, "chip.style.display = show ? '' : 'none'") !== false);
-t('the counter is refreshed', strpos($view, "favTabCount") !== false);
-t('pinning re-applies the tab', strpos($view, 'applySourceTab();') !== false);
-t('it runs on load', preg_match('/renderPinnedSources\(\);\s*\n\s*applySourceTab\(\);/', $view) === 1);
-t('an empty favourites tab explains itself', strpos($view, 'لا يوجد مصدر في المفضلة') !== false);
-t('the existing favourites list still works', strpos($view, 'pinnedSourcesList') !== false && strpos($view, 'togglePinSource') !== false);
+t('the two tabs are real links', strpos($view, 'admin/news-feeds?tab=favorites') !== false);
+t('the all-sources tab links back', strpos($view, "app_url('admin/news-feeds')") !== false);
+t('pinning posts to the server', strpos($view, 'pinForm_') !== false && strpos($view, 'toggle-favorite') !== false);
+t('the counter is refreshed from the saved list', strpos($view, 'favTabCount') !== false);
+t('the dead client filter is gone', strpos($view, 'switchSourceTab') === false && strpos($view, "chip.style.display = show") === false);
+t('the pinned list still highlights chips', strpos($view, 'renderPinnedSources') !== false);
+
+$favView = (string) file_get_contents($root . '/views/admin/aggregator/favorites.php');
+t('a full favourites page exists', strlen($favView) > 800);
+t('it groups sources with their items', strpos($favView, 'foreach ($groups as $group)') !== false);
+t('it shows the published state', strpos($favView, 'منشور') !== false);
+t('it offers editing a published item', strpos($favView, "/edit'") !== false);
+t('it explains an empty tab', strpos($favView, 'لا يوجد مصدر في المفضلة') !== false);
+t('it reports a dead feed', strpos($favView, 'تعذّر جلب الخلاصة') !== false);
+t('items per source is adjustable', strpos($favView, 'per=') !== false);
+t('a favourite can be removed from there', strpos($favView, 'toggle-favorite') !== false);
+
+$aggCtrl = (string) file_get_contents($root . '/controllers/admin/AggregatorController.php');
+t('the controller builds it', strpos($aggCtrl, 'function favoritesView') !== false);
+t('it reads only favourite sources', strpos($aggCtrl, 'WHERE s.is_favorite = 1') !== false);
+t('the tab is routed through index', strpos($aggCtrl, "'favorites'") !== false);
 
 echo "\n--- the schedule is as fast as GitHub allows ---\n";
 t('runs every 5 minutes', strpos($workflow, "*/5 * * * *") !== false);

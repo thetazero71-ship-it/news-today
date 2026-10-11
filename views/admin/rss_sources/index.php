@@ -298,7 +298,13 @@ title="<?= admin_e($thirdParty['warning']) ?>">
   <?php endif; ?>
   </td>
   <td class="text-end">
- <div class="d-inline-flex gap-1">
+<div class="d-inline-flex gap-1">
+ <form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . (int) $s['id'] . '/toggle-favorite')) ?>" class="d-inline">
+ <?= CSRF::field() ?>
+ <button type="submit" class="btn-action-icon btn-action-view" title="<?= !empty($s['is_favorite']) ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة' ?>">
+ <i class="bi <?= !empty($s['is_favorite']) ? 'bi-pin-angle-fill text-warning' : 'bi-pin-angle' ?>"></i>
+ </button>
+ </form>
  <button type="button" class="btn-action-icon btn-action-view btn-check-one-feed"
  data-id="<?= (int) $s['id'] ?>" title="فحص صحة هذه الخلاصة الآن">
  <i class="bi bi-activity"></i>

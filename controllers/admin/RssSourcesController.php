@@ -272,6 +272,7 @@ class RssSourcesController extends AdminController
  $wanted = array(
  'auto_publish' => 'TINYINT(1) NOT NULL DEFAULT 0',
  'auto_publish_translate' => 'TINYINT(1) NOT NULL DEFAULT 0',
+ 'is_favorite' => 'TINYINT(1) NOT NULL DEFAULT 0',
  );
  try {
  $have = array();
@@ -311,6 +312,32 @@ class RssSourcesController extends AdminController
  ? 'النشر التلقائي مفعّل لـ«' . $src['name'] . '» — سيظهر خبره في الموقع فور وصوله.'
  : 'تم إيقاف النشر التلقائي لـ«' . $src['name'] . '» — سيبقى يحتاج موافقتك.');
  return $this->redirect('admin/rss-sources');
+ }
+
+ /** مبدّل سريع: وضع/إخراج مصدر من المفضلة */
+ public function toggleFavorite($id)
+ {
+ $this->postGuardPermission('sources.manage');
+ $db = new Database();
+ self::ensureColumns($db);
+ $cid = (int) $id;
+ $src = $db->fetch("SELECT id, name, is_favorite FROM rss_sources WHERE id = :id", array(':id' => $cid));
+ if (!$src) {
+ Session::flash('error', 'المصدر غير موجود.');
+ return $this->redirect('admin/rss-sources');
+ }
+
+ $now = (int) ($src['is_favorite'] ?? 0) === 1 ? 0 : 1;
+ $db->query('UPDATE rss_sources SET is_favorite = :v WHERE id = :id', array(':v' => $now, ':id' => $cid));
+ $this->audit($now ? 'favourite' : 'unfavourite', 'rss_source', $cid, $src, null);
+
+ $back = ($_POST['back'] ?? '') === 'favorites'
+  ? 'admin/news-feeds?tab=favorites'
+  : 'admin/rss-sources';
+ Session::flash('success', $now
+ ? 'أُضيف «' . $src['name'] . '» إلى المفضلة.'
+ : 'أُزيل «' . $src['name'] . '» من المفضلة.');
+ return $this->redirect($back);
  }
 
  /**

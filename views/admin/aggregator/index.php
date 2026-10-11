@@ -153,15 +153,15 @@
 
  <!-- Sources Tabs: all / favourites -->
  <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
- <button type="button" class="btn btn-sm btn-dark source-tab-btn active" data-tab="all" onclick="switchSourceTab('all')">
+ <a href="<?= admin_e(app_url('admin/news-feeds')) ?>" class="btn btn-sm btn-dark">
  <i class="bi bi-collection me-1"></i> كل المصادر
  <span class="badge bg-light text-dark ms-1"><?= count($sources) ?></span>
- </button>
- <button type="button" class="btn btn-sm btn-outline-dark source-tab-btn" data-tab="fav" onclick="switchSourceTab('fav')">
+ </a>
+ <a href="<?= admin_e(app_url('admin/news-feeds?tab=favorites')) ?>" class="btn btn-sm btn-outline-dark" id="favTabLink">
  <i class="bi bi-pin-angle-fill me-1"></i> المفضلة
  <span class="badge bg-warning text-dark ms-1" id="favTabCount">0</span>
- </button>
- <span class="text-muted small ms-auto" id="sourcesTabHint"></span>
+ </a>
+ <span class="text-muted small ms-auto">اضغط الدبوس 📌 بجانب أي مصدر ليظهر في تبويب المفضلة</span>
  </div>
 
  <!-- All Sources Chips Grid -->
@@ -195,13 +195,14 @@
  data-source-title="<?= admin_e($sName) ?>"
  style="transition:all 0.18s ease;font-size:0.84rem">
  
- <!-- Pin Toggle Button -->
- <button type="button" 
- class="btn-pin-source border-0 bg-transparent p-0 px-1 me-1 text-muted" 
- onclick="togglePinSource(<?= $sId ?>, '<?= admin_e(addslashes($sName)) ?>', '<?= admin_e(app_url('admin/news-feeds?source_id=' . $sId)) ?>', event)" 
- title="تثبيت / إلغاء تثبيت بالمفضلة">
- <i class="bi bi-pin-angle" id="pinIcon_<?= $sId ?>" style="font-size:0.9rem"></i>
+ <!-- Pin Toggle Button (saves to the database) -->
+ <form id="pinForm_<?= $sId ?>" method="post" action="<?= admin_e(app_url('admin/rss-sources/' . $sId . '/toggle-favorite')) ?>" class="d-inline">
+ <?= CSRF::field() ?>
+ <button type="submit" class="btn-pin-source border-0 bg-transparent p-0 px-1 me-1 text-muted <?= !empty($src['is_favorite']) ? 'is-pinned' : '' ?>"
+ title="<?= !empty($src['is_favorite']) ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة' ?>">
+ <i class="bi <?= !empty($src['is_favorite']) ? 'bi-pin-angle-fill text-warning' : 'bi-pin-angle' ?>" id="pinIcon_<?= $sId ?>" style="font-size:0.9rem"></i>
  </button>
+ </form>
 
  <!-- Source Link -->
  <a href="<?= admin_e(app_url('admin/news-feeds?source_id=' . $sId)) ?>" 
@@ -323,19 +324,27 @@ function savePinnedSources(list) {
 }
 
 function togglePinSource(id, name, url, event) {
- if (event) {
- event.preventDefault();
- event.stopPropagation();
- }
- let list = getPinnedSources();
- const existingIndex = list.findIndex(item => item.id === id);
- 
- if (existingIndex> -1) {
- list.splice(existingIndex, 1);
- } else {
- list.push({ id: id, name: name, url: url });
- }
- savePinnedSources(list);
+  if (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  }
+
+  // يُحفظ في قاعدة البيانات، فيظهر في تبويب المفضلة على كل المتصفحات
+  const form = document.getElementById('pinForm_' + id);
+  if (form) {
+  form.submit();
+  return;
+  }
+
+  let list = getPinnedSources();
+  const existingIndex = list.findIndex(item => item.id === id);
+
+  if (existingIndex> -1) {
+  list.splice(existingIndex, 1);
+  } else {
+  list.push({ id: id, name: name, url: url });
+  }
+  savePinnedSources(list);
 }
 
 function renderPinnedSources() {
@@ -384,44 +393,11 @@ function renderPinnedSources() {
 }
 
 // ============ Sources tabs: all / favourites ============
-let activeSourceTab = 'all';
-
-function switchSourceTab(tab) {
-  activeSourceTab = (tab === 'fav') ? 'fav' : 'all';
-  applySourceTab();
-}
-
+// التصفية انتقلت إلى صفحة مستقلة (تبويب المفضلة)، وبقي هنا مجرد
+// تحديث عدّاد الدبابيس المحفوظة في المتصفح.
 function applySourceTab() {
-  const grid = document.getElementById('sourcesChipsGrid');
-  if (!grid) return;
-
-  document.querySelectorAll('.source-tab-btn').forEach(btn => {
-    const isOn = btn.getAttribute('data-tab') === activeSourceTab;
-    btn.classList.toggle('active', isOn);
-    btn.classList.toggle('btn-dark', isOn);
-    btn.classList.toggle('btn-outline-dark', !isOn);
-  });
-
-  const pinned = getPinnedSources().map(item => Number(item.id));
   const counter = document.getElementById('favTabCount');
-  if (counter) counter.textContent = String(pinned.length);
-
-  let visible = 0;
-  grid.querySelectorAll('.source-chip-wrapper').forEach(chip => {
-    const id = Number(chip.getAttribute('data-source-id'));
-    const show = (activeSourceTab === 'all') || pinned.includes(id);
-    chip.style.display = show ? '' : 'none';
-    if (show) visible++;
-  });
-
-  const hint = document.getElementById('sourcesTabHint');
-  if (hint) {
-    if (activeSourceTab === 'fav' && visible === 0) {
-      hint.innerHTML = '<span class="text-warning fw-semibold">لا يوجد مصدر في المفضلة — انقر على أيقونة الدبوس بجانب أي مصدر لإضافته.</span>';
-    } else {
-      hint.textContent = 'المعروض: ' + visible + ' مصدر';
-    }
-  }
+  if (counter) counter.textContent = String(getPinnedSources().length);
 }
 
 // Search text normalizer (handles Arabic letters, diacritics & accents)
