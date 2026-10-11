@@ -13,6 +13,8 @@
 define('CRON_START', microtime(true));
 define('MAX_PER_SOURCE', 5);
 define('MIN_CONTENT_LEN', 50);
+// ميزانية زمنية للدورة الواحدة (ثانية) — أقل من حد PHP في الاستضافة (60ث لكل طلب)
+define('CRON_BUDGET_SECONDS', 45);
 
 // رفع حد وقت التنفيذ لاستيعاب ترجمة AI
 @ini_set('max_execution_time', 0);  // 0 = بلا حد عند التشغيل من CLI
@@ -51,6 +53,23 @@ if ($isHttp) {
         exit(1);
     }
     header('Content-Type: application/json; charset=utf-8');
+}
+
+// ─── Lock: دورة واحدة فقط في الوقت نفسه ─────────────────────
+// دورتان لا تعملان معاً: استضافة مشتركة بعمّال PHP قلال
+// ويسبّب 502 للزوار حتى بدون أي increase في عدد الزيارات.
+$lockFile = $root . '/storage/cron_rss.lock';
+$lockHandle = @fopen($lockFile, 'c');
+if ($lockHandle && !flock($lockHandle, LOCK_EX | LOCK_NB)) {
+    if ($isHttp) {
+        http_response_code(409);
+    }
+    echo json_encode([
+        'ok'      => false,
+        'skipped' => true,
+        'reason'  => 'a run is already in progress',
+    ], JSON_UNESCAPED_UNICODE);
+    exit(0);
 }
 
 // ─── Logger Helper ────────────────────────────────────────────
@@ -212,7 +231,21 @@ try {
 
     // ─── 3. معالجة كل مصدر ─────────────────────────────────────
     $totalSourcesCount = count($sources);
+
+    // ميزانية زمنية: الاستضافة المشتركة تقتل أي طلب يتجاوز 60 ثانية، وطلب
+    // طويل يستهلك أحد عمّال PHP القلائل فيظهر 502 للزوار. نوقف عند الحد
+    // ونترك المصادر الباقية للدورة التالية (تُرتَّب بالأقدم جلباً).
+    $timeBudget = defined('CRON_BUDGET_SECONDS') ? (int) CRON_BUDGET_SECONDS : 240;
+    $stoppedForTime = false;
+
     foreach ($sources as $sourceIndex => $source) {
+        if ((microtime(true) - CRON_START) > $timeBudget) {
+            $stoppedForTime = true;
+            logMsg("\n⏱️ انتهت الميزانية الزمنية ({$timeBudget}ث) — تُكمل المصادر الباقية في الدورة القادمة.");
+            logMsg("   المصادر المتبقية تبدأ تلقائياً من الأقدم جلباً.");
+            break;
+        }
+
         $sourceId   = (int) $source['id'];
         $sourceName = $source['name'];
         $feedUrl    = trim($source['url']);
@@ -420,6 +453,15 @@ try {
 
 // ─── 6. النتيجة النهائية ───────────────────────────────────────
 $updateCronStatus('مكتمل بنجاح', false, 'idle', 100);
+
+// النصوص تغيّرت: يُفرَّغ كاش الصفحات حتى لا يرى الزوار خبراً قديماً
+try {
+    require_once $root . '/core/PageCache.php';
+    $flushed = PageCache::flush();
+    logMsg("♻️ تم تفريغ كاش الصفحات ({$flushed} صفحة)");
+} catch (Throwable $e) {
+    logMsg("⚠️ تفريغ الكاش: " . $e->getMessage());
+}
 
 logMsg("\n═══════════════════════════════════════════");
 logMsg("  📊 ملخص التشغيل:");

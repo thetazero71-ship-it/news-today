@@ -959,5 +959,39 @@ register_shutdown_function(function () {
     TrafficRadar::recordHit();
 });
 
+// Any admin change (publish, edit, delete, settings...) must drop the public
+// page cache, otherwise visitors keep seeing the old version for up to a minute.
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+    && strpos((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH), '/admin') === 0) {
+    register_shutdown_function(function () {
+        PageCache::flush();
+        if (class_exists('Cache')) {
+            Cache::flush();
+        }
+    });
+}
+
 // Dispatch incoming HTTP Request
+
+// Full-page cache: answering from disk keeps the shared-host worker pool free,
+// which is what causes the intermittent "502 Bad Gateway" under bursts.
+$__pageRebuild = PageCache::isRebuildRequest();
+$__pageCacheable = !$__pageRebuild && PageCache::isCacheableRequest();
+if ($__pageCacheable && PageCache::serve()) {
+    if (class_exists('TrafficRadar') && !$__pageRebuild) {
+        TrafficRadar::recordHit();
+    }
+    return;
+}
+
+if ($__pageCacheable || $__pageRebuild) {
+    ob_start();
+    register_shutdown_function(function () {
+        $html = (string) ob_get_contents();
+        if (is_string($html) && $html !== '') {
+            PageCache::store($html);
+        }
+    });
+}
+
 $router->dispatch();
