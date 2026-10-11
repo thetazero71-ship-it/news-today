@@ -460,7 +460,7 @@ function run(url, btn, originalHtml) {
  });
 })();
 </script>
-
+<script>
 // ============ Selection multiple pour les sources RSS ============
 (function () {
   var boxes = Array.prototype.slice.call(document.querySelectorAll('.source-check'));
