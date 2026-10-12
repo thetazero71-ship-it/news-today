@@ -1,0 +1,77 @@
+<?php
+/** فحص مؤقت: قياس زمن كل جزء من عملية النشر على الخادم (يُحذف بعده) */
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/core/Database.php';
+require_once __DIR__ . '/core/Settings.php';
+require_once __DIR__ . '/core/AiTranslator.php';
+require_once __DIR__ . '/core/NewsDeduplicator.php';
+require_once __DIR__ . '/core/FeedFetcher.php';
+require_once __DIR__ . '/core/FetchOg.php';
+require_once __DIR__ . '/core/CategoryClassifier.php';
+require_once __DIR__ . '/core/CategorySeeder.php';
+
+header('Content-Type: text/plain; charset=utf-8');
+
+function stamp(string $label, callable $fn)
+{
+    $t = microtime(true);
+    try {
+        $out = $fn();
+    } catch (Throwable $e) {
+        $out = 'ERROR: ' . $e->getMessage();
+    }
+    printf("%-34s %7.0f ms   %s\n", $label, (microtime(true) - $t) * 1000, mb_substr(is_string($out) ? $out : json_encode($out, JSON_UNESCAPED_UNICODE), 0, 70));
+}
+
+$db = new Database();
+
+echo "== القاعدة ==\n";
+stamp('عدد المقالات', function () use ($db) {
+    return (string) $db->fetch('SELECT COUNT(*) c FROM articles')['c'];
+});
+stamp('جلب 200 صف عنوان', function () use ($db) {
+    return count($db->fetchAll('SELECT id,title,title_ar FROM articles ORDER BY id DESC LIMIT 200'));
+});
+
+echo "\n== فحص التكرار ==\n";
+stamp('NewsDeduplicator (خبر جديد)', function () use ($db) {
+    $m = NewsDeduplicator::findMatch($db, 'A completely unrelated headline about the economy ' . mt_rand(100, 999));
+    return $m ? ('MATCH ' . $m['id']) : 'no match';
+});
+stamp('NewsDeduplicator (مرة ثانية)', function () use ($db) {
+    $m = NewsDeduplicator::findMatch($db, 'Another unrelated headline ' . mt_rand(100, 999));
+    return $m ? 'MATCH' : 'no match';
+});
+
+echo "\n== جلب كل الروابط (المطابقة في النشر اليدوي) ==\n";
+stamp('كل روابط المقالات', function () use ($db) {
+    return count($db->fetchAll('SELECT id, source_url FROM articles WHERE source_url IS NOT NULL'));
+});
+
+echo "\n== الشبكة ==\n";
+$src = $db->fetch('SELECT url FROM rss_sources WHERE last_status = "ok" LIMIT 1');
+$url = $src['url'] ?? null;
+if ($url) {
+    stamp('جلب خلاصة RSS', function () use ($url) {
+        $f = FeedFetcher::fetchRaw($url);
+        return 'items=' . count($f['items'] ?? []);
+    });
+    stamp('استخراج صورة og:image', function () use ($url) {
+        return FetchOg::resolveFor($url, '');
+    });
+}
+
+echo "\n== الذكاء الاصطناعي (الترجمة) ==\n";
+stamp('ترجمة قصيرة', function () {
+    $r = AiTranslator::translateArticle('Short test headline about markets', 'The central bank cut interest rates today, analysts said.');
+    return 'title: ' . mb_substr($r['title_ar'] ?? '?', 0, 40);
+});
+stamp('ترجمة ثانية (نفس النداء)', function () {
+    $r = AiTranslator::translateArticle('Another short headline about weather', 'Heavy rain is expected in the north during the weekend, forecasters warned.');
+    return 'title: ' . mb_substr($r['title_ar'] ?? '?', 0, 40);
+});
+
+echo "\n== التصنيف ==\n";
+stamp('CategoryClassifier::classify', function () {
+    return (string) CategoryClassifier::classify('Some English headline here', 'Some content body for classification', 'عنوان', null, [], 'https://x.com/a', null);
+});
