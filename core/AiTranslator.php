@@ -586,20 +586,33 @@ public static function translateArticle($titleEn, $contentEn, $options = [])
                 $attempts[$activeProvider] = $res['error'] ?? 'فشل الاتصال بـ OpenCode Zen.';
             }
         } elseif ($activeProvider === 'mymemory' || $activeProvider === 'gtx') {
-            $res = self::freeTranslateWithGlossary($titleEn, $contentEn, $articleId);
-            // المترجم المجاني قد يردّ بالنص الأصلي: لا نحسبها ترجمة
-            if (self::isTranslated($res, (string) $titleEn)) {
-                return $buildResult($res, 'mymemory');
+            // لا نضيّع 7 ثوانٍ على المترجم المجاني إذا كان هناك مزوّد ذكاء حقيقي
+            // مُعدّ: المجاني بطيء وغالباً لا يترجم شيئاً.
+            $hasRealAi = !empty($settings['gemini_api_key'])
+                || !empty($settings['openai_api_key'])
+                || !empty($settings['groq_api_key'])
+                || !empty($settings['deepseek_api_key'])
+                || !empty($settings['custom_api_endpoint'])
+                || (($settings['opencode_fallback_enabled'] ?? '1') == '1');
+
+            if ($hasRealAi) {
+                $attempts['mymemory'] = 'تم تخطّي المترجم المجاني لوجود مزوّد ذكاء مُعدّ (أسرع وأدق).';
+            } else {
+                $res = self::freeTranslateWithGlossary($titleEn, $contentEn, $articleId);
+                // المترجم المجاني قد يردّ بالنص الأصلي: لا نحسبها ترجمة
+                if (self::isTranslated($res, (string) $titleEn)) {
+                    return $buildResult($res, 'mymemory');
+                }
+                $attempts['mymemory'] = 'المترجم المجاني أعاد النص الأصلي دون ترجمة.';
             }
-            $attempts['mymemory'] = 'المترجم المجاني أعاد النص الأصلي دون ترجمة.';
         }
 
         // --- Step 2: Fallback Chain if enabled ---
         if ($fallbackOn) {
             $deadline = microtime(true) + (float) self::TRANSLATE_BUDGET_SECONDS;
-            // تجاوز الميزانية: لا نُجرّب مزوّداً جديداً بعد الآن
-            $outOfTime = function () use ($deadline) {
-                return microtime(true) > $deadline;
+            // لا نبدأ مزوّداً جديداً إذا لم يتبقَّ وقت كافٍ له
+            $outOfTime = function (int $need = 6) use ($deadline) {
+                return (microtime(true) + $need) > $deadline;
             };
 
             if ($activeProvider !== 'gemini' && !empty($settings['gemini_api_key']) && !$outOfTime()) {
