@@ -203,10 +203,10 @@ class AiTranslator
 
             case 'gemini':
                 $apiKey = $settings['gemini_api_key'] ?? '';
-                $selectedModel = $settings['gemini_model'] ?? 'gemini-3.7-flash';
+                $selectedModel = $settings['gemini_model'] ?? 'gemini-2.0-flash';
                 $isKeySet = !empty($apiKey);
                 $geminiList = [
-                    'gemini-3.7-flash' => 'gemini-3.7-flash (Gemini 3.7 Flash - موصى به)',
+                    'gemini-2.0-flash' => 'Gemini 2.0 Flash (موصى به - سريع ورخيص)',
                     'gemini-3.6-flash' => 'gemini-3.6-flash (Gemini 3.6 Flash - فائق السرعة)',
                     'gemini-3.5-flash' => 'gemini-3.5-flash (Gemini 3.5 Flash)',
                     'gemini-2.5-pro'   => 'gemini-2.5-pro (Gemini 2.5 Pro)',
@@ -407,7 +407,26 @@ class AiTranslator
      * Strategic AI Translation & Tech News Re-authoring
      * Translates English title, lead, and content into high-grade journalistic Arabic.
      */
-    public static function translateArticle($titleEn, $contentEn, $options = [])
+    /**
+ * هل رجعت نتيجة ترجمة فعلاً؟
+ *
+ * المترجم المجاني يردّ بالنص الأصلي كما هو عند تعذّره — وقبل ذلك كان النظام
+ * يعتبر ذلك «ترجمة ناجحة» وينشر خبراً إنجليزياً في موقع عربي.
+ */
+private static function isTranslated(array $res, string $titleEn): bool
+{
+ $result = (string) ($res['title_ar'] ?? $titleEn) . ' ' . (string) ($res['content_ar'] ?? '');
+ if (preg_match('/\p{Arabic}/u', $result)) {
+ return true;
+ }
+ // النص عربي أصلاً فلا حاجة لمترجم
+ return (bool) preg_match('/\p{Arabic}/u', (string) $titleEn);
+}
+
+/** ميزانية زمنية للترجمة: لا تُجَرَّب مزوّدات كثيرة داخل طلب واحد */
+const TRANSLATE_BUDGET_SECONDS = 14;
+
+public static function translateArticle($titleEn, $contentEn, $options = [])
     {
         $db = new Database();
         $keys = [
@@ -548,32 +567,46 @@ class AiTranslator
             }
         } elseif ($activeProvider === 'mymemory' || $activeProvider === 'gtx') {
             $res = self::freeTranslateWithGlossary($titleEn, $contentEn, $articleId);
-            return $buildResult($res, 'mymemory');
+            // المترجم المجاني قد يردّ بالنص الأصلي: لا نحسبها ترجمة
+            if (self::isTranslated($res, (string) $titleEn)) {
+                return $buildResult($res, 'mymemory');
+            }
+            $attempts['mymemory'] = 'المترجم المجاني أعاد النص الأصلي دون ترجمة.';
         }
 
         // --- Step 2: Fallback Chain if enabled ---
         if ($fallbackOn) {
-            if ($activeProvider !== 'omniroute' && !empty($settings['omniroute_endpoint'])) {
-                $res = self::callOmniroute($titleEn, $contentEn, $settings, $articleId);
-                if ($res['success']) return $buildResult($res['data'], 'omniroute');
-                $attempts['fallback_omniroute'] = $res['error'] ?? 'تعذر استخدام Omniroute كخيار احتياطي.';
-            }
-            if ($activeProvider !== 'gemini' && !empty($settings['gemini_api_key'])) {
+            $deadline = microtime(true) + (float) self::TRANSLATE_BUDGET_SECONDS;
+            // تجاوز الميزانية: لا نُجرّب مزوّداً جديداً بعد الآن
+            $outOfTime = function () use ($deadline) {
+                return microtime(true) > $deadline;
+            };
+
+            if ($activeProvider !== 'gemini' && !empty($settings['gemini_api_key']) && !$outOfTime()) {
                 $res = self::callGemini($titleEn, $contentEn, $settings, $articleId);
-                if ($res['success']) return $buildResult($res['data'], 'gemini');
-                $attempts['fallback_gemini'] = $res['error'] ?? 'تعذر استخدام Google Gemini كخيار احتياطي.';
+                if (!empty($res['success']) && self::isTranslated($res['data'] ?? [], (string) $titleEn)) {
+                    return $buildResult($res['data'], 'gemini');
+                }
+                $attempts['fallback_gemini'] = ($res['error'] ?? '') ?: 'لم تُرجع Gemini نصاً عربياً.';
+            }
+            if ($activeProvider !== 'omniroute' && !empty($settings['omniroute_endpoint']) && !$outOfTime()) {
+                $res = self::callOmniroute($titleEn, $contentEn, $settings, $articleId);
+                if (!empty($res['success']) && self::isTranslated($res['data'] ?? [], (string) $titleEn)) {
+                    return $buildResult($res['data'], 'omniroute');
+                }
+                $attempts['fallback_omniroute'] = ($res['error'] ?? '') ?: 'لم تُرجع Omniroute نصاً عربياً.';
             }
             if ($activeProvider !== 'groq' && !empty($settings['groq_api_key'])) {
                 $res = self::callGroq($titleEn, $contentEn, $settings, $articleId);
                 if ($res['success']) return $buildResult($res['data'], 'groq');
                 $attempts['fallback_groq'] = $res['error'] ?? 'تعذر استخدام Groq كخيار احتياطي.';
             }
-            if ($activeProvider !== 'deepseek' && !empty($settings['deepseek_api_key'])) {
+            if ($activeProvider !== 'deepseek' && !empty($settings['deepseek_api_key']) && !$outOfTime()) {
                 $res = self::callDeepSeek($titleEn, $contentEn, $settings, $articleId);
                 if ($res['success']) return $buildResult($res['data'], 'deepseek');
                 $attempts['fallback_deepseek'] = $res['error'] ?? 'تعذر استخدام DeepSeek كخيار احتياطي.';
             }
-            if ($activeProvider !== 'openai' && !empty($settings['openai_api_key'])) {
+            if ($activeProvider !== 'openai' && !empty($settings['openai_api_key']) && !$outOfTime()) {
                 $res = self::callOpenAi($titleEn, $contentEn, $settings, $articleId);
                 if ($res['success']) return $buildResult($res['data'], 'openai');
                 $attempts['fallback_openai'] = $res['error'] ?? 'تعذر استخدام OpenAI كخيار احتياطي.';
@@ -583,21 +616,41 @@ class AiTranslator
                 if ($res['success']) return $buildResult($res['data'], 'custom_api');
                 $attempts['fallback_custom_api'] = $res['error'] ?? 'تعذر استخدام Custom API كخيار احتياطي.';
             }
-            if ($activeProvider !== 'opencode' && ($settings['opencode_fallback_enabled'] ?? '1') == '1') {
+            if ($activeProvider !== 'opencode' && ($settings['opencode_fallback_enabled'] ?? '1') == '1' && !$outOfTime()) {
                 $res = self::callOpencode($titleEn, $contentEn, $settings, $articleId);
                 if ($res['success']) return $buildResult($res['data'], 'opencode');
                 $attempts['fallback_opencode'] = $res['error'] ?? 'تعذر استخدام OpenCode Zen كخيار احتياطي.';
             }
 
-            // Final Fallback: Free Google Web + Tech Glossary Engine
-            $res = self::freeTranslateWithGlossary($titleEn, $contentEn, $articleId);
-            return $buildResult($res, 'mymemory');
-        }
+// Final Fallback: Free Google Web + Tech Glossary Engine
+ $res = self::freeTranslateWithGlossary($titleEn, $contentEn, $articleId);
+ if (self::isTranslated($res, (string) $titleEn)) {
+ return $buildResult($res, 'mymemory');
+ }
+ // لم ينجح أي مزوّد: نعيد النص الأصلي مع توضيح السبب بدل ادّعاء نجاح كاذب
+ $attempts['mymemory'] = 'المترجم المجاني لم يترجم هذا النص أيضاً.';
+ return $buildResult([
+ 'title_ar' => $titleEn,
+ 'content_ar' => '<p>' . nl2br(htmlspecialchars((string) $contentEn, ENT_QUOTES, 'UTF-8')) . '</p>',
+ 'excerpt' => mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags((string) $contentEn))), 0, 220),
+ 'reading_time_minutes' => max(1, (int) ceil(mb_strlen((string) $contentEn) / 900)),
+ 'translated' => false,
+ ], 'none');
+ }
 
-        // If fallback is disabled and primary provider failed:
-        $res = self::freeTranslateWithGlossary($titleEn, $contentEn, $articleId);
-        return $buildResult($res, 'mymemory');
-    }
+ // If fallback is disabled and primary provider failed:
+ $res = self::freeTranslateWithGlossary($titleEn, $contentEn, $articleId);
+ if (self::isTranslated($res, (string) $titleEn)) {
+ return $buildResult($res, 'mymemory');
+ }
+ return $buildResult([
+ 'title_ar' => $titleEn,
+ 'content_ar' => '<p>' . nl2br(htmlspecialchars((string) $contentEn, ENT_QUOTES, 'UTF-8')) . '</p>',
+ 'excerpt' => mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tags((string) $contentEn))), 0, 220),
+ 'reading_time_minutes' => max(1, (int) ceil(mb_strlen((string) $contentEn) / 900)),
+ 'translated' => false,
+ ], 'none');
+ }
 
     private static function callOpenAi($titleEn, $contentEn, array $cfg, $articleId = null)
     {
@@ -630,7 +683,7 @@ class AiTranslator
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $apiKey
             ],
-            CURLOPT_TIMEOUT        => 22
+            CURLOPT_TIMEOUT        => 15
         ]);
 
         $res = curl_exec($ch);
@@ -686,15 +739,15 @@ class AiTranslator
     {
         $startTime = microtime(true);
         $apiKey = $cfg['gemini_api_key'] ?? '';
-        $selectedModel = !empty($cfg['gemini_model']) ? $cfg['gemini_model'] : 'gemini-3.7-flash';
+        $selectedModel = !empty($cfg['gemini_model']) ? $cfg['gemini_model'] : 'gemini-2.0-flash';
         if (in_array($selectedModel, ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'], true)) {
-            $selectedModel = 'gemini-3.7-flash';
+            $selectedModel = 'gemini-2.0-flash';
         }
         $temp = isset($cfg['ai_temperature']) && is_numeric($cfg['ai_temperature']) ? (float)$cfg['ai_temperature'] : 0.3;
 
         // Build candidate models list starting with selected model, then auto-fallback if 503/high-demand
         $candidateModels = [$selectedModel];
-        $backupModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
+        $backupModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.0-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
         foreach ($backupModels as $bm) {
             if (!in_array($bm, $candidateModels, true)) {
                 $candidateModels[] = $bm;
@@ -726,7 +779,7 @@ class AiTranslator
                 CURLOPT_POST           => true,
                 CURLOPT_POSTFIELDS     => json_encode($payload),
                 CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-                CURLOPT_TIMEOUT        => 18
+                CURLOPT_TIMEOUT        => 14
             ]);
 
             $res = curl_exec($ch);
@@ -824,7 +877,7 @@ class AiTranslator
             CURLOPT_POST           => true,
             CURLOPT_POSTFIELDS     => json_encode($payload),
             CURLOPT_HTTPHEADER     => $headers,
-            CURLOPT_TIMEOUT        => 25,
+            CURLOPT_TIMEOUT        => 15,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false
         ]);
@@ -922,7 +975,7 @@ class AiTranslator
             CURLOPT_POST           => true,
             CURLOPT_POSTFIELDS     => json_encode($payload),
             CURLOPT_HTTPHEADER     => $headers,
-            CURLOPT_TIMEOUT        => 20,
+            CURLOPT_TIMEOUT        => 15,
             CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false
@@ -1036,7 +1089,7 @@ class AiTranslator
             CURLOPT_POST           => true,
             CURLOPT_POSTFIELDS     => json_encode($payload),
             CURLOPT_HTTPHEADER     => $headers,
-            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_TIMEOUT        => 15,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false
         ]);
@@ -1128,7 +1181,7 @@ class AiTranslator
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $apiKey
             ],
-            CURLOPT_TIMEOUT        => 20
+            CURLOPT_TIMEOUT        => 15
         ]);
 
         $res = curl_exec($ch);
@@ -1218,7 +1271,7 @@ class AiTranslator
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $apiKey
             ],
-            CURLOPT_TIMEOUT        => 25
+            CURLOPT_TIMEOUT        => 15
         ]);
 
         $res = curl_exec($ch);
