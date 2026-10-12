@@ -367,6 +367,14 @@ foreach ($feedItems as $itemIndex => $item) {
         $arabicContent = $aiResult['content_ar'] ?? "<p>{$contentEn}</p>";
         $arabicExcerpt = $aiResult['excerpt']    ?? '';
         $readingTime   = $aiResult['reading_time_minutes'] ?? 2;
+
+        // إن لم يفلح أي مزوّد في الترجمة، لا ننشر نصاً أجنبياً في موقع عربي
+        if (isset($aiResult['translated']) && $aiResult['translated'] === false) {
+            logMsg('     ⏭️ تعذّرت الترجمة (لا مزوّد استجاب) — تُخطّى هذه الدورة: ' . mb_substr($titleEn, 0, 50));
+            $stats['articles_skipped']++;
+            $stats['translation_failed'] = ($stats['translation_failed'] ?? 0) + 1;
+            continue;
+        }
     } else {
         $arabicTitle   = $titleEn;
         $arabicContent = "<p>" . nl2br(htmlspecialchars($contentEn, ENT_QUOTES, 'UTF-8')) . "</p>";
