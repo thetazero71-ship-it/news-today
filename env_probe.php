@@ -93,6 +93,25 @@ stamp('CategoryClassifier::classify', function () {
     return (string) CategoryClassifier::classify('Some English headline here', 'Some content body for classification', 'عنوان', null, [], 'https://x.com/a', null);
 });
 
+if (isset($_GET['try'])) {
+ echo "\n== تجربة مزوّد/نموذج ==\n";
+ $model = (string) ($_GET['model'] ?? '');
+ if ($model !== '') {
+  $db->query("UPDATE settings SET `value` = :v WHERE `key` = 'gemini_model'", [':v' => $model]);
+ }
+ $db->query("UPDATE settings SET `value` = :v WHERE `key` = 'ai_provider'", [':v' => (string) ($_GET['try'] ?? 'gemini')]);
+ Settings::clear();
+ echo '  provider = ' . Settings::get('ai_provider') . ' | model = ' . Settings::get('gemini_model') . "\n";
+ stamp('ترجمة قصيرة', function () {
+  $r = AiTranslator::translateArticle('Markets rally as central bank cuts rates', 'The central bank cut interest rates today, analysts said.');
+  return 'used=' . ($r['diagnostics']['used_provider'] ?? '?') . ' | ' . mb_substr($r['title_ar'] ?? '?', 0, 50);
+ });
+ stamp('ترجمة ثانية', function () {
+  $r = AiTranslator::translateArticle('Heavy rain expected in the north', 'Heavy rain is expected in the north during the weekend, forecasters warned.');
+  return 'used=' . ($r['diagnostics']['used_provider'] ?? '?') . ' | ' . mb_substr($r['title_ar'] ?? '?', 0, 50);
+ });
+}
+
 if (isset($_GET['fixmodel'])) {
  echo "\n== تصحيح نموذج Gemini ==\n";
  $db->query("UPDATE settings SET `value` = :v WHERE `key` = 'gemini_model'", [':v' => 'gemini-2.0-flash']);
