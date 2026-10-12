@@ -71,6 +71,23 @@ stamp('ترجمة ثانية (نفس النداء)', function () {
     return 'title: ' . mb_substr($r['title_ar'] ?? '?', 0, 40);
 });
 
+echo "\n== تفاصيل المزوّدين ==\n";
+$keys = array('ai_provider', 'ai_fallback_enabled', 'opencode_fallback_enabled', 'gemini_api_key', 'gemini_model', 'omniroute_api_key', 'omniroute_endpoint', 'custom_api_key', 'custom_api_endpoint', 'openai_api_key', 'groq_api_key', 'deepseek_api_key');
+foreach ($keys as $k) {
+    $v = (string) Settings::get($k, '');
+    $shown = $v === '' ? '(فارغ)' : (strpos($k, 'key') !== false ? 'موجود (' . strlen($v) . ' حرف)' : $v);
+    echo "  $k = $shown\n";
+}
+
+echo "\n== نتيجة الترجمة الكاملة ==\n";
+try {
+    $r = AiTranslator::translateArticle('Diagnostics headline', 'Body text for the diagnostics run to see which provider answers.');
+    echo '  title_ar: ' . mb_substr((string) ($r['title_ar'] ?? ''), 0, 60) . "\n";
+    echo '  diagnostics: ' . json_encode($r['diagnostics'] ?? [], JSON_UNESCAPED_UNICODE) . "\n";
+} catch (Throwable $e) {
+    echo '  ERROR: ' . $e->getMessage() . "\n";
+}
+
 echo "\n== التصنيف ==\n";
 stamp('CategoryClassifier::classify', function () {
     return (string) CategoryClassifier::classify('Some English headline here', 'Some content body for classification', 'عنوان', null, [], 'https://x.com/a', null);
