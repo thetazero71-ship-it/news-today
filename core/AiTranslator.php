@@ -206,10 +206,11 @@ class AiTranslator
                 $selectedModel = self::pickGeminiModel($settings['gemini_model'] ?? null);
                 $isKeySet = !empty($apiKey);
                 $geminiList = [
-                    'gemini-2.0-flash' => 'Gemini 2.0 Flash (موصى به - سريع ورخيص)',
-                    'gemini-3.6-flash' => 'gemini-3.6-flash (Gemini 3.6 Flash - فائق السرعة)',
-                    'gemini-3.5-flash' => 'gemini-3.5-flash (Gemini 3.5 Flash)',
-                    'gemini-2.5-pro'   => 'gemini-2.5-pro (Gemini 2.5 Pro)',
+                    'gemini-3.5-flash-lite' => 'Gemini 3.5 Flash-Lite (موصى به - يعمل مع المفاتيح الجديدة)',
+                    'gemini-3.6-flash' => 'Gemini 3.6 Flash (فائق السرعة)',
+                    'gemini-3.1-flash-lite' => 'Gemini 3.1 Flash-Lite (رخيص - حتى مايو 2027)',
+                    'gemini-3.8-flash' => 'Gemini 3.8 Flash (الأحدث - قد يزدحم)',
+                    'gemini-2.5-flash-lite' => 'Gemini 2.5 Flash-Lite (للمفاتيح القديمة فقط)',
                 ];
                 foreach ($geminiList as $id => $name) {
                     $models[] = [
@@ -424,23 +425,37 @@ private static function isTranslated(array $res, string $titleEn): bool
 }
 
 /**
- * نماذج Gemini المتاحة فعلياً. أي قيمة أخرى في الإعدادات كانت تُرفض من
- * Google وتُهدر الوقت في كل ترجمة قبل الفشل.
+ * نماذج Gemini المتاحة فعلياً (تحقّقنا منها في أكتوبر 2026).
+ *
+ * - LIVE: تعمل لأي مفتاح جديد.
+ * - GRANDFATHERED: تعمل فقط للمفاتيح التي استخدمتها من قبل (جوجل ترفضها
+ *   للمفاتيح الجديدة بخطأ 404 "no longer available to new users").
+ * - كل ما عداها (1.5 و2.0) ميت للجميع.
  */
 const GEMINI_MODELS = [
- 'gemini-2.0-flash',
- 'gemini-2.0-flash-lite',
- 'gemini-1.5-flash',
- 'gemini-1.5-pro',
+ 'gemini-3.5-flash-lite',
+ 'gemini-3.6-flash',
+ 'gemini-3.1-flash-lite',
+ 'gemini-3.8-flash',
+ 'gemini-flash-latest',
+ 'gemini-flash-lite-latest',
 ];
+
+const GEMINI_GRANDFATHERED = [
+ 'gemini-2.5-flash',
+ 'gemini-2.5-flash-lite',
+ 'gemini-2.5-pro',
+];
+
+const GEMINI_DEFAULT = 'gemini-3.5-flash-lite';
 
 private static function pickGeminiModel(?string $configured): string
 {
  $model = trim((string) $configured);
- if ($model !== '' && in_array($model, self::GEMINI_MODELS, true)) {
+ if ($model !== '' && (in_array($model, self::GEMINI_MODELS, true) || in_array($model, self::GEMINI_GRANDFATHERED, true))) {
  return $model;
  }
- return 'gemini-2.0-flash';
+ return self::GEMINI_DEFAULT;
 }
 
 /** ميزانية زمنية للترجمة: لا تُجَرَّب مزوّدات كثيرة داخل طلب واحد */
@@ -780,7 +795,9 @@ public static function translateArticle($titleEn, $contentEn, $options = [])
 
         // Build candidate models list starting with selected model, then auto-fallback if 503/high-demand
         $candidateModels = [$selectedModel];
-        $backupModels = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-2.0-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite'];
+        // live models first (verified Oct 2026), grandfathered 2.5 only as a
+        // last resort for keys that used them before.
+        $backupModels = ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.8-flash'];
         foreach ($backupModels as $bm) {
             if (!in_array($bm, $candidateModels, true)) {
                 $candidateModels[] = $bm;
@@ -803,7 +820,8 @@ public static function translateArticle($titleEn, $contentEn, $options = [])
         $lastError = 'فشل الاتصال بخوادم Google Gemini';
         $lastHttpCode = 0;
 
-        foreach ($candidateModels as $model) {
+        for ($mi = 0; $mi < count($candidateModels); $mi++) {
+            $model = $candidateModels[$mi];
             $url = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent?key=" . $apiKey;
 
             $ch = curl_init($url);
@@ -849,6 +867,13 @@ public static function translateArticle($titleEn, $contentEn, $options = [])
                 $errData = json_decode($res, true);
                 if (!empty($errData['error']['message'])) {
                     $errorSummary = "Gemini Error [{$errData['error']['code']}]: {$errData['error']['message']}";
+                    // الشفاء الذاتي: جوجل نفسها تسمّي البديل ("use models/X") —
+                    // نضعه في مقدّمة الطابور بدل انتظار تحديث الكود.
+                    if (preg_match('/models\/([a-z0-9][a-z0-9._-]*)/i', (string) $errData['error']['message'], $gm)
+                        && $gm[1] !== $model
+                        && !in_array($gm[1], $candidateModels, true)) {
+                        array_splice($candidateModels, array_search($model, $candidateModels, true) + 1, 0, [$gm[1]]);
+                    }
                 }
             }
             $lastError = $errorSummary;

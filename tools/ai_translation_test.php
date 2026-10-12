@@ -44,11 +44,17 @@ t('fallbacks check the clock', substr_count($src, '$outOfTime()') >= 5);
 t('no provider timeout exceeds 15s', (bool) preg_match('/CURLOPT_TIMEOUT\s*=>\s*(2[0-9]|3[0-9])/', $src) === false);
 
 echo "\n--- google model name is real ---\n";
-t('no gemini-3.7-flash as the google default', strpos($src, "'gemini-3.7-flash'") === false);
+t('no google 1.5/2.0 default remains', strpos($src, "'gemini_model'] ?? 'gemini-2.0-flash'") === false);
 t('an unknown model name is corrected', strpos($src, 'function pickGeminiModel') !== false);
-t('the allow-list holds real models', strpos($src, "'gemini-2.0-flash'") !== false && strpos($src, "'gemini-1.5-flash'") !== false);
-t('the corrected default is gemini-2.0-flash', strpos($src, "return 'gemini-2.0-flash';") !== false);
+t('the allow-list holds live models (oct 2026)', strpos($src, "'gemini-3.5-flash-lite'") !== false && strpos($src, "'gemini-3.6-flash'") !== false);
+t('the default is the model google recommends', strpos($src, "const GEMINI_DEFAULT = 'gemini-3.5-flash-lite'") !== false);
+t('grandfathered 2.5 models still accepted for old keys', strpos($src, "'gemini-2.5-flash-lite'") !== false);
 t('third-party gateway ids are untouched', strpos($src, 'antigravity/gemini-3.7-flash-high') !== false);
+t('the backup chain has no dead google model', (bool) preg_match("/backupModels = \[[^\]]*gemini-2\.0-flash[^\]]*\]/", $src) === false);
+t('a 404 recommendation is parsed and retried', strpos($src, 'models\\/([a-z0-9][a-z0-9._-]*)') !== false);
+t('the retry loop is index-based (sees new models)', strpos($src, 'for ($mi = 0; $mi < count($candidateModels); $mi++)') !== false);
+t('the settings dropdown shows live models', strpos($src, "'gemini-3.5-flash-lite' => 'Gemini 3.5 Flash-Lite") !== false);
+t('the dropdown warns about 2.5 keys', strpos($src, 'للمفاتيح القديمة فقط') !== false);
 
 echo "\n--- the cron/UI gets a readable signal ---\n";
 $cron = (string) file_get_contents($root . '/cron/rss_auto_publish.php');
