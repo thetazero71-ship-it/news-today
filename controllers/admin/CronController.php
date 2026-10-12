@@ -5,6 +5,12 @@ class CronController extends AdminController
  public function index()
  {
  $this->guardPermission('cron.view');
+
+ // تشغيل الدورة يغيّر الحالة: لا يُقبل على POST إلا بصلاحية الإدارة + CSRF.
+ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+ $this->postGuardPermission('cron.manage');
+ }
+
  $db = new Database();
 
  // ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ظٹظˆظ…

@@ -11,7 +11,7 @@ class AiLogsController extends AdminController
 {
     public function index()
     {
-        $this->postGuardPermission('ai.logs');
+        $this->guardPermission('ai.logs');
         $db = Database::getInstance();
         $userId = (int) ($_GET['user_id'] ?? 0);
         $search = trim((string) ($_GET['q'] ?? ''));
@@ -115,7 +115,7 @@ class AiLogsController extends AdminController
 
     public function conversation()
     {
-        $this->postGuardPermission('ai.logs');
+        $this->guardPermission('ai.logs');
         $db = Database::getInstance();
         $userId = (int) ($_GET['user_id'] ?? 0);
         $anchor = (int) ($_GET['anchor'] ?? 0);
