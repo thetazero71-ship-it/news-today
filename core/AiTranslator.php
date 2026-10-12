@@ -203,7 +203,7 @@ class AiTranslator
 
             case 'gemini':
                 $apiKey = $settings['gemini_api_key'] ?? '';
-                $selectedModel = $settings['gemini_model'] ?? 'gemini-2.0-flash';
+                $selectedModel = self::pickGeminiModel($settings['gemini_model'] ?? null);
                 $isKeySet = !empty($apiKey);
                 $geminiList = [
                     'gemini-2.0-flash' => 'Gemini 2.0 Flash (موصى به - سريع ورخيص)',
@@ -421,6 +421,26 @@ private static function isTranslated(array $res, string $titleEn): bool
  }
  // النص عربي أصلاً فلا حاجة لمترجم
  return (bool) preg_match('/\p{Arabic}/u', (string) $titleEn);
+}
+
+/**
+ * نماذج Gemini المتاحة فعلياً. أي قيمة أخرى في الإعدادات كانت تُرفض من
+ * Google وتُهدر الوقت في كل ترجمة قبل الفشل.
+ */
+const GEMINI_MODELS = [
+ 'gemini-2.0-flash',
+ 'gemini-2.0-flash-lite',
+ 'gemini-1.5-flash',
+ 'gemini-1.5-pro',
+];
+
+private static function pickGeminiModel(?string $configured): string
+{
+ $model = trim((string) $configured);
+ if ($model !== '' && in_array($model, self::GEMINI_MODELS, true)) {
+ return $model;
+ }
+ return 'gemini-2.0-flash';
 }
 
 /** ميزانية زمنية للترجمة: لا تُجَرَّب مزوّدات كثيرة داخل طلب واحد */
@@ -739,7 +759,7 @@ public static function translateArticle($titleEn, $contentEn, $options = [])
     {
         $startTime = microtime(true);
         $apiKey = $cfg['gemini_api_key'] ?? '';
-        $selectedModel = !empty($cfg['gemini_model']) ? $cfg['gemini_model'] : 'gemini-2.0-flash';
+        $selectedModel = self::pickGeminiModel($cfg['gemini_model'] ?? null);
         if (in_array($selectedModel, ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-2.0-flash-exp'], true)) {
             $selectedModel = 'gemini-2.0-flash';
         }

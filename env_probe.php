@@ -92,3 +92,10 @@ echo "\n== التصنيف ==\n";
 stamp('CategoryClassifier::classify', function () {
     return (string) CategoryClassifier::classify('Some English headline here', 'Some content body for classification', 'عنوان', null, [], 'https://x.com/a', null);
 });
+
+if (isset($_GET['fixmodel'])) {
+ echo "\n== تصحيح نموذج Gemini ==\n";
+ $db->query("UPDATE settings SET `value` = :v WHERE `key` = 'gemini_model'", [':v' => 'gemini-2.0-flash']);
+ Settings::clear();
+ echo "  gemini_model = " . Settings::get('gemini_model') . "\n";
+}
