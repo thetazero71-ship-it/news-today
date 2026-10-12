@@ -40,7 +40,7 @@ t('the timezone is re-applied on reconnect', substr_count($src, "SET time_zone")
 echo "\n--- the fetch job is scheduled ---\n";
 $workflow = (string) file_get_contents(dirname(__DIR__) . '/.github/workflows/auto-fetch-news.yml');
 t('a schedule exists', strpos($workflow, 'schedule:') !== false);
-t('it runs twice an hour', substr_count($workflow, "'13,43 * * * *'") === 1);
+t('it runs every 5 minutes (fastest GitHub allows)', substr_count($workflow, "'*/5 * * * *'") === 1);
 t('it can also be triggered by hand', strpos($workflow, 'workflow_dispatch:') !== false);
 t('it carries the secret', strpos($workflow, 'CRON_SECRET') !== false);
 t('it caps the sources per cycle', strpos($workflow, 'max_sources') !== false);
