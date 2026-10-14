@@ -1,5 +1,17 @@
 <?php
-/** فحص مؤقت: تشخيص جلب خلاصة العالم من الخادم (يُحذف بعده) - v3 */
+/** فحص مؤقت: تشخيص جلب خلاصة العالم من الخادم (يُحذف بعده) - v4 */
+require_once __DIR__ . '/core/Database.php';
+
+echo "== صف العالم في قاعدتك ==\n";
+$db = new Database();
+foreach ($db->fetchAll("SELECT * FROM rss_sources WHERE url LIKE '%alalam%' OR name LIKE '%العالم%'") as $r) {
+    foreach ($r as $k => $v) {
+        echo "  $k = " . mb_substr((string) $v, 0, 160) . "\n";
+    }
+    echo "  ----\n";
+}
+echo "== نهاية ==\n";
+exit;
 require_once __DIR__ . '/core/FeedFetcher.php';
 header('Content-Type: text/plain; charset=utf-8');
 
