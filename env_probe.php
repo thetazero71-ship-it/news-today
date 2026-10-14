@@ -1,5 +1,5 @@
 <?php
-/** فحص مؤقت: تشخيص جلب خلاصة العالم من الخادم (يُحذف بعده) */
+/** فحص مؤقت: تشخيص جلب خلاصة العالم من الخادم (يُحذف بعده) - v3 */
 require_once __DIR__ . '/core/FeedFetcher.php';
 header('Content-Type: text/plain; charset=utf-8');
 
