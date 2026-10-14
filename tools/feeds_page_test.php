@@ -66,5 +66,16 @@ t('runs every 5 minutes', strpos($workflow, "*/5 * * * *") !== false);
 t('only one run at a time', strpos($workflow, 'concurrency:') !== false);
 t('it runs on GitHub, not the host', strpos($workflow, 'SITE_URL') !== false && strpos($workflow, 'curl') !== false);
 
+echo "\n--- broken-host suggestions ---\n";
+require_once $root . '/core/FeedFetcher.php';
+$alts = FeedFetcher::suggestAlternatives('https://alalam.ir/rss/latest');
+t('the www variant of the same path comes first', ($alts[0] ?? '') === 'https://www.alalam.ir/rss/latest');
+t('the apex variant is also offered', in_array('https://alalam.ir/rss/latest', $alts, true));
+$altsWww = FeedFetcher::suggestAlternatives('https://www.alalam.ir/rss/latest');
+t('no duplicate hosts collapse', count($altsWww) === count(array_unique($altsWww)));
+$altsRoot = FeedFetcher::suggestAlternatives('https://example.com');
+t('a bare host still gets generic guesses', in_array('https://example.com/feed/', $altsRoot, true));
+t('empty host yields nothing', FeedFetcher::suggestAlternatives('not-a-url') === []);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);
