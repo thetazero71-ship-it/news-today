@@ -3,19 +3,35 @@
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/core/Database.php';
 
-echo "== صف العالم في قاعدتك ==\n";
+echo "== إصلاح روابط العالم (apex -> www) ==\n";
 try {
     $db = new Database();
-    $rows = $db->fetchAll("SELECT * FROM rss_sources WHERE url LIKE '%alalam%'");
-    echo 'rows matching url: ' . count($rows) . "\n";
+    $rows = $db->fetchAll("SELECT id, url FROM rss_sources WHERE url LIKE '%alalam.ir/%' AND url NOT LIKE '%www.alalam.ir%'");
     foreach ($rows as $r) {
-        foreach ($r as $k => $v) {
-            echo "  $k = " . mb_substr((string) $v, 0, 160) . "\n";
-        }
-        echo "  ----\n";
+        $fixed = str_replace('://alalam.ir/', '://www.alalam.ir/', (string) $r['url']);
+        $db->query('UPDATE rss_sources SET url = :u, last_status = NULL, last_error = NULL, fail_count = 0 WHERE id = :id', [':u' => $fixed, ':id' => (int) $r['id']]);
+        echo "  #{$r['id']}: {$r['url']}  =>  $fixed\n";
     }
-    $n = $db->fetchAll("SELECT COUNT(*) c FROM rss_sources");
-    echo 'total sources: ' . ($n[0]['c'] ?? '?') . "\n";
+    if (!$rows) {
+        echo "  لا يوجد ما يُصلح (كلها www مسبقاً)\n";
+    }
+
+    echo "\n== فحص صحة بنفس منطق زر الفحص ==\n";
+    require_once __DIR__ . '/core/FeedFetcher.php';
+    foreach ($db->fetchAll("SELECT id, name, url FROM rss_sources WHERE url LIKE '%alalam%'") as $s) {
+        $f = FeedFetcher::fetchRaw($s['url'], true, 0, 5, 10);
+        $items = 0;
+        if (!empty($f['success'])) {
+            libxml_use_internal_errors(true);
+            $xml = @simplexml_load_string($f['body'], 'SimpleXMLElement', LIBXML_NOCDATA);
+            if ($xml) {
+                $items = isset($xml->channel->item) ? count($xml->channel->item) : (isset($xml->entry) ? count($xml->entry) : 0);
+            }
+        }
+        printf("  #%d %s => success=%s http=%s items=%d %s\n",
+            $s['id'], mb_substr($s['name'], 0, 30), var_export($f['success'], true),
+            $f['http_code'] ?? '?', $items, $f['success'] ? '' : (' err=' . mb_substr($f['error'] ?? '', 0, 100)));
+    }
 } catch (Throwable $e) {
     echo 'EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage() . "\n";
 }

@@ -387,6 +387,7 @@ class FeedFetcher
 
         $bare   = preg_replace('/^www\./', '', $host);
         $scheme = 'https';
+        $samePath = (string) ($p['path'] ?? '');
 
         // خلاصات FeedBurner الميتة: خمّن خلاصة الموقع الأصلية من اسم الخلاصة
         if (in_array(strtolower($host), self::DEAD_HOSTS, true)) {
@@ -398,15 +399,22 @@ class FeedFetcher
             ]));
         }
 
-        return array_values(array_unique([
-            "{$scheme}://{$bare}/feed/",
-            "{$scheme}://www.{$bare}/feed/",
-            "{$scheme}://{$bare}/rss/",
-            "{$scheme}://{$bare}/rss.xml",
-            "{$scheme}://{$bare}/feed/atom/",
-            "{$scheme}://{$bare}/atom.xml",
-            "{$scheme}://{$bare}/index.xml",
-            "{$scheme}://{$bare}/feeds/posts/default?alt=rss&redirect=false",
-        ]));
+return array_values(array_unique(array_merge(
+            // نفس المسار تماماً مع/بدون www — أشهر سبب للفشل: بعض الخوادم
+            // (Varnish وغيره) ترفض النطاق الجذري وتخدم www فقط، أو العكس.
+            ($samePath !== '' && $samePath !== '/')
+                ? ["{$scheme}://www.{$bare}{$samePath}", "{$scheme}://{$bare}{$samePath}"]
+                : [],
+            [
+                "{$scheme}://{$bare}/feed/",
+                "{$scheme}://www.{$bare}/feed/",
+                "{$scheme}://{$bare}/rss/",
+                "{$scheme}://{$bare}/rss.xml",
+                "{$scheme}://{$bare}/feed/atom/",
+                "{$scheme}://{$bare}/atom.xml",
+                "{$scheme}://{$bare}/index.xml",
+                "{$scheme}://{$bare}/feeds/posts/default?alt=rss&redirect=false",
+            ]
+        )));
     }
 }
