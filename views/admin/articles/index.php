@@ -7,10 +7,99 @@ $title = 'إدارة المقالات';
  <h2 class="h3 fw-bold mb-1"><i class="bi bi-journal-richtext text-primary me-2"></i>إدارة المقالات</h2>
  <p class="text-muted mb-0">عرض وتعديل وتصفية كافة الأخبار والتحليلات في المنصة.</p>
  </div>
- <a href="<?= admin_e(app_url('admin/articles/create')) ?>" class="btn btn-primary fw-bold shadow-sm">
+<a href="<?= admin_e(app_url('admin/articles/create')) ?>" class="btn btn-primary fw-bold shadow-sm">
  <i class="bi bi-plus-lg me-1"></i> كتابة مقال جديد
  </a>
-</div>
+ </div>
+
+ <!-- Image repair: download remote images to our own server -->
+ <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" id="imageRepairCard">
+ <div class="card-body d-flex align-items-center gap-3 flex-wrap">
+  <div class="flex-grow-1">
+  <div class="fw-bold"><i class="bi bi-images text-primary me-1"></i> إصلاح صور المقالات</div>
+  <div class="text-muted small">ينزّل الصور الخارجية إلى خادم الموقع حتى لا تختفي لاحقاً، ويعيد استخراج صورة لمن لا صورة له.</div>
+  </div>
+  <button type="button" class="btn btn-outline-primary btn-sm fw-bold" id="imageRepairBtn">
+  <i class="bi bi-wrench-adjustable me-1"></i> بدء الإصلاح
+  </button>
+ </div>
+ <div class="card-body pt-0 d-none" id="imageRepairProgress">
+  <div class="d-flex justify-content-between small mb-1">
+  <span id="imageRepairLabel">جارٍ الفحص…</span>
+  <span id="imageRepairCount"></span>
+  </div>
+  <div class="progress" style="height:8px">
+  <div class="progress-bar progress-bar-striped progress-bar-animated" id="imageRepairBar" style="width:0%"></div>
+  </div>
+  <div class="small mt-2" id="imageRepairLog" style="max-height:120px;overflow-y:auto"></div>
+ </div>
+ </div>
+ <script>
+ (function () {
+  var btn = document.getElementById('imageRepairBtn');
+  if (!btn) return;
+  var running = false;
+
+  function log(msg, cls) {
+  var box = document.getElementById('imageRepairLog');
+  if (!box) return;
+  var div = document.createElement('div');
+  if (cls) div.className = cls;
+  div.textContent = msg;
+  box.prepend(div);
+  }
+
+  async function batch(offset) {
+  var fd = new FormData();
+  fd.append('offset', offset);
+  fd.append('limit', '8');
+  fd.append('respond_with', 'json');
+  var token = document.querySelector('input[name="_csrf_token"], input[name="_csrf"]');
+  if (token) fd.append(token.name, token.value);
+
+  var res = await fetch('<?= admin_e(app_url('admin/articles/repair-images')) ?>', {
+  method: 'POST', body: fd, credentials: 'same-origin',
+  headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  });
+  var data = await res.json();
+  if (!data.ok) throw new Error(data.message || data.error || 'فشل الإصلاح');
+
+  var bar = document.getElementById('imageRepairBar');
+  var label = document.getElementById('imageRepairLabel');
+  var count = document.getElementById('imageRepairCount');
+  if (bar && data.total > 0) bar.style.width = Math.round(100 * data.next / data.total) + '%';
+  if (label) label.textContent = data.done ? 'اكتمل الإصلاح' : 'جارٍ الإصلاح… (' + data.next + ' / ' + data.total + ')';
+  if (count) count.textContent = 'أُصلح: ' + data.fixed + ' · معطوب: ' + data.broken;
+  (data.notes || []).forEach(function (n) { log(n); });
+
+  if (!data.done) {
+  return batch(data.next);
+  }
+  return data;
+  }
+
+  btn.addEventListener('click', async function () {
+  if (running) return;
+  running = true;
+  btn.disabled = true;
+  document.getElementById('imageRepairProgress').classList.remove('d-none');
+  document.getElementById('imageRepairLog').innerHTML = '';
+  try {
+  var done = await batch(0);
+  if (window.adminToast) {
+  window.adminToast('اكتمل إصلاح الصور: ' + done.fixed + ' أُصلح، ' + done.broken + ' ما زال معطوباً.', done.broken ? 'warning' : 'success', 6000);
+  }
+  } catch (e) {
+  if (window.adminToast) window.adminToast(e.message, 'error');
+  else alert(e.message);
+  log('خطأ: ' + e.message, 'text-danger');
+  } finally {
+  running = false;
+  btn.disabled = false;
+  }
+  });
+ })();
+ </script>
 
 <!-- Search & Filters -->
 <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">

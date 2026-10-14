@@ -407,6 +407,19 @@ foreach ($feedItems as $itemIndex => $item) {
                 $featuredImage = '';
             }
 
+            // الصورة تُحفَظ على خادمنا فوراً — الرابط الخارجي قد يموت لاحقاً
+            // (وهو سبب تحوّل صور منشورة إلى الافتراضية بعد أيام).
+            require_once $root . '/core/ImageStore.php';
+            if (ImageStore::isRemote($featuredImage)) {
+                $stored = ImageStore::storeFromUrl($featuredImage);
+                if ($stored !== '') {
+                    $featuredImage = $stored;
+                    logMsg("     🖼️ حُفظت الصورة محلياً");
+                } else {
+                    logMsg("     ⚠️ تعذّر حفظ الصورة محلياً — يبقى الرابط الخارجي");
+                }
+            }
+
 // ─── الإدراج في قاعدة البيانات ────────────────────
  try {
 // صاحب المقال: أول مدير نشط. الرقم 1 ليس مضموناً الوجود (حذف أو تغيير)،

@@ -56,6 +56,9 @@ class ArticlesController extends AdminController
  $categoryId = get_default_category_id($db);
  }
 
+ // رابط صورة خارجي في النموذج؟ نزّله لخادمنا فوراً حتى لا يموت لاحقاً
+ $data['featured_image'] = self::localizeImage($data['featured_image'] ?? null);
+
  $db->query('INSERT INTO articles (title,title_ar,title_en,slug,content,content_ar,content_en,excerpt,featured_image,category_id,author_id,status,article_type,allow_comments,is_featured,is_premium,source_name,source_url,published_at,reading_time_minutes,views_count,shares_count) VALUES (:title,:title_ar,:title_en,:slug,:content,:content_ar,:content_en,:excerpt,:featured_image,:category_id,:author_id,:status,:article_type,:allow_comments,:is_featured,:is_premium,:source_name,:source_url,:published_at,:reading_time_minutes,:views_count,:shares_count)', array(
  ':title' => $data['title'] ?? '',
  ':title_ar' => $data['title_ar'] ?? ($data['title'] ?? ''),
@@ -115,6 +118,12 @@ class ArticlesController extends AdminController
  $categoryId = (int) ($data['category_id'] ?? 0);
  if ($categoryId <= 0) {
  $categoryId = get_default_category_id($db);
+ }
+
+ // رابط صورة خارجي جديد في النموذج؟ نزّله لخادمنا فوراً (لا نعيد تنزيل
+ // ما لم يتغيّر حتى لا تتراكم نسخ مكررة).
+ if (($data['featured_image'] ?? null) !== ($old['featured_image'] ?? null)) {
+ $data['featured_image'] = self::localizeImage($data['featured_image'] ?? null);
  }
 
  $db->query('UPDATE articles SET title=:title,title_ar=:title_ar,title_en=:title_en,slug=:slug,content=:content,content_ar=:content_ar,content_en=:content_en,excerpt=:excerpt,featured_image=:featured_image,category_id=:category_id,status=:status,article_type=:article_type,allow_comments=:allow_comments,is_featured=:is_featured,is_premium=:is_premium,source_name=:source_name,source_url=:source_url,published_at=:published_at,reading_time_minutes=:reading_time_minutes,views_count=:views_count,shares_count=:shares_count,updated_at=CURRENT_TIMESTAMP WHERE id=:id', array(
@@ -336,6 +345,96 @@ class ArticlesController extends AdminController
  exit;
  }
 
+ /**
+  * إصلاح صور المقالات على دفعات (JSON).
+  *
+  * لكل مقال صورته خارجية أو مفقودة: تُنزَّل نسخة محلية وتُحفَظ في قاعدة
+  * البيانات. المعطوب الذي لا يُستعاد تُعاد محاولة استخراجه من رابطه الأصلي.
+  */
+ public function repairImages()
+ {
+ $this->postGuardPermission('articles.edit');
+ $db = new Database();
+
+ $offset = max(0, (int) ($_POST['offset'] ?? 0));
+ $limit = min(20, max(1, (int) ($_POST['limit'] ?? 8)));
+ $started = microtime(true);
+ $budget = 25; // نترك هامشاً قبل مهلة الاستضافة
+
+ $where = "(featured_image IS NULL OR featured_image = '' OR featured_image LIKE 'http%')";
+ $total = (int) ($db->fetch("SELECT COUNT(*) AS c FROM articles WHERE {$where}")['c'] ?? 0);
+ $rows = $db->fetchAll(
+ "SELECT id, title, featured_image, source_url FROM articles WHERE {$where} ORDER BY id DESC LIMIT " . (int) $limit . " OFFSET " . (int) $offset
+ );
+
+ $fixed = 0;
+ $broken = 0;
+ $notes = [];
+ $processed = 0;
+
+ foreach ($rows as $row) {
+ if ((microtime(true) - $started) > $budget) {
+ break;
+ }
+ $processed++;
+ $id = (int) $row['id'];
+ $img = trim((string) ($row['featured_image'] ?? ''));
+ $short = mb_substr((string) ($row['title'] ?? ('#' . $id)), 0, 45);
+
+ // مسار محلي والملف موجود: سليم، لا نلمسه
+ if (ImageStore::isLocal($img)) {
+ $full = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 2)) . '/' . $img;
+ if (is_file($full)) {
+ continue;
+ }
+ }
+
+ $local = '';
+ if (ImageStore::isRemote($img)) {
+ // يعمل؟ نزّله مباشرة
+ $probe = ImageStore::check($img);
+ if ($probe['ok']) {
+ $local = ImageStore::storeFromUrl($img);
+ }
+ // ميت؟ أعد استخراج صورة طازجة من المقال الأصلي
+ if ($local === '' && !empty($row['source_url'])) {
+ $fresh = FetchOg::resolve((string) $row['source_url']);
+ if ($fresh !== '' && $fresh !== $img) {
+ $local = ImageStore::storeFromUrl($fresh);
+ }
+ }
+ } elseif ($img === '' && !empty($row['source_url'])) {
+ // بلا صورة أصلاً: استخرج ثم نزّل
+ $fresh = FetchOg::resolve((string) $row['source_url']);
+ if ($fresh !== '') {
+ $local = ImageStore::storeFromUrl($fresh);
+ }
+ }
+
+ if ($local !== '') {
+ $db->query('UPDATE articles SET featured_image = :img WHERE id = :id', [':img' => $local, ':id' => $id]);
+ $fixed++;
+ $notes[] = '✅ #' . $id . ' ' . $short;
+ } else {
+ $broken++;
+ $notes[] = '❌ #' . $id . ' ' . $short . ' — تعذّر الاستعاضة';
+ }
+ }
+
+ $next = $offset + $processed;
+ header('Content-Type: application/json; charset=utf-8');
+ echo json_encode([
+ 'ok' => true,
+ 'total' => $total,
+ 'next' => $next,
+ 'done' => $next >= $total || $processed === 0,
+ 'fixed' => $fixed,
+ 'broken' => $broken,
+ 'notes' => array_slice($notes, 0, 12),
+ ], JSON_UNESCAPED_UNICODE);
+ exit;
+ }
+
  private function slug($value)
  {
  $slug = strtolower(trim(preg_replace('/[^\p{L}\p{N}]+/u', '-', (string) $value), '-'));
@@ -346,5 +445,22 @@ class ArticlesController extends AdminController
  {
  $words = preg_split('/\s+/u', trim(strip_tags($content)));
  return max(1, (int) ceil(count($words) / 200));
+ }
+
+ /**
+  * رابط صورة خارجي؟ يُنزَّل إلى خادمنا ويُعاد المسار المحلي.
+  * أي قيمة أخرى (مسار محلي، فارغ) تمرّ كما هي.
+  */
+ private static function localizeImage($value)
+ {
+  if (!class_exists('ImageStore') || !ImageStore::isRemote($value)) {
+  return $value;
+  }
+  try {
+  $local = ImageStore::storeFromUrl((string) $value);
+  return $local !== '' ? $local : $value;
+  } catch (Throwable $e) {
+  return $value;
+  }
  }
 }

@@ -246,6 +246,11 @@ $featuredImage = trim($data['featured_image'] ?? '');
   // عناصر خلاصات مثل Google News لا تحمل صوراً داخل XML؛ نجلب الصورة البارزة
   // الحقيقية من صفحة المقال الأصلية (og:image مع كاش على القرص) عند غيابها.
   $featuredImage = FetchOg::resolveFor($sourceUrl, $featuredImage);
+ // الصورة تُحفَظ على خادمنا فوراً: الرابط الخارجي قد يموت لاحقاً
+ if (ImageStore::isRemote($featuredImage)) {
+  $stored = ImageStore::storeFromUrl($featuredImage);
+  if ($stored !== '') { $featuredImage = $stored; }
+ }
 
  if (empty($title)) {
  if ($this->ajaxOut(['success' => false, 'error' => 'عنوان المقال مطلوب للنشر.'])) return;
@@ -413,6 +418,11 @@ $featuredImage = trim($data['featured_image'] ?? '');
   // عناصر خلاصات مثل Google News لا تحمل صوراً داخل XML؛ نجلب الصورة البارزة
   // الحقيقية من صفحة المقال الأصلية (og:image مع كاش على القرص) عند غيابها.
   $featuredImage = FetchOg::resolveFor($sourceUrl, $featuredImage);
+ // الصورة تُحفَظ على خادمنا فوراً: الرابط الخارجي قد يموت لاحقاً
+ if (ImageStore::isRemote($featuredImage)) {
+  $stored = ImageStore::storeFromUrl($featuredImage);
+  if ($stored !== '') { $featuredImage = $stored; }
+ }
 
  if (empty($title)) {
  if ($this->ajaxOut(['success' => false, 'error' => 'عنوان المقال مطلوب للنشر.'])) return;
@@ -534,6 +544,11 @@ $this->audit('direct_publish', 'article', $newId, null, ['source' => $sourceName
         // عناصر خلاصات مثل Google News لا تحمل صوراً داخل XML؛ نجلب الصورة البارزة
         // الحقيقية من صفحة المقال الأصلية (og:image مع كاش على القرص) عند غيابها.
         $featuredImage = FetchOg::resolveFor($sourceUrl, $featuredImage);
+ // الصورة تُحفَظ على خادمنا فوراً: الرابط الخارجي قد يموت لاحقاً
+ if (ImageStore::isRemote($featuredImage)) {
+  $stored = ImageStore::storeFromUrl($featuredImage);
+  if ($stored !== '') { $featuredImage = $stored; }
+ }
 
 if (empty($title)) {
  if ($this->ajaxOut(['success' => false, 'error' => 'عنوان المقال مطلوب.'])) return;
