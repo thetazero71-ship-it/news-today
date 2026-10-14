@@ -3,12 +3,20 @@
 require_once __DIR__ . '/core/Database.php';
 
 echo "== صف العالم في قاعدتك ==\n";
-$db = new Database();
-foreach ($db->fetchAll("SELECT * FROM rss_sources WHERE url LIKE '%alalam%' OR name LIKE '%العالم%'") as $r) {
-    foreach ($r as $k => $v) {
-        echo "  $k = " . mb_substr((string) $v, 0, 160) . "\n";
+try {
+    $db = new Database();
+    $rows = $db->fetchAll("SELECT * FROM rss_sources WHERE url LIKE '%alalam%'");
+    echo 'rows matching url: ' . count($rows) . "\n";
+    foreach ($rows as $r) {
+        foreach ($r as $k => $v) {
+            echo "  $k = " . mb_substr((string) $v, 0, 160) . "\n";
+        }
+        echo "  ----\n";
     }
-    echo "  ----\n";
+    $n = $db->fetchAll("SELECT COUNT(*) c FROM rss_sources");
+    echo 'total sources: ' . ($n[0]['c'] ?? '?') . "\n";
+} catch (Throwable $e) {
+    echo 'EXCEPTION: ' . get_class($e) . ': ' . $e->getMessage() . "\n";
 }
 echo "== نهاية ==\n";
 exit;
