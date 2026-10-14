@@ -22,6 +22,38 @@ function t($label, $cond, $extra = '')
 $root = dirname(__DIR__);
 require_once $root . '/core/ImageStore.php';
 
+/** بديل قاعدة البيانات لاختبار التسجيل في المكتبة */
+class TestMediaDb
+{
+    public static $rows = [];
+    public static $queries = [];
+
+    public function fetch($sql, array $p = [])
+    {
+        foreach (self::$rows as $row) {
+            if (($row['file_path'] ?? null) === ($p[':p'] ?? null)) {
+                return $row;
+            }
+        }
+        return null;
+    }
+    public function fetchAll($sql, array $p = [])
+    {
+        return self::$rows;
+    }
+    public function query($sql, array $p = [])
+    {
+        self::$queries[] = [$sql, $p];
+        if (stripos($sql, 'INSERT INTO media') !== false) {
+            self::$rows[] = ['id' => count(self::$rows) + 1, 'file_path' => $p[':file_path']];
+        }
+        return true;
+    }
+}
+if (!class_exists('Database')) {
+    class_alias('TestMediaDb', 'Database');
+}
+
 echo "--- remote vs local ---\n";
 t('http url is remote', ImageStore::isRemote('https://x.com/a.jpg'));
 t('http url is remote', ImageStore::isRemote('http://x.com/a.jpg'));
@@ -133,6 +165,24 @@ t('recompress route registered', strpos((string) file_get_contents($root . '/ind
 $view = (string) file_get_contents($root . '/views/admin/articles/index.php');
 t('compress button rendered', strpos($view, 'imageCompressBtn') !== false);
 t('compress batches automatically', strpos($view, 'return cbatch(data.next, saved)') !== false);
+
+echo "\n--- media library registration ---\n";
+TestMediaDb::$rows = [];
+TestMediaDb::$queries = [];
+t('a new image is registered', ImageStore::registerInLibrary('uploads/articles/2026/10/abc123.jpg', 'https://x.com/pic.jpg', ['mime' => 'image/jpeg', 'width' => 1200, 'height' => 675], 45000));
+t('one row was inserted', count(TestMediaDb::$rows) === 1);
+$last = end(TestMediaDb::$queries);
+t('folder is articles', ($last[1][':folder'] ?? '') === 'articles');
+t('path is stored', ($last[1][':file_path'] ?? '') === 'uploads/articles/2026/10/abc123.jpg');
+t('mime is stored', ($last[1][':mime_type'] ?? '') === 'image/jpeg');
+t('size is stored', ($last[1][':file_size'] ?? 0) === 45000);
+t('dimensions are stored', ($last[1][':dimensions'] ?? '') === '1200x675');
+TestMediaDb::$queries = [];
+t('an existing image is not duplicated', ImageStore::registerInLibrary('uploads/articles/2026/10/abc123.jpg'));
+t('no second insert happened', TestMediaDb::$queries === []);
+t('publishing stores register the file', strpos((string) file_get_contents($root . '/core/ImageStore.php'), 'self::registerInLibrary($relative') !== false);
+t('old images are backfilled on recompress', strpos((string) file_get_contents($root . '/controllers/admin/ArticlesController.php'), "ImageStore::registerInLibrary(ltrim((string) (\$row['featured_image']") !== false);
+t('registration never breaks publishing', strpos((string) file_get_contents($root . '/core/ImageStore.php'), 'catch (Throwable $e) {') !== false);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

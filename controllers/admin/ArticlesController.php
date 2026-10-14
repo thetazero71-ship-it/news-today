@@ -478,6 +478,8 @@ class ArticlesController extends AdminController
  if (!empty($r['saved'])) {
  $savedBytes += max(0, $r['before'] - $r['after']);
  }
+ // تسجيل تراكمي في مكتبة الوسائط لمن فاته التسجيل سابقاً
+ ImageStore::registerInLibrary(ltrim((string) ($row['featured_image'] ?? ''), '/'));
  }
 
  $next = $offset + $done;

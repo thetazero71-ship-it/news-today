@@ -98,7 +98,71 @@ class ImageStore
             return '';
         }
 
-        return 'uploads/' . $context . '/' . $sub . '/' . $name;
+        $relative = 'uploads/' . $context . '/' . $sub . '/' . $name;
+
+        // لتظهر الصورة في مكتبة الوسائط — لا يمنع النشر إن فشل
+        self::registerInLibrary($relative, $url, $info, strlen($data));
+
+        return $relative;
+    }
+
+    /**
+     * تسجيل الصورة في مكتبة الوسائط (جدول media) إن لم تكن مسجلة.
+     *
+     * آمن تماماً: أي خطأ (لا جدول، لا قاعدة) يُتجاهل بصمت لأن التسجيل
+     * تحسيني فقط — الصورة نفسها محفوظة وتعمل دونه.
+     */
+    public static function registerInLibrary(string $relativePath, ?string $originalName = null, ?array $info = null, ?int $bytes = null): bool
+    {
+        try {
+            if (!class_exists('Database')) {
+                return false;
+            }
+            $db = new Database();
+            $exists = $db->fetch('SELECT id FROM media WHERE file_path = :p LIMIT 1', [':p' => $relativePath]);
+            if ($exists) {
+                return true;
+            }
+
+            $full = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__)) . '/' . ltrim($relativePath, '/');
+            if ($bytes === null) {
+                $bytes = is_file($full) ? (int) filesize($full) : 0;
+            }
+            if ($info === null && is_file($full)) {
+                $raw = @file_get_contents($full);
+                $info = is_string($raw) ? self::inspect($raw) : null;
+            }
+
+            $userId = null;
+            if (class_exists('Auth')) {
+                try {
+                    $u = Auth::user();
+                    $userId = isset($u['id']) ? (int) $u['id'] : null;
+                } catch (Throwable $e) {
+                    $userId = null;
+                }
+            }
+
+            $db->query(
+                'INSERT INTO media (user_id, folder, original_name, file_name, file_path, mime_type, file_size, dimensions, width, height)
+                 VALUES (:user_id, :folder, :original_name, :file_name, :file_path, :mime_type, :file_size, :dimensions, :width, :height)',
+                [
+                    ':user_id'       => $userId,
+                    ':folder'        => 'articles',
+                    ':original_name' => mb_substr((string) ($originalName ?: basename($relativePath)), 0, 255),
+                    ':file_name'     => basename($relativePath),
+                    ':file_path'     => $relativePath,
+                    ':mime_type'     => (string) ($info['mime'] ?? 'application/octet-stream'),
+                    ':file_size'     => (int) $bytes,
+                    ':dimensions'    => isset($info['width']) ? ($info['width'] . 'x' . $info['height']) : null,
+                    ':width'         => isset($info['width']) ? (int) $info['width'] : null,
+                    ':height'        => isset($info['height']) ? (int) $info['height'] : null,
+                ]
+            );
+            return true;
+        } catch (Throwable $e) {
+            return false;
+        }
     }
 
     /**
