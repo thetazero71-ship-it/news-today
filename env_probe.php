@@ -1,5 +1,6 @@
 <?php
 /** فحص مؤقت: تشخيص جلب خلاصة العالم من الخادم (يُحذف بعده) - v4 */
+require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/core/Database.php';
 
 echo "== صف العالم في قاعدتك ==\n";
