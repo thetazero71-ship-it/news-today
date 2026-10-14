@@ -9,8 +9,8 @@ foreach (array(
 ) as $u) {
     echo "== $u ==\n";
     $t = microtime(true);
-    // نفس المسار الذي يستخدمه فحص الصحة (الوضع الافتراضي الكامل)
-    $f = FeedFetcher::fetchRaw($u);
+    // مهلات قصيرة صريحة حتى لا تُقتل العملية قبل الإجابة
+    $f = FeedFetcher::fetchRaw($u, true, 0, 5, 10);
     printf("  success=%s http=%s bytes=%d time=%.1fs\n",
         var_export($f['success'], true),
         $f['http_code'] ?? '?',
