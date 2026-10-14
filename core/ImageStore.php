@@ -15,6 +15,18 @@ class ImageStore
     /** أكبر حجم مقبول للصورة (8MB). */
     const MAX_BYTES = 8388608;
 
+    /** أكبر عرض مقبول (1200px يكفي لشاشات الهواتف والبطاقات). */
+    const MAX_WIDTH = 1200;
+
+    /** أكبر ارتفاع مقبول (للصور الطولية جداً). */
+    const MAX_HEIGHT = 1600;
+
+    /** جودة إعادة الترميز (JPEG/WebP). */
+    const QUALITY = 82;
+
+    /** لا يُعاد الترميز إلا بتوفير حقيقي (10% على الأقل). */
+    const MIN_SAVING = 0.10;
+
     /** أصغر أبعاد مقبولة — لرفض بكسلات التتبع والصور التالفة. */
     const MIN_WIDTH = 80;
     const MIN_HEIGHT = 60;
@@ -78,11 +90,142 @@ class ImageStore
 
         $name = sha1($url . '|' . microtime(true) . '|' . mt_rand()) . '.' . $info['ext'];
         $full = $dir . '/' . $name;
+
+        // ضغط فوري: الحجم الأصلي غالباً ضخم (متوسط 700KB حالياً)
+        $data = self::compress($data, $info['mime']) ?? $data;
+
         if (@file_put_contents($full, $data, LOCK_EX) === false) {
             return '';
         }
 
         return 'uploads/' . $context . '/' . $sub . '/' . $name;
+    }
+
+    /**
+     * حساب الأبعاد المستهدفة (دالة صرفة قابلة للاختبار).
+     *
+     * @return array{width:int,height:int,resize:bool}
+     */
+    public static function computeSize(int $w, int $h): array
+    {
+        if ($w <= 0 || $h <= 0) {
+            return ['width' => 0, 'height' => 0, 'resize' => false];
+        }
+        $scale = max(1.0, $w / self::MAX_WIDTH, $h / self::MAX_HEIGHT);
+        if ($scale <= 1.0) {
+            return ['width' => $w, 'height' => $h, 'resize' => false];
+        }
+        return [
+            'width'  => (int) round($w / $scale),
+            'height' => (int) round($h / $scale),
+            'resize' => true,
+        ];
+    }
+
+    /**
+     * يعيد ترميز الصورة بأبعاد وجودة الويب، أو null للإبقاء على الأصل.
+     *
+     * القواعد: بلا GD = الأصل. GIF متحرك = الأصل (إعادة الترميز تقتله).
+     * الشفافية (PNG/WebP) محفوظة. لا يُستبدَل إلا بتوفير ≥10%.
+     */
+    public static function compress(string $data, string $mime): ?string
+    {
+        if ($data === '' || !function_exists('imagecreatefromstring')) {
+            return null;
+        }
+        if ($mime === 'image/gif' && substr_count($data, "\x21\xF9\x04") > 1) {
+            return null; // animated: keep every frame
+        }
+
+        $src = @imagecreatefromstring($data);
+        if (!$src) {
+            return null;
+        }
+
+        $w = imagesx($src);
+        $h = imagesy($src);
+        $target = self::computeSize($w, $h);
+
+        $img = $src;
+        if ($target['resize']) {
+            $img = imagecreatetruecolor($target['width'], $target['height']);
+            if (!$img) {
+                imagedestroy($src);
+                return null;
+            }
+            // حافظ على الشفافية
+            imagealphablending($img, false);
+            imagesavealpha($img, true);
+            $transparent = imagecolorallocatealpha($img, 0, 0, 0, 127);
+            imagefill($img, 0, 0, $transparent);
+            if (!imagecopyresampled($img, $src, 0, 0, 0, 0, $target['width'], $target['height'], $w, $h)) {
+                imagedestroy($src);
+                imagedestroy($img);
+                return null;
+            }
+        } elseif (in_array($mime, ['image/png', 'image/webp'], true)) {
+            // نفس الأبعاد لكن بإعادة ترميز محسّنة — جهّز نسخة نظيفة
+            imagealphablending($src, false);
+            imagesavealpha($src, true);
+        }
+
+        ob_start();
+        $ok = false;
+        if ($mime === 'image/jpeg') {
+            $ok = imagejpeg($img, null, self::QUALITY);
+        } elseif ($mime === 'image/png') {
+            $ok = imagepng($img, null, 6);
+        } elseif ($mime === 'image/webp' && function_exists('imagewebp')) {
+            $ok = imagewebp($img, null, self::QUALITY);
+        } elseif ($mime === 'image/gif' && function_exists('imagegif')) {
+            $ok = imagegif($img);
+        }
+        $out = $ok ? (string) ob_get_clean() : (function () { ob_end_clean(); return ''; })();
+
+        if ($img !== $src) {
+            imagedestroy($img);
+        }
+        imagedestroy($src);
+
+        if (!$ok || $out === '') {
+            return null;
+        }
+        // لا تستبدل إلا بتوفير حقيقي
+        if (strlen($out) >= strlen($data) * (1 - self::MIN_SAVING)) {
+            return null;
+        }
+        return $out;
+    }
+
+    /**
+     * ضغط ملف محلي في مكانه (لإعادة ضغط الصور القديمة لمرة واحدة).
+     *
+     * @return array{before:int,after:int,saved:bool}
+     */
+    public static function compressFile(string $fullPath): array
+    {
+        $before = is_file($fullPath) ? (int) filesize($fullPath) : 0;
+        $result = ['before' => $before, 'after' => $before, 'saved' => false];
+        if ($before <= 0) {
+            return $result;
+        }
+        $data = @file_get_contents($fullPath);
+        if (!is_string($data) || $data === '') {
+            return $result;
+        }
+        $info = self::inspect($data);
+        if ($info === null) {
+            return $result;
+        }
+        $out = self::compress($data, $info['mime']);
+        if ($out === null) {
+            return $result;
+        }
+        if (@file_put_contents($fullPath, $out, LOCK_EX) === false) {
+            return $result;
+        }
+        clearstatcache(true, $fullPath);
+        return ['before' => $before, 'after' => (int) filesize($fullPath), 'saved' => true];
     }
 
     /**

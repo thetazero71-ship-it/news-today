@@ -435,6 +435,77 @@ class ArticlesController extends AdminController
  exit;
  }
 
+ /**
+  * إعادة ضغط الصور المحلية لمرة واحدة (JSON، على دفعات).
+  *
+  * يعيد ترميز كل صورة محلية بأبعاد الويب وجودة 82 — يوفّر عادة 60-80%
+  * من الحجم دون فرق مرئي. آمن: لا يُستبدَل الملف إلا بتوفير حقيقي.
+  */
+ public function recompressImages()
+ {
+ $this->postGuardPermission('articles.edit');
+ $db = new Database();
+
+ $offset = max(0, (int) ($_POST['offset'] ?? 0));
+ $limit = min(30, max(1, (int) ($_POST['limit'] ?? 15)));
+ $started = microtime(true);
+ $budget = 25;
+
+ $total = (int) ($db->fetch("SELECT COUNT(*) AS c FROM articles WHERE featured_image LIKE 'uploads/%'")['c'] ?? 0);
+ $rows = $db->fetchAll(
+ "SELECT id, featured_image FROM articles WHERE featured_image LIKE 'uploads/%' ORDER BY id DESC LIMIT " . (int) $limit . " OFFSET " . (int) $offset
+ );
+
+ $done = 0;
+ $savedBytes = 0;
+ $skipped = 0;
+ $root = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 2);
+
+ foreach ($rows as $row) {
+ if ((microtime(true) - $started) > $budget) {
+ break;
+ }
+ $done++;
+ $full = $root . '/' . ltrim((string) ($row['featured_image'] ?? ''), '/');
+ // أمان المسار: يجب أن يبقى داخل uploads/articles
+ $real = realpath($full);
+ $base = realpath($root . '/uploads/articles');
+ if ($real === false || $base === false || strpos($real, $base) !== 0 || !is_file($real)) {
+ $skipped++;
+ continue;
+ }
+ $r = ImageStore::compressFile($real);
+ if (!empty($r['saved'])) {
+ $savedBytes += max(0, $r['before'] - $r['after']);
+ }
+ }
+
+ $next = $offset + $done;
+ header('Content-Type: application/json; charset=utf-8');
+ echo json_encode([
+ 'ok' => true,
+ 'total' => $total,
+ 'next' => $next,
+ 'done' => $next >= $total || $done === 0,
+ 'processed' => $done,
+ 'saved_bytes' => $savedBytes,
+ 'saved_human' => $this->formatBytes($savedBytes),
+ 'skipped' => $skipped,
+ ], JSON_UNESCAPED_UNICODE);
+ exit;
+ }
+
+ private function formatBytes(int $bytes): string
+ {
+  if ($bytes >= 1048576) {
+  return round($bytes / 1048576, 2) . ' MB';
+  }
+  if ($bytes >= 1024) {
+  return round($bytes / 1024, 1) . ' KB';
+  }
+  return $bytes . ' B';
+ }
+
  private function slug($value)
  {
  $slug = strtolower(trim(preg_replace('/[^\p{L}\p{N}]+/u', '-', (string) $value), '-'));

@@ -93,5 +93,46 @@ t('repair button rendered', strpos($view, 'imageRepairBtn') !== false);
 t('repair shows progress', strpos($view, 'imageRepairBar') !== false);
 t('repair batches automatically', strpos($view, 'return batch(data.next)') !== false);
 
+echo "\n--- compression math (no GD needed) ---\n";
+$s = ImageStore::computeSize(800, 600);
+t('small image is untouched', $s['resize'] === false && $s['width'] === 800 && $s['height'] === 600);
+$s = ImageStore::computeSize(2400, 1600);
+t('wide image scales to 1200', $s['resize'] === true && $s['width'] === 1200 && $s['height'] === 800);
+$s = ImageStore::computeSize(800, 3200);
+t('tall image scales by height', $s['resize'] === true && $s['height'] === 1600 && $s['width'] === 400);
+$s = ImageStore::computeSize(1200, 1600);
+t('exact caps are untouched', $s['resize'] === false);
+$s = ImageStore::computeSize(0, 0);
+t('zero dimensions are safe', $s['resize'] === false && $s['width'] === 0);
+$s = ImageStore::computeSize(1201, 100);
+t('one pixel over still rescales', $s['resize'] === true && $s['width'] === 1200);
+
+echo "\n--- compression guards ---\n";
+t('animated gif is never touched', (function () {
+    $frames = "\x21\xF9\x04" . 'a' . "\x21\xF9\x04" . 'b';
+    return ImageStore::compress($frames, 'image/gif') === null;
+})());
+t('empty bytes give null', ImageStore::compress('', 'image/jpeg') === null);
+t('unknown mime gives null', ImageStore::compress('whatever', 'image/bmp') === null);
+if (!function_exists('imagecreatefromstring')) {
+    t('without GD everything is kept as-is', ImageStore::compress('x', 'image/jpeg') === null);
+}
+
+echo "\n--- compression is wired everywhere ---\n";
+$store = (string) file_get_contents($root . '/core/ImageStore.php');
+t('downloads are compressed before saving', strpos($store, '$data = self::compress($data') !== false);
+t('compressFile() exists for old images', strpos($store, 'function compressFile') !== false);
+t('compressFile never writes on failure', strpos($store, "if (\$out === null)") !== false);
+
+$articles = (string) file_get_contents($root . '/controllers/admin/ArticlesController.php');
+t('one-time recompress action exists', strpos($articles, 'function recompressImages') !== false);
+t('it is batched with a time budget', strpos($articles, '$budget = 25') !== false);
+t('path traversal is blocked', strpos($articles, "strpos(\$real, \$base) !== 0") !== false);
+t('it reports saved bytes', strpos($articles, "'saved_bytes'") !== false);
+t('recompress route registered', strpos((string) file_get_contents($root . '/index.php'), "admin/articles/recompress-images") !== false);
+$view = (string) file_get_contents($root . '/views/admin/articles/index.php');
+t('compress button rendered', strpos($view, 'imageCompressBtn') !== false);
+t('compress batches automatically', strpos($view, 'return cbatch(data.next, saved)') !== false);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

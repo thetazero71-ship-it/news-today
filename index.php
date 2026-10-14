@@ -687,6 +687,7 @@ $router->post('/admin/articles/bulk-expire', 'ArticlesController@bulkExpire');
 $router->post('/admin/articles/translate-preview', 'ArticlesController@translatePreview');
 $router->post('/admin/articles/quick-update-category', 'ArticlesController@quickUpdateCategory');
 $router->post('/admin/articles/repair-images', 'ArticlesController@repairImages');
+$router->post('/admin/articles/recompress-images', 'ArticlesController@recompressImages');
 
 // Categories Management
 $router->get('/admin/categories', 'CategoriesController@index');

@@ -22,6 +22,9 @@ $title = 'إدارة المقالات';
   <button type="button" class="btn btn-outline-primary btn-sm fw-bold" id="imageRepairBtn">
   <i class="bi bi-wrench-adjustable me-1"></i> بدء الإصلاح
   </button>
+  <button type="button" class="btn btn-outline-success btn-sm fw-bold" id="imageCompressBtn" title="يعيد ترميز الصور المحلية بأبعاد الويب — يوفّر غالباً 60-80% من الحجم">
+  <i class="bi bi-file-earmark-zip me-1"></i> ضغط الصور المحلية
+  </button>
  </div>
  <div class="card-body pt-0 d-none" id="imageRepairProgress">
   <div class="d-flex justify-content-between small mb-1">
@@ -98,6 +101,76 @@ $title = 'إدارة المقالات';
   btn.disabled = false;
   }
   });
+
+  // ---- ضغط الصور المحلية (دفعات) ----
+  var cbtn = document.getElementById('imageCompressBtn');
+  var cRunning = false;
+
+  async function cbatch(offset, saved) {
+  var fd = new FormData();
+  fd.append('offset', offset);
+  fd.append('limit', '15');
+  fd.append('respond_with', 'json');
+  var token = document.querySelector('input[name="_csrf_token"], input[name="_csrf"]');
+  if (token) fd.append(token.name, token.value);
+
+  var res = await fetch('<?= admin_e(app_url('admin/articles/recompress-images')) ?>', {
+  method: 'POST', body: fd, credentials: 'same-origin',
+  headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  });
+  var data = await res.json();
+  if (!data.ok) throw new Error(data.message || data.error || 'فشل الضغط');
+
+  saved += (data.saved_bytes || 0);
+  var bar = document.getElementById('imageRepairBar');
+  var label = document.getElementById('imageRepairLabel');
+  var count = document.getElementById('imageRepairCount');
+  if (bar && data.total > 0) bar.style.width = Math.round(100 * data.next / data.total) + '%';
+  if (label) label.textContent = data.done ? 'اكتمل الضغط' : 'جارٍ الضغط… (' + data.next + ' / ' + data.total + ')';
+  if (count) count.textContent = 'وُفّر حتى الآن: ' + fmtBytes(saved);
+  log('دفعة: عُولج ' + data.processed + ' — وُفّر ' + (data.saved_human || '0 B'));
+
+  if (!data.done) {
+  return cbatch(data.next, saved);
+  }
+  return saved;
+  }
+
+  function fmtBytes(b) {
+  if (b >= 1048576) return (Math.round(b / 1048576 * 100) / 100) + ' MB';
+  if (b >= 1024) return (Math.round(b / 1024 * 10) / 10) + ' KB';
+  return b + ' B';
+  }
+
+  if (cbtn) {
+  cbtn.addEventListener('click', async function () {
+  if (cRunning) return;
+  var ok;
+  if (window.adminConfirm) {
+  ok = await window.adminConfirm('سيُعاد ترميز الصور المحلية بأبعاد الويب (1200px وجودة 82) لتوفير المساحة. متابعة؟', { title: 'ضغط الصور', danger: false });
+  } else {
+  ok = confirm('سيُعاد ترميز الصور المحلية بأبعاد الويب لتوفير المساحة. متابعة؟');
+  }
+  if (!ok) return;
+  cRunning = true;
+  cbtn.disabled = true;
+  document.getElementById('imageRepairProgress').classList.remove('d-none');
+  document.getElementById('imageRepairLog').innerHTML = '';
+  try {
+  var saved = await cbatch(0, 0);
+  if (window.adminToast) {
+  window.adminToast('اكتمل الضغط — وُفّر ' + fmtBytes(saved) + ' من مساحة الخادم.', 'success', 6000);
+  }
+  } catch (e) {
+  if (window.adminToast) window.adminToast(e.message, 'error');
+  else alert(e.message);
+  log('خطأ: ' + e.message, 'text-danger');
+  } finally {
+  cRunning = false;
+  cbtn.disabled = false;
+  }
+  });
+  }
  })();
  </script>
 
