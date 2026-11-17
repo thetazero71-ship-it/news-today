@@ -249,14 +249,21 @@ if (!function_exists('site_favicon_tag')) {
             $favicon = 'assets/images/favicon.ico';
         }
         // Search engines & browsers ignore oversized icons — fall back to the
-        // bundled small icon so Google/Chrome still display one.
+        // bundled small icon so Google/Chrome still display one. A setting can
+        // also point at a file that was never uploaded: never emit a 404 icon.
         if (strpos($favicon, '://') === false && !empty($favicon)) {
             $local = APP_ROOT . '/' . ltrim($favicon, '/');
-            if (is_file($local) && filesize($local) > 200 * 1024) {
+            if (!is_file($local) || filesize($local) > 200 * 1024) {
                 $favicon = 'assets/images/favicon.ico';
             }
         }
         $url = str_starts_with($favicon, 'http') ? $favicon : app_url($favicon);
+        if (strpos($favicon, '://') === false) {
+            $local = APP_ROOT . '/' . ltrim($favicon, '/');
+            if (is_file($local)) {
+                $url .= (strpos($url, '?') === false ? '?' : '&') . 'v=' . (int) @filemtime($local);
+            }
+        }
         $type = 'image/x-icon';
         if (str_ends_with(strtolower($favicon), '.png')) $type = 'image/png';
         if (str_ends_with(strtolower($favicon), '.svg')) $type = 'image/svg+xml';
@@ -274,14 +281,12 @@ if (!function_exists('site_brand_logo_html')) {
     {
         $siteName = Brand::name();
         $siteTagline = Settings::get('site_tagline', 'نبض التكنولوجيا والذكاء الاصطناعي');
-        $siteLogo = Settings::get('site_logo', '');
+        $logoUrl = Brand::logoUrl();
 
         $out = '<a class="brand" href="' . htmlspecialchars(app_url(), ENT_QUOTES, 'UTF-8') . '">';
-        if (!empty($siteLogo)) {
-            $logoUrl = str_starts_with($siteLogo, 'http') ? $siteLogo : app_url($siteLogo);
-            $out .= '<img src="' . htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8') . '" alt="' . htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8') . '" style="height:' . (int)$imgHeight . 'px;max-width:160px;object-fit:contain;border-radius:6px">';
-        } else {
-            $out .= '<div class="brand-icon">T</div>';
+        $out .= '<div class="brand-icon"' . ($logoUrl !== '' ? ' style="display:none"' : '') . '>T</div>';
+        if ($logoUrl !== '') {
+            $out .= '<img src="' . htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8') . '" alt="' . htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8') . '" style="height:' . (int)$imgHeight . 'px;max-width:160px;object-fit:contain;border-radius:6px" onerror="this.style.display=\'none\';this.previousElementSibling.style.display=\'flex\'">';
         }
         $out .= '<div class="brand-text">';
         $out .= '<span class="brand-title">' . htmlspecialchars($siteName, ENT_QUOTES, 'UTF-8') . '</span>';

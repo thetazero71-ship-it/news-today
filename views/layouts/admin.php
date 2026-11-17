@@ -1092,9 +1092,10 @@ html.admin-dark .btn-outline-info {
  <!-- Sidebar -->
  <aside class="admin-sidebar">
  <div class="sidebar-brand">
- <?php $adminLogo = Settings::get('site_logo', ''); ?>
- <?php if (!empty($adminLogo)): ?>
- <img src="<?= admin_e(str_starts_with($adminLogo, 'http') ? $adminLogo : app_url($adminLogo)) ?>" alt="Logo" style="height:32px;max-width:38px;object-fit:contain;border-radius:6px;margin-inline-end:8px">
+ <?php $adminLogo = Brand::logoUrl(); ?>
+ <?php if ($adminLogo !== ''): ?>
+ <img src="<?= admin_e($adminLogo) ?>" alt="Logo" style="height:32px;max-width:38px;object-fit:contain;border-radius:6px;margin-inline-end:8px" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+ <div class="brand-logo-badge" style="display:none">T</div>
  <?php else: ?>
  <div class="brand-logo-badge">T</div>
  <?php endif; ?>

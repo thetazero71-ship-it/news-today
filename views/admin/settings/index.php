@@ -439,6 +439,7 @@ $brandImageKeys = ['site_logo', 'site_favicon', 'default_og_image', 'site_logo_d
  name="settings[<?= htmlspecialchars($s['key']) ?>]" 
  class="form-control font-monospace small" 
  placeholder="رابط الصورة أو مسارها (مثال: uploads/brand/logo.png)"
+ oninput="previewBrandPath('<?= htmlspecialchars($s['key'], ENT_QUOTES) ?>')"
  value="<?= htmlspecialchars($s['value'] ?? '') ?>">
  </div>
 
@@ -710,6 +711,27 @@ function brandPreviewFailed(key) {
   if (!box) return;
   box.innerHTML = '<span class="brand-preview-missing text-danger"><i class="bi bi-image"></i></span>';
   brandStatus(key, false, 'تعذّر تحميل الصورة — تحقق من المسار');
+}
+
+// Typing a path updates the preview after a short pause, before saving.
+const brandPreviewTimers = {};
+function previewBrandPath(key) {
+  clearTimeout(brandPreviewTimers[key]);
+  brandPreviewTimers[key] = setTimeout(function () {
+    const input = document.getElementById('setting_' + key);
+    if (!input) return;
+    const value = input.value.trim();
+    if (!value) {
+      const box = document.getElementById('preview_box_' + key);
+      if (box) box.innerHTML = '<span class="brand-preview-missing text-danger"><i class="bi bi-image"></i></span>';
+      brandStatus(key, false, 'لم يُضبط أي ملف بعد');
+      return;
+    }
+    const base = <?= json_encode(app_url(''), JSON_UNESCAPED_SLASHES) ?>;
+    const url = /^https?:\/\//i.test(value) ? value : base + '/' + value.replace(/^\/+/, '');
+    renderBrandPreview(key, url + (url.indexOf('?') === -1 ? '?' : '&') + 't=' + Date.now(), 0);
+    brandStatus(key, true, 'معاينة مؤقتة — احفظ لتثبيت المسار');
+  }, 400);
 }
 
 function renderBrandPreview(key, url, bytes) {

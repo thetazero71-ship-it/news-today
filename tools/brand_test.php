@@ -220,5 +220,32 @@ $uploadsHtaccess = (string) file_get_contents(APP_ROOT . '/uploads/.htaccess');
 t('uploads htaccess is Apache 2.4-safe', strpos($uploadsHtaccess, 'mod_authz_core.c') !== false);
 t('PHP is still denied in uploads', strpos($uploadsHtaccess, 'Require all denied') !== false);
 
+echo "\n--- an asset that disappears never breaks a page ---\n";
+Settings::$data['site_logo'] = 'uploads/brand/does_not_exist.png';
+Brand::flush();
+t('missing logo resolves to empty', Brand::logoUrl() === '');
+
+Settings::$data['site_logo'] = 'uploads/brand/site_logo_1789925847.ico';
+Brand::flush();
+$logoUrl = Brand::logoUrl();
+t('present logo resolves to a URL', strpos($logoUrl, 'site_logo_1789925847.ico') !== false);
+t('present logo carries a cache-buster', preg_match('/\?v=\d+$/', $logoUrl) === 1);
+
+Settings::$data['site_logo'] = 'https://cdn.example.com/logo.png';
+Brand::flush();
+t('remote logo is left untouched', Brand::logoUrl() === 'https://cdn.example.com/logo.png');
+
+Settings::$data['site_favicon'] = 'uploads/brand/does_not_exist.png';
+Brand::flush();
+t('missing favicon resolves to empty', Brand::faviconUrl() === '');
+
+$indexSrc = (string) file_get_contents(APP_ROOT . '/index.php');
+$adminLayout = (string) file_get_contents(APP_ROOT . '/views/layouts/admin.php');
+t('favicon tag falls back when the file is missing', strpos($indexSrc, '!is_file($local) || filesize($local) > 200 * 1024') !== false);
+t('public logo uses the checked URL', strpos($indexSrc, 'Brand::logoUrl()') !== false);
+t('public logo has a badge fallback', strpos($indexSrc, 'previousElementSibling.style.display=') !== false);
+t('admin sidebar uses the checked URL', strpos($adminLayout, 'Brand::logoUrl()') !== false);
+t('admin sidebar can fall back to the badge', strpos($adminLayout, "this.nextElementSibling.style.display='flex'") !== false);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

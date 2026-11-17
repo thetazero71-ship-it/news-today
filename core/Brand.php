@@ -72,16 +72,42 @@ class Brand
         return $suffix === '' ? self::name() : $suffix . ' | ' . self::name();
     }
 
+    /**
+     * Public URL of a stored brand asset, or '' when the local file is gone.
+     *
+     * A setting can point at a file that was never uploaded (or was deleted),
+     * and printing that path puts a broken image on every page. Checking the
+     * disk here keeps every surface honest, and the mtime suffix busts caches
+     * when the same filename is replaced.
+     */
+    public static function assetUrl(string $key, string $fallback = ''): string
+    {
+        $value = trim(self::setting($key, ''));
+        if ($value === '') {
+            return $fallback;
+        }
+        if (preg_match('#^https?://#i', $value) === 1) {
+            return $value;
+        }
+
+        $root = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__);
+        $local = $root . '/' . ltrim($value, '/');
+        if (!is_file($local)) {
+            return $fallback;
+        }
+
+        $url = app_url($value);
+        return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . (int) @filemtime($local);
+    }
+
     public static function logoUrl(): string
     {
-        $logo = self::setting('site_logo', '');
-        return $logo === '' ? '' : app_url($logo);
+        return self::assetUrl('site_logo');
     }
 
     public static function faviconUrl(): string
     {
-        $icon = self::setting('site_favicon', '');
-        return $icon === '' ? '' : app_url($icon);
+        return self::assetUrl('site_favicon');
     }
 
     /** Drop the per-request cache after the settings are saved. */
