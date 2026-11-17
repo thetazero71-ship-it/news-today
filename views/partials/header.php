@@ -195,10 +195,10 @@ foreach ($breakingSocials as $net) {
 <div class="breaking-topbar">
     <div class="container breaking-topbar-inner">
         <?php if (!empty($breakingNews)): ?>
-        <div class="breaking-news" role="marquee" aria-label="أحدث المستجدات التقنية">
+        <div class="breaking-news" role="marquee" aria-label="أحدث المستجدات">
             <span class="breaking-label">
                 <?= ui_icon('bolt', '', 14) ?>
-                <span class="breaking-label-text">أحدث المستجدات التقنية:</span>
+                <span class="breaking-label-text">أحدث المستجدات:</span>
             </span>
             <div class="breaking-viewport" id="breaking-viewport">
                 <?php foreach ($breakingNews as $bi => $bart): ?>
