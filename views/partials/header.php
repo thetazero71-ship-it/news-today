@@ -25,9 +25,13 @@ $metaKeywords   = $metaKeywords ?? Settings::get('meta_keywords', 'أخبار ت
 $currentUri     = trim(parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH), '/');
 $canonicalUrl   = $canonicalUrl ?? (rtrim(app_url(), '/') . ($currentUri ? '/' . $currentUri : ''));
 $ogType         = $ogType ?? 'website';
-$ogImage        = $ogImage ?? Settings::get('og_default_image');
+$ogImage        = $ogImage ?? Brand::assetUrl('default_og_image');
+if (!empty($ogImage) && !preg_match('#^https?://#i', $ogImage)) {
+    $ogImage = app_url($ogImage);
+}
 if (empty($ogImage)) {
-    $ogImage = app_url('uploads/brand/og_share.png');
+    // Never emit a path that was not uploaded: use a card that exists.
+    $ogImage = app_url('assets/images/icon-512.png');
 }
 $twitterHandle      = Settings::get('twitter_site_handle', '@TechNewsAr');
 // Verification codes are forgiving: accept the bare token OR a full pasted
@@ -127,7 +131,7 @@ $ga4Id              = Settings::get('google_analytics_id');
                 "url": "<?= view_e(app_url()) ?>",
                 "logo": {
                     "@type": "ImageObject",
-                    "url": "<?= view_e(app_url('uploads/brand/logo.png')) ?>"
+                    "url": "<?= view_e(Brand::logoUrl() ?: app_url('assets/images/icon-512.png')) ?>"
                 }
             }
         ]

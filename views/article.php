@@ -85,7 +85,7 @@ require_once APP_ROOT . '/views/partials/header.php';
             "headline": <?= json_encode($article['title_ar'] ?? $article['title'], JSON_UNESCAPED_UNICODE) ?>,
             "description": <?= json_encode($lead, JSON_UNESCAPED_UNICODE) ?>,
             "image": [
-                <?= json_encode($ogImage ?: app_url('uploads/brand/og_share.png')) ?>
+                <?= json_encode($ogImage ?: (Brand::assetUrl('default_og_image') ?: app_url('assets/images/icon-512.png'))) ?>
             ],
             "datePublished": "<?= date('c', strtotime($article['created_at'])) ?>",
             "dateModified": "<?= date('c', strtotime($article['updated_at'] ?? $article['created_at'])) ?>",
@@ -98,7 +98,7 @@ require_once APP_ROOT . '/views/partials/header.php';
                 "name": <?= json_encode(Brand::name(), JSON_UNESCAPED_UNICODE) ?>,
                 "logo": {
                     "@type": "ImageObject",
-                    "url": "<?= article_e(app_url('uploads/brand/logo.png')) ?>"
+                    "url": "<?= article_e(Brand::logoUrl() ?: app_url('assets/images/icon-512.png')) ?>"
                 }
             },
             "articleSection": <?= json_encode($article['category_name'] ?? 'أخبار التكنولوجيا', JSON_UNESCAPED_UNICODE) ?>

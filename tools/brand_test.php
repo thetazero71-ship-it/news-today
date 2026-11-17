@@ -284,5 +284,16 @@ $meta = SEO::renderMeta('صفحة', '', 'https://remote.example.com/a.jpg');
 t('remote article image is not double-prefixed', strpos($meta, 'https://remote.example.com/a.jpg') !== false);
 t('publisher logo comes from the brand helper', strpos($meta, 'site_logo_1789925847.ico') !== false);
 
+echo "\n--- no view hardcodes a missing brand file ---\n";
+$headerSrc = (string) file_get_contents(APP_ROOT . '/views/partials/header.php');
+$articleSrc = (string) file_get_contents(APP_ROOT . '/views/article.php');
+t('header uses the configured OG image', strpos($headerSrc, "Brand::assetUrl('default_og_image')") !== false);
+t('header no longer points at og_share.png', strpos($headerSrc, 'og_share.png') === false);
+t('header JSON-LD logo is checked', strpos($headerSrc, 'Brand::logoUrl()') !== false);
+t('article OG falls back safely', strpos($articleSrc, "Brand::assetUrl('default_og_image')") !== false);
+t('article no longer points at og_share.png', strpos($articleSrc, 'og_share.png') === false);
+t('article publisher logo is checked', strpos($articleSrc, 'Brand::logoUrl()') !== false);
+t('the missing uploads/brand/logo.png is gone', strpos($headerSrc . $articleSrc, 'uploads/brand/logo.png') === false);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);
