@@ -8,6 +8,12 @@ class ArticlesController extends AdminController
  $db = new Database();
  $q = trim((string) ($_GET['q'] ?? ''));
  $status = trim((string) ($_GET['status'] ?? ''));
+ $allowedPerPage = array(10, 25, 50, 100, 200);
+ $perPage = (int) ($_GET['per_page'] ?? 25);
+ if (!in_array($perPage, $allowedPerPage, true)) {
+ $perPage = 25;
+ }
+ $page = max(1, (int) ($_GET['page'] ?? 1));
  $where = array();
  $params = array();
 
@@ -21,18 +27,32 @@ class ArticlesController extends AdminController
  }
 
  $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
- $sql = "SELECT a.*, c.name as category_name, u.username as author_name 
+ $totalRow = $db->fetch("SELECT COUNT(*) as total FROM articles a {$whereSql}", $params);
+ $total = (int) ($totalRow['total'] ?? 0);
+ $totalPages = max(1, (int) ceil($total / $perPage));
+ if ($page > $totalPages) {
+ $page = $totalPages;
+ }
+ $offset = ($page - 1) * $perPage;
+
+ $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug, u.username as author_name 
  FROM articles a 
  LEFT JOIN categories c ON c.id = a.category_id 
  LEFT JOIN users u ON u.id = a.author_id 
  {$whereSql} 
- ORDER BY a.id DESC LIMIT 100";
+ ORDER BY a.id DESC LIMIT {$perPage} OFFSET {$offset}";
  $articles = $db->fetchAll($sql, $params);
 
  $this->view('admin/articles/index', array(
  'articles' => $articles,
  'q' => $q,
  'status' => $status,
+ 'perPage' => $perPage,
+ 'allowedPerPage' => $allowedPerPage,
+ 'page' => $page,
+ 'total' => $total,
+ 'totalPages' => $totalPages,
+ 'offset' => $offset,
  ));
  }
 

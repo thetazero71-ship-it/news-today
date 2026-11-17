@@ -1,5 +1,11 @@
 <?php
 $title = 'إدارة المقالات';
+$allowedPerPage = $allowedPerPage ?? array(10, 25, 50, 100, 200);
+$perPage = (int) ($perPage ?? 25);
+$page = max(1, (int) ($page ?? 1));
+$total = (int) ($total ?? count($articles ?? array()));
+$totalPages = max(1, (int) ($totalPages ?? 1));
+$offset = (int) ($offset ?? 0);
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -176,10 +182,10 @@ $title = 'إدارة المقالات';
 <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
  <div class="card-body p-3">
  <form method="get" action="<?= admin_e(app_url('admin/articles')) ?>" class="row g-2 align-items-center">
- <div class="col-md-5">
+ <div class="col-md-4">
  <input type="text" class="form-control" name="q" placeholder="ابحث بالعنوان أو الرابط..." value="<?= admin_e($q ?? '') ?>">
  </div>
- <div class="col-md-3">
+ <div class="col-md-2">
  <select class="form-select" name="status">
  <option value="">جميع الحالات</option>
  <option value="published" <?= ($status ?? '') === 'published' ? 'selected' : '' ?>>منشور</option>
@@ -189,11 +195,21 @@ $title = 'إدارة المقالات';
  </select>
  </div>
  <div class="col-md-2">
+ <div class="input-group">
+ <span class="input-group-text small">لكل صفحة</span>
+ <select class="form-select" name="per_page" onchange="this.form.submit()" title="عدد الصفوف في الصفحة الواحدة">
+ <?php foreach ($allowedPerPage as $n): ?>
+ <option value="<?= (int) $n ?>" <?= (int) $perPage === (int) $n ? 'selected' : '' ?>><?= (int) $n ?></option>
+ <?php endforeach; ?>
+ </select>
+ </div>
+ </div>
+ <div class="col-md-2">
  <button type="submit" class="btn btn-dark w-100"><i class="bi bi-funnel me-1"></i> تصفية</button>
  </div>
  <?php if (!empty($q) || !empty($status)): ?>
  <div class="col-md-2">
- <a href="<?= admin_e(app_url('admin/articles')) ?>" class="btn btn-outline-secondary w-100">إلغاء الفلتر</a>
+ <a href="<?= admin_e(app_url('admin/articles?per_page=' . (int) $perPage)) ?>" class="btn btn-outline-secondary w-100">إلغاء الفلتر</a>
  </div>
  <?php endif; ?>
  </form>
@@ -358,6 +374,50 @@ $allCategoriesList = (new Database())->fetchAll("SELECT id, name, slug FROM cate
  <?php endif; ?>
  </tbody>
  </table>
+ </div>
+
+ <?php
+ $fromItem = (int) $total > 0 ? (int) $offset + 1 : 0;
+ $toItem = min((int) $offset + (int) $perPage, (int) $total);
+ $paginationBase = array_filter(array(
+ 'q' => $q ?? '',
+ 'status' => $status ?? '',
+ 'per_page' => (int) $perPage,
+ ), function ($v) { return $v !== '' && $v !== null; });
+ $pageUrl = function ($p) use ($paginationBase) {
+ $params = $paginationBase;
+ $params['page'] = (int) $p;
+ return app_url('admin/articles?' . http_build_query($params));
+ };
+ ?>
+ <div class="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+ <small class="text-muted">
+ عرض <strong><?= number_format($fromItem) ?></strong>–<strong><?= number_format($toItem) ?></strong>
+ من <strong><?= number_format((int) $total) ?></strong> مقال
+ </small>
+ <?php if ($totalPages > 1): ?>
+ <nav aria-label="تصفح المقالات">
+ <ul class="pagination pagination-sm mb-0">
+ <?php if ($page > 1): ?>
+ <li class="page-item"><a class="page-link" href="<?= admin_e($pageUrl(1)) ?>">« الأولى</a></li>
+ <li class="page-item"><a class="page-link" href="<?= admin_e($pageUrl($page - 1)) ?>">‹ السابق</a></li>
+ <?php endif; ?>
+ <?php
+ $startPage = max(1, (int) $page - 2);
+ $endPage = min((int) $totalPages, (int) $page + 2);
+ for ($p = $startPage; $p <= $endPage; $p++):
+ ?>
+ <li class="page-item <?= $p === (int) $page ? 'active' : '' ?>">
+ <a class="page-link" href="<?= admin_e($pageUrl($p)) ?>"><?= (int) $p ?></a>
+ </li>
+ <?php endfor; ?>
+ <?php if ($page < $totalPages): ?>
+ <li class="page-item"><a class="page-link" href="<?= admin_e($pageUrl($page + 1)) ?>">التالي ›</a></li>
+ <li class="page-item"><a class="page-link" href="<?= admin_e($pageUrl($totalPages)) ?>">الأخيرة »</a></li>
+ <?php endif; ?>
+ </ul>
+ </nav>
+ <?php endif; ?>
  </div>
 </div>
 
