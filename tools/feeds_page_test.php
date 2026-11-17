@@ -44,7 +44,7 @@ t('the all-sources tab links back', strpos($view, "app_url('admin/news-feeds')")
 t('pinning posts to the server', strpos($view, 'pinForm_') !== false && strpos($view, 'toggle-favorite') !== false);
 t('the counter is refreshed from the saved list', strpos($view, 'favTabCount') !== false);
 t('the dead client filter is gone', strpos($view, 'switchSourceTab') === false && strpos($view, "chip.style.display = show") === false);
-t('the pinned list still highlights chips', strpos($view, 'renderPinnedSources') !== false);
+t('the pinned list still highlights chips', strpos($view, 'refreshPinnedUI') !== false);
 
 $favView = (string) file_get_contents($root . '/views/admin/aggregator/favorites.php');
 t('a full favourites page exists', strlen($favView) > 800);

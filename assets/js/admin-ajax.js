@@ -72,8 +72,13 @@
         if (!btn || btn.disabled) return;
 
         const wasOn = btn.classList.contains('is-pinned');
-        btn.classList.toggle('is-pinned', !wasOn);
-        if (icon) icon.className = !wasOn ? 'bi bi-pin-angle-fill text-warning' : 'bi bi-pin-angle';
+        const setPinVisual = (on) => {
+          btn.classList.toggle('is-pinned', on);
+          btn.title = on ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة';
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          if (icon) icon.className = on ? 'bi bi-pin-angle-fill text-warning' : 'bi bi-pin-angle';
+        };
+        setPinVisual(!wasOn);
 
         try {
           const data = await window.postForm(form);
@@ -86,8 +91,7 @@
           }
           document.dispatchEvent(new CustomEvent('admin:favorite-changed', { detail: data }));
         } catch (err) {
-          btn.classList.toggle('is-pinned', wasOn);
-          if (icon) icon.className = wasOn ? 'bi bi-pin-angle-fill text-warning' : 'bi bi-pin-angle';
+          setPinVisual(wasOn);
           if (window.adminToast) window.adminToast(err.message, 'error');
         }
       });

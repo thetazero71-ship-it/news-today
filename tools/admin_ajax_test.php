@@ -40,7 +40,7 @@ echo "\n--- pin button: no navigation ---\n";
 t('pin forms are bound', strpos($ajax, 'form[id^="pinForm_"]') !== false);
 t('the default submit is cancelled', strpos($ajax, 'e.preventDefault()') !== false);
 t('the icon flips immediately', strpos($ajax, 'bi-pin-angle-fill text-warning') !== false);
-t('a failure is rolled back', strpos($ajax, "btn.classList.toggle('is-pinned', wasOn)") !== false);
+t('a failure is rolled back', strpos($ajax, 'setPinVisual(wasOn)') !== false);
 t('the pin button appears in the feeds page', strpos((string) file_get_contents($root . '/views/admin/aggregator/index.php'), 'pinForm_') !== false);
 t('and in the sources table', strpos((string) file_get_contents($root . '/views/admin/rss_sources/index.php'), 'pinForm_src_') !== false);
 

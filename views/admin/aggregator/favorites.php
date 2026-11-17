@@ -147,17 +147,23 @@
 </div>
 <script>
 document.addEventListener('admin:favorite-changed', function (e) {
-  // removed from favourites: the card goes away without touching the page
-  if (e.detail && e.detail.favorite === false) {
-    var form = document.querySelector('form[id^="pinForm_"] button.is-pinned');
-    if (form) { /* keep going */ }
-    document.querySelectorAll('.card').forEach(function (card) {
-      var f = card.querySelector('form[id^="pinForm_"]');
-      if (f && f.contains(document.activeElement)) {
-        var col = card.closest('.col-12');
-        if (col) { col.style.transition = 'opacity .2s'; col.style.opacity = '0'; setTimeout(function () { col.remove(); }, 200); }
-      }
-    });
-  }
+  // removed from favourites: this card goes away without touching the page
+  if (!e.detail || e.detail.favorite !== false) return;
+  var id = String(e.detail.id || '');
+  if (!id) return;
+  var form = document.getElementById('pinForm_' + id);
+  var card = form ? form.closest('.card') : null;
+  var col = card ? card.closest('.col-12') : null;
+  if (!col) return;
+
+  col.style.transition = 'opacity .2s';
+  col.style.opacity = '0';
+  setTimeout(function () {
+    col.remove();
+    // last favourite removed: bring back the empty state
+    if (!document.querySelector('.row.g-3 > .col-12')) {
+      window.location.reload();
+    }
+  }, 200);
 });
 </script>

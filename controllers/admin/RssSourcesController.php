@@ -348,7 +348,7 @@ class RssSourcesController extends AdminController
  $this->audit($now ? 'favourite' : 'unfavourite', 'rss_source', $cid, $src, null);
 
  if ($this->wantsJson()) {
- return $this->json(array('ok' => true, 'favorite' => (bool) $now, 'name' => $src['name']));
+ return $this->json(array('ok' => true, 'favorite' => (bool) $now, 'id' => $cid, 'name' => $src['name']));
  }
 
  $back = ($_POST['back'] ?? '') === 'favorites'

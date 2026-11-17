@@ -101,6 +101,15 @@
 <!-- ================= ADVANCED SOURCE HUB & PINNING RADAR ================= -->
 <div class="card border-0 shadow-sm rounded-4 bg-white p-3 mb-4">
  
+<?php
+// المصادر المفضلة كما هي في قاعدة البيانات — مصدر الحقيقة الوحيد للدبوس
+$favoriteSources = array();
+foreach ($sources as $srcRow) {
+    if (!empty($srcRow['is_favorite'])) {
+        $favoriteSources[] = $srcRow;
+    }
+}
+?>
  <!-- Pinned Sources Top Section (Favorites) -->
  <div id="pinnedSourcesSection" class="p-2 mb-3 rounded-3 pinned-sources-box">
  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
@@ -111,7 +120,18 @@
  <small class="text-muted" style="font-size:0.75rem">انقر على لإلغاء التثبيت</small>
  </div>
  <div id="pinnedSourcesList" class="d-flex align-items-center gap-2 flex-wrap">
+ <?php if (empty($favoriteSources)): ?>
  <span id="noPinnedNotice" class="text-muted small py-1 px-2 fst-italic">لم تقم بتثبيت أي مصدر بعد. انقر على أيقونة الدبوس بجانب أي مصدر لتثبيته هنا!</span>
+ <?php else: ?>
+ <?php foreach ($favoriteSources as $favSrc): ?>
+ <div class="pinned-source-chip d-inline-flex align-items-center rounded-pill px-2 py-1 shadow-xs me-1 mb-1" data-fav-id="<?= (int) $favSrc['id'] ?>">
+ <a href="<?= admin_e(app_url('admin/news-feeds?source_id=' . (int) $favSrc['id'])) ?>" class="text-decoration-none fw-bold small me-1"><?= admin_e($favSrc['name']) ?></a>
+ <button type="button" class="btn btn-link text-danger p-0 ms-1 text-decoration-none js-unpin" data-id="<?= (int) $favSrc['id'] ?>" title="إلغاء التثبيت" style="font-size:0.75rem">
+ <i class="bi bi-x-circle-fill"></i>
+ </button>
+ </div>
+ <?php endforeach; ?>
+ <?php endif; ?>
  </div>
  </div>
 
@@ -159,7 +179,7 @@
  </a>
  <a href="<?= admin_e(app_url('admin/news-feeds?tab=favorites')) ?>" class="btn btn-sm btn-outline-dark" id="favTabLink">
  <i class="bi bi-pin-angle-fill me-1"></i> المفضلة
- <span class="badge bg-warning text-dark ms-1" id="favTabCount">0</span>
+ <span class="badge bg-warning text-dark ms-1" id="favTabCount"><?= count($favoriteSources) ?></span>
  </a>
  <span class="text-muted small ms-auto">اضغط الدبوس 📌 بجانب أي مصدر ليظهر في تبويب المفضلة</span>
  </div>
@@ -307,97 +327,67 @@ html.admin-dark .input-group-text {
 </style>
 
 <script>
-// ================= CLIENT-SIDE PINNING & SOURCE FILTER ENGINE =================
-const PINNED_STORAGE_KEY = 'pinned_feed_sources_v1';
-
-function getPinnedSources() {
- try {
- return JSON.parse(localStorage.getItem(PINNED_STORAGE_KEY)) || [];
- } catch (e) {
- return [];
- }
+// ================= PINNED SOURCES (database is the only source of truth) =================
+// The pin button posts to the server; the top box + tab counter are derived
+// from the buttons themselves, so they can never disagree with the database.
+function escapePinText(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function savePinnedSources(list) {
- localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(list));
- renderPinnedSources();
-}
+function refreshPinnedUI() {
+  const container = document.getElementById('pinnedSourcesList');
+  const counter = document.getElementById('favTabCount');
+  if (!container) return;
 
-function togglePinSource(id, name, url, event) {
-  if (event) {
-  event.preventDefault();
-  event.stopPropagation();
+  const pinned = Array.from(document.querySelectorAll('.source-chip-wrapper')).filter(function (w) {
+    const btn = w.querySelector('.btn-pin-source');
+    return btn && btn.classList.contains('is-pinned');
+  });
+
+  if (counter) counter.textContent = String(pinned.length);
+
+  if (pinned.length === 0) {
+    container.innerHTML = '<span id="noPinnedNotice" class="text-muted small py-1 px-2 fst-italic">لم تقم بتثبيت أي مصدر بعد. انقر على أيقونة الدبوس بجانب أي مصدر لتثبيته هنا!</span>';
+    return;
   }
 
-  // يُحفظ في قاعدة البيانات، فيظهر في تبويب المفضلة على كل المتصفحات
-  const form = document.getElementById('pinForm_' + id);
-  if (form) {
-  form.submit();
-  return;
-  }
-
-  let list = getPinnedSources();
-  const existingIndex = list.findIndex(item => item.id === id);
-
-  if (existingIndex> -1) {
-  list.splice(existingIndex, 1);
-  } else {
-  list.push({ id: id, name: name, url: url });
-  }
-  savePinnedSources(list);
+  container.innerHTML = pinned.map(function (w) {
+    const id = w.getAttribute('data-source-id') || '';
+    const name = w.getAttribute('data-source-title') || '';
+    const url = w.getAttribute('data-source-url') || '#';
+    return '<div class="pinned-source-chip d-inline-flex align-items-center rounded-pill px-2 py-1 shadow-xs me-1 mb-1" data-fav-id="' + escapePinText(id) + '">'
+      + '<a href="' + escapePinText(url) + '" class="text-decoration-none fw-bold small me-1">' + escapePinText(name) + '</a>'
+      + '<button type="button" class="btn btn-link text-danger p-0 ms-1 text-decoration-none js-unpin" data-id="' + escapePinText(id) + '" title="إلغاء التثبيت" style="font-size:0.75rem">'
+      + '<i class="bi bi-x-circle-fill"></i></button></div>';
+  }).join('');
 }
 
-function renderPinnedSources() {
- const list = getPinnedSources();
- const container = document.getElementById('pinnedSourcesList');
- const notice = document.getElementById('noPinnedNotice');
- 
- // Reset all pin icons
- document.querySelectorAll('.btn-pin-source').forEach(btn => {
- btn.classList.remove('is-pinned');
- const icon = btn.querySelector('i');
- if (icon) {
- icon.className = 'bi bi-pin-angle';
- }
- });
+// The X on a top chip uses the same AJAX path as the pin itself. Calling
+// form.submit() directly would bypass the submit listener and reload the page.
+document.addEventListener('click', function (e) {
+  const unpin = e.target.closest('.js-unpin');
+  if (!unpin) return;
+  e.preventDefault();
+  const form = document.getElementById('pinForm_' + unpin.getAttribute('data-id'));
+  if (!form) return;
+  if (typeof form.requestSubmit === 'function') form.requestSubmit();
+  else form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+});
 
- if (list.length === 0) {
- container.innerHTML = '<span id="noPinnedNotice" class="text-muted small py-1 px-2 fst-italic">لم تقم بتثبيت أي مصدر بعد. انقر على أيقونة الدبوس بجانب أي مصدر لتثبيته هنا!</span>';
- return;
- }
-
- let html = '';
- list.forEach(item => {
- // Highlight corresponding chip pin icon
- const pinBtn = document.querySelector(`.source-chip-wrapper[data-source-id="${item.id}"] .btn-pin-source`);
- if (pinBtn) {
- pinBtn.classList.add('is-pinned');
- const icon = pinBtn.querySelector('i');
- if (icon) icon.className = 'bi bi-pin-angle-fill text-warning';
- }
-
- html += `
- <div class="pinned-source-chip d-inline-flex align-items-center rounded-pill px-2 py-1 shadow-xs me-1 mb-1">
- <a href="${item.url}" class="text-decoration-none fw-bold small me-1">
- ${item.name}
- </a>
- <button type="button" class="btn btn-link text-danger p-0 ms-1 text-decoration-none" onclick="togglePinSource(${item.id}, '', '', event)" title="إلغاء التثبيت" style="font-size:0.75rem">
- <i class="bi bi-x-circle-fill"></i>
- </button>
- </div>
- `;
- });
-
- container.innerHTML = html;
-  applySourceTab();
-}
+// admin-ajax.js fires this after a successful toggle (and only then).
+document.addEventListener('admin:favorite-changed', function () {
+  refreshPinnedUI();
+});
 
 // ============ Sources tabs: all / favourites ============
-// التصفية انتقلت إلى صفحة مستقلة (تبويب المفضلة)، وبقي هنا مجرد
-// تحديث عدّاد الدبابيس المحفوظة في المتصفح.
+// The counter lives in refreshPinnedUI(); kept here so existing callers work.
 function applySourceTab() {
-  const counter = document.getElementById('favTabCount');
-  if (counter) counter.textContent = String(getPinnedSources().length);
+  refreshPinnedUI();
 }
 
 // Search text normalizer (handles Arabic letters, diacritics & accents)
@@ -520,8 +510,7 @@ function clearNewsSearch() {
 
 // Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', function () {
-renderPinnedSources();
-  applySourceTab();
+  refreshPinnedUI();
 
   // Attach independent event listeners
  const sInput = document.getElementById('sourceSearchInput');
