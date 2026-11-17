@@ -13,7 +13,7 @@ class CronController extends AdminController
 
  $db = new Database();
 
- // ط¥ط­طµط§ط¦ظٹط§طھ ط§ظ„ظٹظˆظ…
+ // إحصائيات اليوم
  $todayStats = $db->fetch("
  SELECT 
  COUNT(*) as total_runs,
@@ -25,15 +25,15 @@ class CronController extends AdminController
  WHERE DATE(created_at) = CURDATE()
  ");
 
- // ط¢ط®ط± 20 ط³ط¬ظ„
+ // آخر 20 سجل
  $logs = $db->fetchAll("
  SELECT * FROM cron_logs ORDER BY created_at DESC LIMIT 20
  ");
 
- // ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ظ‚ط§ظ„ط§طھ ط§ظ„ظ…ظ†ط´ظˆط±ط© طھظ„ظ‚ط§ط¦ظٹط§ظ‹ (ظ„ظ‡ط§ source_url)
+ // إجمالي المقالات المنشورة تلقائياً (لها source_url)
  $autoTotal = $db->fetch("SELECT COUNT(*) as cnt FROM articles WHERE source_url IS NOT NULL AND source_url != ''");
 
- // ط£ط­ط¯ط« ط§ظ„ظ…ظ‚ط§ظ„ط§طھ ط§ظ„ظ…ظ†ط´ظˆط±ط© طھظ„ظ‚ط§ط¦ظٹط§ظ‹
+ // أحدث المقالات المنشورة تلقائياً
  $recentAutoArticles = $db->fetchAll("
  SELECT a.id, a.title, a.title_ar, a.slug, a.source_name, a.source_url, a.category_id, a.created_at,
  c.name as category_name, c.slug as category_slug
@@ -44,7 +44,7 @@ class CronController extends AdminController
  LIMIT 15
  ");
 
- // ظ‚ط§ط¦ظ…ط© ط¬ظ…ظٹط¹ ظ…طµط§ط¯ط± ط§ظ„ظ€ RSS ط§ظ„ظ…طھط§ط­ط© ظ…ط¹ طھطµظ†ظٹظپط§طھظ‡ط§
+ // قائمة جميع مصادر الـ RSS المتاحة مع تصنيفاتها
  $allSources = $db->fetchAll("
  SELECT s.id, s.name, s.url, s.category_id, s.last_fetched_at,
  c.name as category_name, c.slug as category_slug
@@ -53,19 +53,19 @@ class CronController extends AdminController
  ORDER BY s.id ASC
  ");
 
- // طھط´ط؛ظٹظ„ ظٹط¯ظˆظٹ ظ„ط¯ظˆط±ط© ط¬ط¯ظٹط¯ط© (ط§ظ„ظƒظ„ ط£ظˆ ظ…طµط§ط¯ط± ظ…ط­ط¯ط¯ط©)
+ // تشغيل يدوي لدورة جديدة (الكل أو مصادر محددة)
  $manualResult = null;
  if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'run_now') {
  $cronFile = dirname(dirname(dirname(__FILE__))) . '/cron/rss_auto_publish.php';
  if (file_exists($cronFile)) {
  $statusFile = dirname(dirname(dirname(__FILE__))) . '/storage/cron_status.json';
 
- // ط¥ط؛ظ„ط§ظ‚ ظ‚ظپظ„ ط§ظ„ط¬ظ„ط³ط© ظپظˆط±ط§ظ‹ ظ„ظ…ظ†ط¹ طھط¹ظ„ظٹظ‚ ط§ظ„ظ…طھطµظپط­ ظ†ظ‡ط§ط¦ظٹط§ظ‹
+ // إغلاق قفل الجلسة فوراً لمنع تعليق المتصفح نهائياً
  if (session_status() === PHP_SESSION_ACTIVE) {
  session_write_close();
  }
 
- // ظپط­طµ ط§ظ„ظ…طµط§ط¯ط± ط§ظ„ظ…ط®طھط§ط±ط©
+ // فحص المصادر المختارة
  $sourceIds = [];
  if (!empty($_POST['source_ids']) && is_array($_POST['source_ids'])) {
  $sourceIds = array_filter(array_map('intval', $_POST['source_ids']));
@@ -81,8 +81,8 @@ class CronController extends AdminController
 
  $totalSelected = !empty($sourceIds) ? count($sourceIds) : count($allSources);
  $statusText = !empty($sourceIds) 
- ? (count($sourceIds) === 1 ? 'ط¬ظ„ط¨ ظ…ظ† ظ…طµط¯ط± ظ…ط­ط¯ط¯...' : 'ط¬ظ„ط¨ ظ…ظ† ' . count($sourceIds) . ' ظ…طµط§ط¯ط± ظ…ط­ط¯ط¯ط©...') 
- : 'ط¨ط¯ط، ط¯ظˆط±ط© ط¬ط¯ظٹط¯ط© (ظƒط§ظپط© ط§ظ„ظ…طµط§ط¯ط±)...';
+ ? (count($sourceIds) === 1 ? 'جلب من مصدر محدد...' : 'جلب من ' . count($sourceIds) . ' مصادر محددة...') 
+ : 'بدء دورة جديدة (كافة المصادر)...';
 
  @file_put_contents($statusFile, json_encode([
  'state' => 'running',
@@ -203,7 +203,7 @@ $this->view('admin/cron/index', [
  exit;
  }
 
- Session::flash('success', 'طھظ… ط¥ط±ط³ط§ظ„ ط£ظ…ط± ط§ظ„ط¥ظٹظ‚ط§ظپ ط§ظ„ظ…ط¤ظ‚طھ (Pause) ط¨ظ†ط¬ط§ط­.');
+ Session::flash('success', 'تم إرسال أمر الإيقاف المؤقت (Pause) بنجاح.');
  return $this->redirect('admin/cron');
  }
 
@@ -219,7 +219,7 @@ $this->view('admin/cron/index', [
  $json = @json_decode(file_get_contents($statusFile), true) ?: [];
  }
 
- // ط¥ط؛ظ„ط§ظ‚ ظ‚ظپظ„ ط§ظ„ط¬ظ„ط³ط© ظپظˆط±ط§ظ‹ ظ„ظ…ظ†ط¹ طھط¹ظ„ظٹظ‚ ط§ظ„ظ…طھطµظپط­
+ // إغلاق قفل الجلسة فوراً لمنع تعليق المتصفح
  if (session_status() === PHP_SESSION_ACTIVE) {
  session_write_close();
  }
@@ -233,7 +233,7 @@ $pid = null;
  $json['state'] = 'running';
  $json['is_running'] = true;
  $json['pid'] = $pid;
- $json['current_source'] = 'ط¬ط§ط±ظٹ ط§ظ„ط§ط³طھط¦ظ†ط§ظپ...';
+ $json['current_source'] = 'جاري الاستئناف...';
  $json['timestamp'] = time();
  @file_put_contents($statusFile, json_encode($json, JSON_UNESCAPED_UNICODE));
 
@@ -243,7 +243,7 @@ $pid = null;
  exit;
  }
 
- Session::flash('success', 'طھظ… ط§ط³طھط¦ظ†ط§ظپ ظ…ظ‡ظ…ط© ط§ظ„ظ†ط´ط± ط§ظ„طھظ„ظ‚ط§ط¦ظٹ ط¨ظ†ط¬ط§ط­ ظ…ظ† ط­ظٹط« طھظˆظ‚ظپطھ.');
+ Session::flash('success', 'تم استئناف مهمة النشر التلقائي بنجاح من حيث توقفت.');
  return $this->redirect('admin/cron');
  }
 
@@ -251,7 +251,7 @@ $pid = null;
  {
 $this->guardPermission('cron.view');
 
- // طھط­ط±ظٹط± ظ‚ظپظ„ ط§ظ„ط¬ظ„ط³ط© ظ…ط¨ط§ط´ط±ط© ط£ط«ظ†ط§ط، ط§ط³طھط¹ظ„ط§ظ… ط§ظ„ظ€ AJAX ط§ظ„ط­ظٹ
+ // تحرير قفل الجلسة مباشرة أثناء استعلام الـ AJAX الحي
  if (session_status() === PHP_SESSION_ACTIVE) {
  session_write_close();
  }
@@ -292,10 +292,10 @@ $this->guardPermission('cron.view');
  }
  }
 
- // ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ظ‚ط§ط¹ط¯ط© ط§ظ„ط¨ظٹط§ظ†ط§طھ ظ„ط¹ط¯ط¯ ط§ظ„ظ…ظ‚ط§ظ„ط§طھ ط§ظ„ظ…ظ†ط´ظˆط±ط© ط§ظ„ظٹظˆظ…
+ // التحقق من قاعدة البيانات لعدد المقالات المنشورة اليوم
  $todayPublished = (int) $db->fetch("SELECT COUNT(*) as c FROM articles WHERE DATE(created_at) = CURDATE() AND source_url IS NOT NULL")['c'];
 
- // ط¬ظ„ط¨ ط£ط­ط¯ط« 12 ظ…ظ‚ط§ظ„ ظ…ظ†ط´ظˆط± طھظ„ظ‚ط§ط¦ظٹط§ظ‹
+ // جلب أحدث 12 مقال منشور تلقائياً
  $recent = $db->fetchAll("
  SELECT a.id, a.title, a.title_ar, a.slug, a.source_name, a.source_url, a.category_id, a.created_at,
  c.name as category_name, c.slug as category_slug
@@ -342,7 +342,7 @@ $this->guardPermission('cron.view');
  $json['is_running'] = false;
  $json['state'] = 'stopped';
  $json['pid'] = null;
- $json['current_source'] = 'طھظ… ط§ظ„ط¥ظٹظ‚ط§ظپ ط¨ظ†ط¬ط§ط­';
+ $json['current_source'] = 'تم الإيقاف بنجاح';
  $json['progress_percent'] = 0;
  $json['timestamp'] = time();
  @file_put_contents($statusFile, json_encode($json, JSON_UNESCAPED_UNICODE));
@@ -353,7 +353,7 @@ $this->guardPermission('cron.view');
  exit;
  }
 
- Session::flash('success', 'طھظ… ط¥ظٹظ‚ط§ظپ ظ…ظ‡ظ…ط© ط§ظ„ظ†ط´ط± ط§ظ„طھظ„ظ‚ط§ط¦ظٹ ط¨ظ†ط¬ط§ط­.');
+ Session::flash('success', 'تم إيقاف مهمة النشر التلقائي بنجاح.');
  return $this->redirect('admin/cron');
  }
 }

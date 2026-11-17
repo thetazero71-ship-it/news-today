@@ -1,9 +1,9 @@
 # تقرير الإصلاحات التقني — منصة أخبار التقنية
 
-> **تاريخ ووقت آخر تعديل:** 17 نوفمبر 2026 — 08:46 صباحًا بتوقيت مكة/الرياض (UTC+03:00)
+> **تاريخ ووقت آخر تعديل:** 17 نوفمبر 2026 — 10:06 صباحًا بتوقيت مكة/الرياض (UTC+03:00)
 > **الفرع:** `main` · **المستودع:** `thetazero71-ship-it/news-today`
 > **النطاق الزمني:** 19 سبتمبر 2026 → 14 أكتوبر 2026 — **113 commit** إجمالاً، منها **98** منذ بدء مشروع الصلاحيات
-> **آخر commit برمجي موثّق:** `80da93b`
+> **آخر commit برمجي موثّق:** `959e71e`
 > **حالة النشر:** جميع ما في هذا التقرير مُودَع ومنشور على `main` ومُوزَّع على الاستضافة (`news-today.42web.io`)، ما لم يُذكر خلاف ذلك صراحةً.
 
 ---
@@ -177,7 +177,8 @@ guardPermission('articles.edit')
 
 | الإصلاح | ماذا عولج | الـ commit |
 |---|---|---|
-| **ترميز عربي مشوّه** | نص عربي داخل `AggregatorController` كان مُفكَّك الترميز (UTF-8 قُرئ cp1256) فظهر رموزًا | `580a028` |
+| **ترميز عربي مشوّه** | **85 سطرًا** في `AggregatorController` كانت UTF-8 قُرئ cp1256، فظهرت رسالة النشر هكذا: `طھظ…طھ ط§ظ„طھط±ط¬ظ…ط© ظˆط§ظ„ظ†ط´ط± ط¨ظ†ط¬ط§ط­ ط¨ط¹ظ†ظˆط§ظ†...` بدل «**تمت الترجمة والنشر بنجاح بعنوان: …**». أُعيد بناء النص العربي كاملًا (رسائل JSON والتعليقات) | `580a028` |
+| **ترميز مشوّه في صفحة الكرون** | **19 سطرًا** في `CronController` بالنمط نفسه: تعليقات، رسائل `Session::flash` («تم إرسال أمر الإيقاف المؤقت» · «تم استئناف مهمة النشر التلقائي» · «تم إيقاف مهمة النشر التلقائي»)، ونصوص الحالة. أُعيد بناؤها + أُضيف حارس `tools/encoding_test.php` يمنع عودة النمط | هذا الـ commit |
 | **ستة أقسام جديدة** | `economic` · `health` · `sports` · `science` · `technology` · `society` مع بذر تلقائي ومصطلحات تصنيف | `7a90257` |
 | **مصطلحات تصنيف** | إضافة مصطلحات للعسكري (`mali-tiry`) والسياسة (`cya-sah`) + عدم احتساب أقسام غير موجودة في القاعدة | `c57317c` |
 | **ربط 147 مصدر RSS** | كل مصدر إلى قسمه الحقيقي مع أوزان صارمة/ذكية | `d6913fc` |
@@ -285,7 +286,7 @@ guardPermission('articles.edit')
 
 ### 8.3 اختبارات وظيفية أخرى في `tools/`
 
-`admin_ajax_test` · `admin_nav_test` · `aggregator_publish_ui_test` · `ai_render_test.js` · `ai_translation_test` · `brand_test` · `category_test` · `db_resilience_test` · `dedupe_test` · `feeds_page_test` · `guard_test` · `image_store_test` · `js_syntax_test` · `pagecache_test` · `rss_sources_test` · `search_test` · `search_mysql_test` · `view_script_test`.
+`admin_ajax_test` · `admin_nav_test` · `aggregator_publish_ui_test` · `ai_render_test.js` · `ai_translation_test` · `brand_test` · `category_test` · `db_resilience_test` · `dedupe_test` · `encoding_test` · `favorites_test` · `feeds_page_test` · `guard_test` · `image_store_test` · `js_syntax_test` · `pagecache_test` · `rss_sources_test` · `search_test` · `search_mysql_test` · `view_script_test`.
 
 ---
 
@@ -400,7 +401,9 @@ c57317c  Auto-classification terms for military and politics
 | 17 نوفمبر 2026 — 08:04 | إضافة إصلاح الرابط المكسور في محادثة المساعد + اختبار `tools/ai_render_test.js` | `80da93b` |
 | 17 نوفمبر 2026 — 08:16 | إضافة تاريخ ووقت التعديل وسجل التحديثات | `8b2d445` |
 | 17 نوفمبر 2026 — 08:21 | شريط المستجدات: حذف كلمة «التقنية» من العنوان ليصبح «أحدث المستجدات:» | `40d8fe6` |
-| 17 نوفمبر 2026 — 08:46 | إصلاح المفضلة: صندوق «المصادر المثبتة» كان يُبنى من `localStorage` بينما الدبوس يحفظ في قاعدة البيانات، فظهر الإشعار دون ظهور المصدر · توحيد المصدر وإزالة التخزين المحلي + اختبار `tools/favorites_test.php` | هذا الـ commit |
+| 17 نوفمبر 2026 — 08:46 | إصلاح المفضلة: صندوق «المصادر المثبتة» كان يُبنى من `localStorage` بينما الدبوس يحفظ في قاعدة البيانات، فظهر الإشعار دون ظهور المصدر · توحيد المصدر وإزالة التخزين المحلي + اختبار `tools/favorites_test.php` | `959e71e` |
+| 17 نوفمبر 2026 — 10:06 | توثيق صريح لإصلاح ترميز الرسائل: 85 سطرًا في `AggregatorController` (رسالة «تمت الترجمة والنشر بنجاح بعنوان») | `580a028` |
+| 17 نوفمبر 2026 — 10:06 | إصلاح ترميز `CronController` (19 سطرًا: تعليقات ورسائل Flash ونصوص حالة) + حارس `tools/encoding_test.php` (14 تأكيدًا) | هذا الـ commit |
 
 ---
 
