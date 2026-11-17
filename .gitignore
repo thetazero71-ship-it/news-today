@@ -53,6 +53,8 @@ scratch/
 # ── User uploads are server-side data (keep the security .htaccess) ──
 uploads/*
 !uploads/.htaccess
+!uploads/brand/
+!uploads/brand/*
 
 # ── OS / editor junk ──
 .DS_Store

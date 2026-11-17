@@ -750,21 +750,34 @@ exit;
  @mkdir($brandDir, 0777, true);
  }
 
+ $uploadErrors = array();
  foreach ($_FILES as $inputKey => $fileData) {
  if (!empty($fileData['tmp_name']) && is_uploaded_file($fileData['tmp_name']) && $fileData['error'] === UPLOAD_ERR_OK) {
  $settingKey = str_replace('_upload_file', '', $inputKey);
  $ext = strtolower(pathinfo($fileData['name'], PATHINFO_EXTENSION));
  $allowedExts = ['png', 'jpg', 'jpeg', 'svg', 'webp', 'ico', 'gif'];
- if (in_array($ext, $allowedExts, true)) {
+ if (!in_array($ext, $allowedExts, true)) {
+ $uploadErrors[] = 'صيغة «' . $settingKey . '» غير مدعومة.';
+ continue;
+ }
+ if ((int) ($fileData['size'] ?? 0) > 5 * 1024 * 1024) {
+ $uploadErrors[] = 'حجم «' . $settingKey . '» يتجاوز 5 ميجابايت.';
+ continue;
+ }
  $filename = $settingKey . '_' . time() . '.' . $ext;
  $targetPath = $brandDir . '/' . $filename;
  if (move_uploaded_file($fileData['tmp_name'], $targetPath)) {
+ $this->normaliseBrandAsset($targetPath, $settingKey, $ext);
  $savedUrl = 'uploads/brand/' . $filename;
  $stmt = $db->prepare("UPDATE settings SET `value` = ? WHERE `key` = ?");
  $stmt->execute([$savedUrl, $settingKey]);
+ } else {
+ $uploadErrors[] = 'تعذّر حفظ «' . $settingKey . '» على الخادم.';
  }
  }
  }
+ if ($uploadErrors) {
+ Session::flash('error', implode(' ', $uploadErrors));
  }
  }
 
@@ -792,6 +805,69 @@ exit;
  /**
  * Instant AJAX upload endpoint for brand assets (Logo, Favicon, OG Image)
  */
+ /**
+  * Keep uploaded brand assets sane. A 1920px / 3.7 MB PNG as a favicon slows
+  * every tab, and an oversized logo bloats every page, so anything above the
+  * per-key limit is scaled down once, on upload.
+  */
+ private function normaliseBrandAsset(string $path, string $key, string $ext): void
+ {
+ if (!in_array($ext, ['png', 'jpg', 'jpeg', 'webp'], true)) {
+ return;
+ }
+ if (!function_exists('imagecreatetruecolor') || !function_exists('imagecopyresampled')) {
+ return;
+ }
+ $info = @getimagesize($path);
+ if (empty($info[0]) || empty($info[1])) {
+ return;
+ }
+ $max = $key === 'site_favicon' ? 256 : 1024;
+ $bytes = (int) @filesize($path);
+ if ($info[0] <= $max && $info[1] <= $max && $bytes <= 400 * 1024) {
+ return;
+ }
+
+ $src = null;
+ if ($ext === 'png') {
+ $src = @imagecreatefrompng($path);
+ } elseif ($ext === 'webp' && function_exists('imagecreatefromwebp')) {
+ $src = @imagecreatefromwebp($path);
+ } elseif ($ext !== 'webp') {
+ $src = @imagecreatefromjpeg($path);
+ }
+ if (!$src) {
+ return;
+ }
+
+ $w = imagesx($src);
+ $h = imagesy($src);
+ $scale = min($max / $w, $max / $h, 1);
+ $nw = max(1, (int) round($w * $scale));
+ $nh = max(1, (int) round($h * $scale));
+ $dst = imagecreatetruecolor($nw, $nh);
+ if ($ext === 'png' || $ext === 'webp') {
+ imagealphablending($dst, false);
+ imagesavealpha($dst, true);
+ $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+ imagefilledrectangle($dst, 0, 0, $nw, $nh, $transparent);
+ } else {
+ $white = imagecolorallocate($dst, 255, 255, 255);
+ imagefilledrectangle($dst, 0, 0, $nw, $nh, $white);
+ }
+ imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+
+ if ($ext === 'png') {
+ @imagepng($dst, $path, 9);
+ } elseif ($ext === 'webp' && function_exists('imagewebp')) {
+ @imagewebp($dst, $path, 85);
+ } else {
+ @imagejpeg($dst, $path, 85);
+ }
+ imagedestroy($src);
+ imagedestroy($dst);
+ }
+
  public function uploadAsset()
  {
 $this->guardPermission('settings.manage');
@@ -820,6 +896,11 @@ $this->guardPermission('settings.manage');
  }
 
  $file = $_FILES['asset_file'];
+ if ((int) ($file['size'] ?? 0) > 5 * 1024 * 1024) {
+ http_response_code(413);
+ echo json_encode(['success' => false, 'message' => 'حجم الملف يتجاوز 5 ميجابايت — استخدم صورة أصغر']);
+ exit;
+ }
  $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
  $allowedExts = ['png', 'jpg', 'jpeg', 'svg', 'webp', 'ico', 'gif'];
 
@@ -843,6 +924,8 @@ $this->guardPermission('settings.manage');
  exit;
  }
 
+ $this->normaliseBrandAsset($targetPath, $key, $ext);
+
  $savedUrl = 'uploads/brand/' . $filename;
  $db = Database::getInstance();
  $stmt = $db->prepare("UPDATE settings SET `value` = ? WHERE `key` = ?");
@@ -862,6 +945,7 @@ $this->guardPermission('settings.manage');
  'success' => true,
  'url' => $savedUrl,
  'full_url' => app_url($savedUrl),
+ 'bytes' => (int) @filesize($targetPath),
  'message' => 'تم رفع وتطبيق الصورة فورياً بنجاح!'
  ]);
  exit;

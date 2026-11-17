@@ -71,6 +71,8 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           protocol: ftp
+          # Runtime uploads are gitignored; only .htaccess and uploads/brand/*
+          # are tracked, so user content never enters the deploy.
           exclude: |
             **/.git/**
             **/.git*
@@ -104,7 +106,6 @@ jobs:
             storage/cache/**
             storage/cron_status.json
             scratch/**
-            uploads/**
             docs/**
 
       - name: Delete retired files from the server

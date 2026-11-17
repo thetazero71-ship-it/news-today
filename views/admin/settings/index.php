@@ -227,6 +227,26 @@ $selectDropdowns = [
 $brandImageKeys = ['site_logo', 'site_favicon', 'default_og_image', 'site_logo_dark'];
 ?>
 
+ <style>
+ .brand-preview-box {
+  min-width: 50px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff !important;
+  background-image:
+    linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+    linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0;
+ }
+ html.admin-dark .brand-preview-box { background-color: #fff !important; }
+ .brand-preview-missing { font-size: 1rem; line-height: 1; }
+ </style>
+
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
  <div>
  <h2 class="h3 fw-bold mb-1">لوحة التحكم في الإعدادات الشاملة</h2>
@@ -237,6 +257,13 @@ $brandImageKeys = ['site_logo', 'site_favicon', 'default_og_image', 'site_logo_d
 <?php if ($msg = Session::getFlash('success')): ?>
  <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
  <i class="bi bi-check-circle-fill me-1"></i> <?= htmlspecialchars($msg) ?>
+ <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+ </div>
+<?php endif; ?>
+
+<?php if ($msg = Session::getFlash('error')): ?>
+ <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+ <i class="bi bi-exclamation-triangle-fill me-1"></i> <?= htmlspecialchars($msg) ?>
  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
  </div>
 <?php endif; ?>
@@ -376,10 +403,34 @@ $brandImageKeys = ['site_logo', 'site_favicon', 'default_og_image', 'site_logo_d
  <?= htmlspecialchars($s['description_ar'] ?: $s['key']) ?>
  </small>
  </div>
- <div id="preview_box_<?= htmlspecialchars($s['key']) ?>" class="p-1 bg-white border rounded-3 text-center" style="min-width: 50px; min-height: 40px; display: <?= !empty($s['value']) ? 'block' : 'none' ?>;">
- <img id="preview_img_<?= htmlspecialchars($s['key']) ?>" src="<?= !empty($s['value']) ? htmlspecialchars(str_starts_with($s['value'], 'http') ? $s['value'] : app_url($s['value'])) : '' ?>" alt="معاينة" style="max-height: 38px; max-width: 60px; object-fit: contain;">
+ <?php
+ $brandValue = trim((string) ($s['value'] ?? ''));
+ $brandRemote = $brandValue !== '' && preg_match('#^https?://#i', $brandValue) === 1;
+ $brandFile = (!$brandRemote && $brandValue !== '') ? APP_ROOT . '/' . ltrim($brandValue, '/') : '';
+ $brandExists = $brandRemote || ($brandFile !== '' && is_file($brandFile));
+ $brandKb = (!$brandRemote && $brandExists) ? (int) round((int) @filesize($brandFile) / 1024) : 0;
+ $brandSrc = $brandValue === '' ? '' : ($brandRemote ? $brandValue : app_url($brandValue));
+ if (!$brandRemote && $brandExists) {
+ $brandSrc .= (strpos($brandSrc, '?') === false ? '?' : '&') . 'v=' . (int) @filemtime($brandFile);
+ }
+ ?>
+ <div id="preview_box_<?= htmlspecialchars($s['key']) ?>" class="brand-preview-box p-1 border rounded-3 text-center" title="<?= htmlspecialchars($brandValue) ?>">
+ <?php if ($brandExists): ?>
+ <img id="preview_img_<?= htmlspecialchars($s['key']) ?>" src="<?= htmlspecialchars($brandSrc) ?>" alt="معاينة" style="max-height: 38px; max-width: 60px; object-fit: contain;" onerror="brandPreviewFailed('<?= htmlspecialchars($s['key'], ENT_QUOTES) ?>')">
+ <?php else: ?>
+ <span class="brand-preview-missing text-danger"><i class="bi bi-image"></i></span>
+ <?php endif; ?>
  </div>
  </div>
+ <small id="brand_status_<?= htmlspecialchars($s['key']) ?>" class="d-block mb-2 small fw-semibold <?= $brandExists ? 'text-success' : 'text-danger' ?>">
+ <?php if ($brandValue === ''): ?>
+ لم يُضبط أي ملف بعد
+ <?php elseif ($brandExists): ?>
+ الملف موجود<?= $brandKb > 0 ? ' · ' . number_format($brandKb) . ' KB' : '' ?>
+ <?php else: ?>
+ الملف غير موجود على الخادم — ارفعه من جديد أو صحّح المسار
+ <?php endif; ?>
+ </small>
  
  <div class="input-group mb-2">
  <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
@@ -647,13 +698,40 @@ $brandImageKeys = ['site_logo', 'site_favicon', 'default_og_image', 'site_logo_d
 </div>
 
 <script>
+function brandStatus(key, ok, text) {
+  const el = document.getElementById('brand_status_' + key);
+  if (!el) return;
+  el.className = 'd-block mb-2 small fw-semibold ' + (ok ? 'text-success' : 'text-danger');
+  el.textContent = text;
+}
+
+function brandPreviewFailed(key) {
+  const box = document.getElementById('preview_box_' + key);
+  if (!box) return;
+  box.innerHTML = '<span class="brand-preview-missing text-danger"><i class="bi bi-image"></i></span>';
+  brandStatus(key, false, 'تعذّر تحميل الصورة — تحقق من المسار');
+}
+
+function renderBrandPreview(key, url, bytes) {
+  const box = document.getElementById('preview_box_' + key);
+  if (!box) return;
+  box.innerHTML = '';
+  const img = document.createElement('img');
+  img.id = 'preview_img_' + key;
+  img.src = url;
+  img.alt = 'معاينة';
+  img.style.cssText = 'max-height:38px;max-width:60px;object-fit:contain';
+  img.onerror = function () { brandPreviewFailed(key); };
+  box.appendChild(img);
+  const kb = Math.round((Number(bytes) || 0) / 1024);
+  brandStatus(key, true, kb > 0 ? 'الملف موجود · ' + kb.toLocaleString('en-US') + ' KB' : 'الملف موجود');
+}
+
 function uploadBrandAssetInstant(key, inputElement) {
  if (!inputElement.files || !inputElement.files[0]) return;
  const file = inputElement.files[0];
  const labelBtn = document.getElementById('upload_label_' + key);
  const textInput = document.getElementById('setting_' + key);
- const previewImg = document.getElementById('preview_img_' + key);
- const previewBox = document.getElementById('preview_box_' + key);
  const originalLabelHtml = labelBtn.innerHTML;
 
  labelBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> جاري الرفع والتطبيق...';
@@ -675,16 +753,11 @@ function uploadBrandAssetInstant(key, inputElement) {
  labelBtn.className = 'btn btn-sm btn-success mb-0 w-100 text-truncate';
  labelBtn.innerHTML = ' تم التطبيق بنجاح: ' + file.name;
  if (textInput) textInput.value = data.url;
- if (previewImg) {
- previewImg.src = data.full_url + '?t=' + new Date().getTime();
- if (previewBox) previewBox.style.display = 'block';
- } else if (previewBox) {
- previewBox.innerHTML = '<img id="preview_img_' + key + '" src="' + data.full_url + '?t=' + new Date().getTime() + '" alt="معاينة" style="max-height: 38px; max-width: 60px; object-fit: contain;">';
- previewBox.style.display = 'block';
- }
+ renderBrandPreview(key, data.full_url + '?t=' + new Date().getTime(), data.bytes);
  } else {
  labelBtn.className = 'btn btn-sm btn-danger mb-0 w-100 text-truncate';
  labelBtn.innerHTML = 'خطأ: ' + (data.message || 'فشل الرفع');
+ brandStatus(key, false, data.message || 'فشل الرفع');
  adminToast(data.message || 'حدث خطأ أثناء رفع الصورة', 'error');
  }
  })

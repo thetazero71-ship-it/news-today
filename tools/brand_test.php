@@ -188,5 +188,33 @@ t('no old name left in the rewritten values', count(preg_grep('/عصب التق�
 t('same name is a no-op', Brand::migrateReferences($dbStub, 'نفس الاسم', 'نفس الاسم') === array());
 t('blank old name is refused', Brand::migrateReferences($dbStub, '', 'جديد') === array());
 
+echo "\n--- brand assets: real files, sane size, honest preview ---\n";
+$logoFile = APP_ROOT . '/uploads/brand/site_logo_1789925847.ico';
+$iconFile = APP_ROOT . '/uploads/brand/site_favicon_1786883107.png';
+t('logo asset is present in the repo', is_file($logoFile));
+t('favicon asset is present in the repo', is_file($iconFile));
+
+if (is_file($iconFile)) {
+    $iconInfo = @getimagesize($iconFile);
+    t('favicon is a real PNG', $iconInfo !== false && $iconInfo[2] === IMAGETYPE_PNG);
+    t('favicon is at most 256px', $iconInfo !== false && $iconInfo[0] <= 256 && $iconInfo[1] <= 256);
+    t('favicon stays under 100 KB', filesize($iconFile) < 100 * 1024);
+}
+if (is_file($logoFile)) {
+    t('logo is a real ICO', substr((string) file_get_contents($logoFile, false, null, 0, 4), 0, 4) === "\x00\x00\x01\x00");
+    t('logo stays under 150 KB', filesize($logoFile) < 150 * 1024);
+}
+
+$settingsView = (string) file_get_contents(APP_ROOT . '/views/admin/settings/index.php');
+$settingsCtrl = (string) file_get_contents(APP_ROOT . '/controllers/admin/SettingsController.php');
+
+t('preview checks the file on disk', strpos($settingsView, 'is_file($brandFile)') !== false);
+t('missing file is named, not left as a broken icon', strpos($settingsView, 'الملف غير موجود على الخادم') !== false);
+t('preview has an onerror fallback', strpos($settingsView, 'brandPreviewFailed') !== false);
+t('preview box stays light in dark mode', strpos($settingsView, 'html.admin-dark .brand-preview-box') !== false);
+t('uploads are capped at 5 MB', strpos($settingsCtrl, '5 * 1024 * 1024') !== false);
+t('oversized images are downscaled on upload', strpos($settingsCtrl, 'normaliseBrandAsset') !== false);
+t('favicon is capped at 256px', strpos($settingsCtrl, "\$key === 'site_favicon' ? 256 : 1024") !== false);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);
