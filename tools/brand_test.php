@@ -216,5 +216,9 @@ t('uploads are capped at 5 MB', strpos($settingsCtrl, '5 * 1024 * 1024') !== fal
 t('oversized images are downscaled on upload', strpos($settingsCtrl, 'normaliseBrandAsset') !== false);
 t('favicon is capped at 256px', strpos($settingsCtrl, "\$key === 'site_favicon' ? 256 : 1024") !== false);
 
+$uploadsHtaccess = (string) file_get_contents(APP_ROOT . '/uploads/.htaccess');
+t('uploads htaccess is Apache 2.4-safe', strpos($uploadsHtaccess, 'mod_authz_core.c') !== false);
+t('PHP is still denied in uploads', strpos($uploadsHtaccess, 'Require all denied') !== false);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);
