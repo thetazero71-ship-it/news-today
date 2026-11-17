@@ -247,5 +247,29 @@ t('public logo has a badge fallback', strpos($indexSrc, 'previousElementSibling.
 t('admin sidebar uses the checked URL', strpos($adminLayout, 'Brand::logoUrl()') !== false);
 t('admin sidebar can fall back to the badge', strpos($adminLayout, "this.nextElementSibling.style.display='flex'") !== false);
 
+echo "\n--- social cards never point at a missing file ---\n";
+t('bundled OG fallback exists', is_file(APP_ROOT . '/assets/images/icon-512.png'));
+
+Settings::$data['site_logo'] = 'uploads/brand/site_logo_1789925847.ico';
+Settings::$data['default_og_image'] = 'uploads/brand/does_not_exist.png';
+Brand::flush();
+$meta = SEO::renderMeta('صفحة');
+t('missing default OG falls back to a bundled card', strpos($meta, 'assets/images/icon-512.png') !== false);
+t('the old missing og-default.jpg is gone', strpos($meta, 'og-default.jpg') === false);
+
+Settings::$data['default_og_image'] = 'https://cdn.example.com/card.png';
+Brand::flush();
+$meta = SEO::renderMeta('صفحة');
+t('remote default OG is used as-is', strpos($meta, 'https://cdn.example.com/card.png') !== false);
+
+Settings::$data['default_og_image'] = 'uploads/brand/site_favicon_1786883107.png';
+Brand::flush();
+$meta = SEO::renderMeta('صفحة');
+t('present default OG is used', strpos($meta, 'site_favicon_1786883107.png') !== false);
+
+$meta = SEO::renderMeta('صفحة', '', 'https://remote.example.com/a.jpg');
+t('remote article image is not double-prefixed', strpos($meta, 'https://remote.example.com/a.jpg') !== false);
+t('publisher logo comes from the brand helper', strpos($meta, 'site_logo_1789925847.ico') !== false);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

@@ -8,7 +8,13 @@ class SEO
         $titleFormatted = Brand::titleWith((string) $title);
         $description = $description ?: Brand::description();
         $url = $url ?: app_url();
-        $image = $image ? app_url($image) : app_url('assets/images/og-default.jpg');
+        if ($image !== '') {
+            $image = preg_match('#^https?://#i', $image) === 1 ? $image : app_url($image);
+        } else {
+            // Configured default first, then a bundled card that actually exists.
+            $image = Brand::assetUrl('default_og_image') ?: app_url('assets/images/icon-512.png');
+        }
+        $publisherLogo = Brand::logoUrl() ?: app_url('assets/images/icon-512.png');
 
         $html = "<!-- SEO & Social Meta Tags -->\n";
         $html .= '<title>' . htmlspecialchars($titleFormatted, ENT_QUOTES, 'UTF-8') . "</title>\n";
@@ -45,7 +51,7 @@ class SEO
                 'name' => $siteName,
                 'logo' => [
                     '@type' => 'ImageObject',
-                    'url' => app_url('assets/images/logo.png')
+                    'url' => $publisherLogo
                 ]
             ]
         ];
