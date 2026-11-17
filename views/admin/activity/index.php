@@ -228,16 +228,31 @@
  </tr>
  <?php else: ?>
  <?php foreach ($logs as $log): ?>
+ <?php
+ // Distinguish a real person from a deleted account and from cron work.
+ $actorName = trim((string) ($log['username'] ?? ''));
+ if ($actorName === '') {
+ if (!empty($log['user_id'])) {
+ $actorName = 'مستخدم محذوف';
+ } elseif (!empty($log['ip_address']) || !empty($log['user_agent'])) {
+ // A real request with no session is an unregistered actor, not automation.
+ $actorName = 'مستخدم غير مسجّل';
+ } else {
+ $actorName = 'نظام آلي';
+ }
+ }
+ $actorIcon = $actorName === 'نظام آلي' ? 'bi-robot' : ($actorName === 'مستخدم محذوف' || $actorName === 'مستخدم غير مسجّل' ? 'bi-person-dash' : 'bi-person-fill');
+ ?>
  <tr>
  <!-- User Actor -->
  <td>
  <div class="d-flex align-items-center gap-2">
  <div class="rounded-circle bg-light border p-1 d-grid place-items-center" style="width:32px;height:32px;font-size:0.9rem">
- 
+ <i class="bi <?= $actorIcon ?> text-secondary"></i>
  </div>
  <div>
  <strong class="text-dark d-block text-truncate" style="max-width:110px">
- <?= admin_e($log['username'] ?? 'نظام آلي') ?>
+ <?= admin_e($actorName) ?>
  </strong>
  </div>
  </div>
@@ -297,7 +312,7 @@
  title="عرض التفاصيل الكاملة"
  onclick='openLogDetailsModal(<?= json_encode([
  'id' => $log['id'],
- 'username' => $log['username'] ?? 'نظام آلي',
+ 'username' => $actorName,
  'action' => $log['action'],
  'severity' => $log['severity'],
  'entity' => $log['entity_type'],

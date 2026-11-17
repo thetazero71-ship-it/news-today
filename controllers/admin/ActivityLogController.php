@@ -190,7 +190,7 @@ $this->guardPermission('activity.view');
 $this->guardPermission('activity.view');
  $db = new Database();
  $logs = $db->fetchAll("
- SELECT l.id, u.username, l.action, l.entity_type, l.entity_id, l.ip_address, l.created_at, l.new_values 
+ SELECT l.id, l.user_id, u.username, l.action, l.entity_type, l.entity_id, l.ip_address, l.created_at, l.user_agent, l.new_values 
  FROM activity_logs l 
  LEFT JOIN users u ON u.id = l.user_id 
  ORDER BY l.id DESC LIMIT 5000
@@ -208,7 +208,7 @@ $this->guardPermission('activity.view');
  $cc = GeoIp::lookup($row['ip_address'] ?? '');
  fputcsv($out, [
  $row['id'],
- $row['username'] ?? 'نظام آلي',
+ $this->actorName($row),
  $row['action'],
  $row['entity_type'],
  $row['entity_id'],
@@ -227,11 +227,16 @@ $this->guardPermission('activity.view');
 $this->guardPermission('activity.view');
  $db = new Database();
  $logs = $db->fetchAll("
- SELECT l.id, u.username, l.action, l.entity_type, l.entity_id, l.ip_address, l.created_at, l.old_values, l.new_values, l.user_agent 
+ SELECT l.id, l.user_id, u.username, l.action, l.entity_type, l.entity_id, l.ip_address, l.created_at, l.old_values, l.new_values, l.user_agent 
  FROM activity_logs l 
  LEFT JOIN users u ON u.id = l.user_id 
  ORDER BY l.id DESC LIMIT 5000
  ");
+
+ foreach ($logs as &$row) {
+ $row['actor'] = $this->actorName($row);
+ }
+ unset($row);
 
  header('Content-Type: application/json; charset=utf-8');
  header('Content-Disposition: attachment; filename="audit_log_' . date('Y-m-d_His') . '.json"');
@@ -254,6 +259,22 @@ $this->postGuardPermission('activity.manage');
  $this->audit('cleanup', 'activity_log', null, null, ['deleted_older_than' => '90_days']);
  Session::flash('success', 'تم تنظيف وأرشفة سجلات النشاط الأقدم من 90 يوماً بنجاح!');
  return $this->redirect('admin/activity-log');
+ }
+
+ /** Human label for the actor: username, deleted account, unregistered request, or real automation. */
+ private function actorName(array $row): string
+ {
+  $name = trim((string) ($row['username'] ?? ''));
+  if ($name !== '') {
+  return $name;
+  }
+  if (!empty($row['user_id'])) {
+  return 'مستخدم محذوف';
+  }
+  if (!empty($row['ip_address']) || !empty($row['user_agent'])) {
+  return 'مستخدم غير مسجّل';
+  }
+  return 'نظام آلي';
  }
 
  private function sanitizeValuesForDisplay($raw)

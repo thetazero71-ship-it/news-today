@@ -1,6 +1,6 @@
 # تقرير الإصلاحات التقني — منصة أخبار التقنية
 
-> **تاريخ ووقت آخر تعديل:** 17 نوفمبر 2026 — 11:14 صباحًا بتوقيت مكة/الرياض (UTC+03:00)
+> **تاريخ ووقت آخر تعديل:** 17 نوفمبر 2026 — 11:26 صباحًا بتوقيت مكة/الرياض (UTC+03:00)
 > **الفرع:** `main` · **المستودع:** `thetazero71-ship-it/news-today`
 > **النطاق الزمني:** 19 سبتمبر 2026 → 14 أكتوبر 2026 — **113 commit** إجمالاً، منها **98** منذ بدء مشروع الصلاحيات
 > **آخر commit برمجي موثّق:** `0fba279`
@@ -171,6 +171,10 @@ guardPermission('articles.edit')
 - **التراجع الفوري:** إعادته `false` — بلا أي تغيير في البيانات أو المسارات.
 - **قبل التفعيل يُنصح بـ:** تسجيل دخول بحساب `admin` وآخر بحساب `managing_editor` وتجربة: لوحة التحكم · مقال · قسم · نسخ احتياطي · إعدادات.
 
+### 1.12 سجل النشاط — نسبة الأحداث لأصحابها
+
+`ActivityLogger` كان يكتب `$user['id'] ?? null` بينما `$user` **غير معرّف أصلًا** داخل الدالة، فحُفظت كل السجلات بـ `user_id = NULL` وظهرت في اللوحة «نظام آلي» حتى للأفعال البشرية. صار يقرأ المستخدم من `Auth::user()` ثم من مفتاح الجلسة `auth_user_id`؛ عمليات الـ cron وحدها تبقى بلا مستخدم. الصفوف القديمة لا يمكن نسبتها بأمان (لا عنوان IP ولا User-Agent محفوظ في `users`)، فصارت تظهر «مستخدم غير مسجّل» بدل «نظام آلي»، و«مستخدم محذوف» عندما يبقى `user_id` مع حساب محذوف، مع أيقونة تمييز لكل حالة. التصدير CSV/JSON يستخدم نفس التسمية. أُضيف `tools/activity_test.php` (22 تأكيدًا).
+
 ---
 
 ## 2. المحتوى والتصنيف
@@ -293,7 +297,7 @@ guardPermission('articles.edit')
 
 ### 8.3 اختبارات وظيفية أخرى في `tools/`
 
-`admin_ajax_test` · `admin_nav_test` · `aggregator_publish_ui_test` · `ai_render_test.js` · `ai_translation_test` · `brand_test` · `category_test` · `db_resilience_test` · `dedupe_test` · `encoding_test` · `favorites_test` · `feeds_page_test` · `guard_test` · `image_store_test` · `js_syntax_test` · `pagecache_test` · `rss_sources_test` · `search_test` · `search_mysql_test` · `view_script_test`.
+`admin_ajax_test` · `admin_nav_test` · `aggregator_publish_ui_test` · `ai_render_test.js` · `ai_translation_test` · `brand_test` · `category_test` · `db_resilience_test` · `dedupe_test` · `encoding_test` · `favorites_test` · `feeds_page_test` · `guard_test` · `image_store_test` · `js_syntax_test` · `pagecache_test` · `rss_sources_test` · `search_test` · `search_mysql_test` · `view_script_test` · `activity_test`.
 
 ---
 
@@ -417,7 +421,8 @@ c57317c  Auto-classification terms for military and politics
 | 17 نوفمبر 2026 — 11:04 | حماية الشعار والأيقونة في كل الواجهات: فحص وجود الملف، تراجع إلى الشعار النصي/الأيقونة المدمجة، كسر الكاش بـ `?v=mtime`، ومعاينة فورية أثناء كتابة المسار | `a9e157f` |
 | 17 نوفمبر 2026 — 11:08 | إصلاح بطاقات المشاركة: `og:image` وشعار JSON-LD كانا يشيران إلى ملفين غير موجودين · استخدام `default_og_image` ثم `icon-512.png` | `fdd9f8c` |
 | 17 نوفمبر 2026 — 11:10 | فحص الروابط المطلقة التي تعود إلى الموقع نفسه: `default_og_image` كان رابطًا مطلقًا لملف مفقود، فيظهر 404 في البطاقة | `ac1ffc2` |
-| 17 نوفمبر 2026 — 11:14 | الترويسة وقالب المقال: إزالة المسارات الثابتة `og_share.png` و`logo.png` المفقودة، وقراءة `default_og_image` مع تراجع إلى `icon-512.png` | هذا الـ commit |
+| 17 نوفمبر 2026 — 11:14 | الترويسة وقالب المقال: إزالة المسارات الثابتة `og_share.png` و`logo.png` المفقودة، وقراءة `default_og_image` مع تراجع إلى `icon-512.png` | `0fba279` |
+| 17 نوفمبر 2026 — 11:26 | سجل النشاط: كل الأحداث كانت تُحفظ بـ `user_id = NULL` بسبب متغيّر غير معرّف، فتظهر «نظام آلي» · قراءة المستخدم من الجلسة + تسمية الصفوف القديمة والتصدير + اختبار `tools/activity_test.php` | هذا الـ commit |
 
 ---
 
