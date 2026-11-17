@@ -94,7 +94,6 @@ $title = 'إدارة المقالات';
   }
   } catch (e) {
   if (window.adminToast) window.adminToast(e.message, 'error');
-  else alert(e.message);
   log('خطأ: ' + e.message, 'text-danger');
   } finally {
   running = false;
@@ -163,7 +162,6 @@ $title = 'إدارة المقالات';
   }
   } catch (e) {
   if (window.adminToast) window.adminToast(e.message, 'error');
-  else alert(e.message);
   log('خطأ: ' + e.message, 'text-danger');
   } finally {
   cRunning = false;

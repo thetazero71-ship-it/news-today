@@ -228,6 +228,7 @@ guardPermission('articles.edit')
 | **تجاوز المترجم البطيء** | تجاهل المترجم المجاني عندما يوجد مزوّد AI حقيقي | `2d65186` |
 | **لا نشر بترجمة فاشلة** | منع نشر قصة فشلت ترجمتها | `7bc029e` |
 | **CSRF المستشار الذكي** | فصل تحقق العرض عن POST، وتحقق فعلي لزر cron | `4c0d667` |
+| **رابط مكسور في محادثة المساعد** | كل رابط في إجابة الذكاء كان يظهر كـ `$1">العنوان` — النمط `$1` بلا مجموعة التقاط يبقى حرفيًا في JavaScript، ثم كان مُحوِّل الروابط المجرّدة يعيد كتابة `href` لرابط أُنشئ للتو فيُداخل وسمين `<a>`. أُعيد بناء التحويل: الروابط تُبنى مرة واحدة وتُحمى بعلامات مؤقتة، والرابط المجرّد يملك مجموعة التقاط، وعلامات الترقيم تبقى خارج الرابط | هذا الـ commit |
 
 ---
 
@@ -283,7 +284,7 @@ guardPermission('articles.edit')
 
 ### 8.3 اختبارات وظيفية أخرى في `tools/`
 
-`admin_ajax_test` · `admin_nav_test` · `aggregator_publish_ui_test` · `ai_translation_test` · `brand_test` · `category_test` · `db_resilience_test` · `dedupe_test` · `feeds_page_test` · `guard_test` · `image_store_test` · `js_syntax_test` · `pagecache_test` · `rss_sources_test` · `search_test` · `search_mysql_test` · `view_script_test`.
+`admin_ajax_test` · `admin_nav_test` · `aggregator_publish_ui_test` · `ai_render_test.js` · `ai_translation_test` · `brand_test` · `category_test` · `db_resilience_test` · `dedupe_test` · `feeds_page_test` · `guard_test` · `image_store_test` · `js_syntax_test` · `pagecache_test` · `rss_sources_test` · `search_test` · `search_mysql_test` · `view_script_test`.
 
 ---
 

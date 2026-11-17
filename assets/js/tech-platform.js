@@ -1346,17 +1346,60 @@
 
     // Inline markdown transforms (receive ALREADY-escaped text).
     function inlineMarkdown(t) {
-      t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      // Inline code is stashed first so links/emphasis never run inside it.
+      const codes = [];
+      t = t.replace(/`([^`\n]+)`/g, function (m, code) {
+        codes.push(code);
+        return '\u0000C' + (codes.length - 1) + '\u0000';
+      });
       t = t.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
       t = t.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
       t = t.replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)(?=[^*\w]|$)/g, '$1<em>$2</em>');
       t = t.replace(/~~([^~\n]+)~~/g, '<del>$1</del>');
+
+      // Links are built once, then replaced by placeholders. This stops the
+      // bare-URL pass from re-writing the href of a link we just produced
+      // (which used to nest anchors and leak a literal `$1">` into the chat).
+      const links = [];
+      const stash = function (html) {
+        links.push(html);
+        return '\u0000L' + (links.length - 1) + '\u0000';
+      };
+      const anchor = function (href, label, external) {
+        return '<a href="' + href + '"' + (external ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + label + '</a>';
+      };
+
       t = t.replace(/\[([^\]]+)\]\(\/(?:article|tutorial|category)\/[^)\s]+\)/g, function (m, label) {
         const href = m.match(/\((\/[^)\s]+)\)/)[1];
-        return '<a href="' + base + href + '">' + label + '</a>';
+        return stash(anchor(base + href, label, false));
       });
-      t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-      t = t.replace(/(?:(?:https?|ftp):\/\/[^\s<>"']+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+      t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, function (m, label, url) {
+        return stash(anchor(url, label, true));
+      });
+
+      // Bare URLs: capture the address explicitly (the whole match is group 0,
+      // so a `$1` backreference would stay literal in JS) and move sentence
+      // punctuation outside the anchor.
+      t = t.replace(/((?:https?|ftp):\/\/[^\s<>"']+)/g, function (m) {
+        let url = m;
+        let tail = '';
+        const trailing = url.match(/[.,;:!?]+$/);
+        if (trailing) {
+          tail = trailing[0];
+          url = url.slice(0, -tail.length);
+        }
+        while (/[)\]]$/.test(url)) {
+          const open = (url.match(/[(\[]/g) || []).length;
+          const close = (url.match(/[)\]]/g) || []).length;
+          if (close <= open) break;
+          tail = url.slice(-1) + tail;
+          url = url.slice(0, -1);
+        }
+        return stash(anchor(url, url, true)) + tail;
+      });
+
+      t = t.replace(/\u0000L(\d+)\u0000/g, function (m, i) { return links[Number(i)] || ''; });
+      t = t.replace(/\u0000C(\d+)\u0000/g, function (m, i) { return '<code>' + (codes[Number(i)] || '') + '</code>'; });
       return t;
     }
 
