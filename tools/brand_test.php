@@ -27,7 +27,7 @@ function e($s)
 }
 function app_url($p = '')
 {
-    return '/' . ltrim($p, '/');
+    return 'https://example.test/' . ltrim($p, '/');
 }
 
 /** In-memory Settings stub. */
@@ -239,6 +239,14 @@ Settings::$data['site_favicon'] = 'uploads/brand/does_not_exist.png';
 Brand::flush();
 t('missing favicon resolves to empty', Brand::faviconUrl() === '');
 
+Settings::$data['default_og_image'] = 'https://example.test/uploads/brand/missing.png';
+Brand::flush();
+t('missing self-hosted asset resolves to empty', Brand::assetUrl('default_og_image') === '');
+
+Settings::$data['default_og_image'] = 'https://example.test/uploads/brand/site_favicon_1786883107.png';
+Brand::flush();
+t('present self-hosted asset is verified and versioned', preg_match('#/uploads/brand/site_favicon_1786883107\.png\?v=\d+$#', Brand::assetUrl('default_og_image')) === 1);
+
 $indexSrc = (string) file_get_contents(APP_ROOT . '/index.php');
 $adminLayout = (string) file_get_contents(APP_ROOT . '/views/layouts/admin.php');
 t('favicon tag falls back when the file is missing', strpos($indexSrc, '!is_file($local) || filesize($local) > 200 * 1024') !== false);
@@ -256,6 +264,11 @@ Brand::flush();
 $meta = SEO::renderMeta('صفحة');
 t('missing default OG falls back to a bundled card', strpos($meta, 'assets/images/icon-512.png') !== false);
 t('the old missing og-default.jpg is gone', strpos($meta, 'og-default.jpg') === false);
+
+Settings::$data['default_og_image'] = 'https://example.test/uploads/brand/missing.png';
+Brand::flush();
+$meta = SEO::renderMeta('صفحة');
+t('self-hosted missing OG falls back in meta', strpos($meta, 'assets/images/icon-512.png') !== false);
 
 Settings::$data['default_og_image'] = 'https://cdn.example.com/card.png';
 Brand::flush();

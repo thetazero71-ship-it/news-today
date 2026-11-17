@@ -87,6 +87,20 @@ class Brand
             return $fallback;
         }
         if (preg_match('#^https?://#i', $value) === 1) {
+            // A URL pointing back at this site is still a local file: verify it,
+            // otherwise an old absolute URL can keep a 404 image on every page.
+            $host = strtolower((string) parse_url($value, PHP_URL_HOST));
+            $self = strtolower((string) parse_url(app_url(''), PHP_URL_HOST));
+            if ($host !== '' && $host === $self) {
+                $path = rawurldecode((string) parse_url($value, PHP_URL_PATH));
+                $root = defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__);
+                $local = $root . '/' . ltrim($path, '/');
+                if (!is_file($local)) {
+                    return $fallback;
+                }
+                $url = app_url(ltrim($path, '/'));
+                return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . (int) @filemtime($local);
+            }
             return $value;
         }
 
