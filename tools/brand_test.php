@@ -295,5 +295,26 @@ t('article no longer points at og_share.png', strpos($articleSrc, 'og_share.png'
 t('article publisher logo is checked', strpos($articleSrc, 'Brand::logoUrl()') !== false);
 t('the missing uploads/brand/logo.png is gone', strpos($headerSrc . $articleSrc, 'uploads/brand/logo.png') === false);
 
+echo "\n--- the tagline is neutral and owner-editable ---\n";
+Settings::$data['site_tagline'] = '';
+Brand::flush();
+t('default tagline has no tech/AI words', preg_match('/تكنولوجيا|تقنية|ذكاء/u', Brand::tagline()) !== 1);
+t('default tagline is neutral', Brand::tagline() === 'أحدث المستجدات');
+
+Settings::$data['site_tagline'] = 'أحدث مستجدات التكنولوجيا والذكاء الاصطناعي';
+Brand::flush();
+t('legacy seeded tagline is neutralised', Brand::tagline() === 'أحدث المستجدات');
+
+Settings::$data['site_tagline'] = 'أخبار العالم اليوم';
+Brand::flush();
+t('custom tagline is preserved', Brand::tagline() === 'أخبار العالم اليوم');
+
+$homeSrc = (string) file_get_contents(APP_ROOT . '/views/home.php');
+$settingsSrc = (string) file_get_contents(APP_ROOT . '/controllers/admin/SettingsController.php');
+t('home H1 no longer hardcodes a tech phrase', strpos($homeSrc, 'التكنولوجيا والذكاء الاصطناعي') === false);
+t('home H1 is built from Brand::tagline()', strpos($homeSrc, 'Brand::tagline()') !== false);
+t('settings seed uses the neutral default', strpos($settingsSrc, "'value' => Brand::DEFAULT_TAGLINE") !== false);
+t('settings labels the phrase as editable', strpos($settingsSrc, 'العبارة التعريفية') !== false);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

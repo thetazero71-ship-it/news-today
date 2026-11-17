@@ -280,7 +280,7 @@ if (!function_exists('site_brand_logo_html')) {
     function site_brand_logo_html($imgHeight = 38, $showTagline = true)
     {
         $siteName = Brand::name();
-        $siteTagline = Settings::get('site_tagline', 'نبض التكنولوجيا والذكاء الاصطناعي');
+        $siteTagline = Settings::get('site_tagline', '') ?: Brand::tagline();
         $logoUrl = Brand::logoUrl();
 
         $out = '<a class="brand" href="' . htmlspecialchars(app_url(), ENT_QUOTES, 'UTF-8') . '">';

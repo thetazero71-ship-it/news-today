@@ -11,7 +11,14 @@ class Brand
     /** Last-resort defaults, only used when the settings table has no value. */
     const DEFAULT_NAME_AR = 'عصب التقنية';
     const DEFAULT_NAME_EN = 'AsabTech';
-    const DEFAULT_TAGLINE = 'أحدث أخبار التقنية والذكاء الاصطناعي';
+    const DEFAULT_TAGLINE = 'أحدث المستجدات';
+
+    /** Old seeded taglines that mention tech/AI: replaced by the neutral default. */
+    const LEGACY_TAGLINES = array(
+        'أحدث أخبار التقنية والذكاء الاصطناعي',
+        'أحدث مستجدات التكنولوجيا والذكاء الاصطناعي',
+        'نبض التكنولوجيا والذكاء الاصطناعي',
+    );
 
     private static $cache = array();
 
@@ -47,10 +54,13 @@ class Brand
         return self::setting('site_name_en', self::DEFAULT_NAME_EN);
     }
 
-    /** Short tagline. */
+    /** Short tagline, editable from Settings → General. */
     public static function tagline(): string
     {
-        return self::setting('site_tagline', self::DEFAULT_TAGLINE);
+        $value = self::setting('site_tagline', self::DEFAULT_TAGLINE);
+        // Seeded values count as defaults, not user content: remove the tech/AI
+        // wording without touching any custom phrase the owner typed.
+        return in_array($value, self::LEGACY_TAGLINES, true) ? self::DEFAULT_TAGLINE : $value;
     }
 
     /** Meta / SEO description in Arabic. */

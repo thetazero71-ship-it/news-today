@@ -8,7 +8,7 @@ if (!function_exists('e')) {
 
 // Read live settings from DB
 $siteName       = Brand::name();
-$siteTagline    = Settings::get('site_tagline', 'نبض التكنولوجيا والذكاء الاصطناعي');
+$siteTagline    = Brand::tagline();
 $siteDesc       = Settings::get('meta_description', 'منصة عربية رائدة في تغطية الأخبار التقنية، أحدث تطورات الذكاء الاصطناعي، الأجهزة الذكية، والأمن السيبراني.');
 $siteLogo       = Settings::get('site_logo', '');
 $themeDefault   = Settings::get('theme_default', 'dark');
@@ -60,7 +60,7 @@ require_once APP_ROOT . '/views/partials/header.php';
 
 <!-- Main Page Body -->
 <main class="container page-shell">
-    <h1 class="visually-hidden"><?= e(Brand::name()) ?> - أحدث مستجدات التكنولوجيا والذكاء الاصطناعي</h1>
+    <h1 class="visually-hidden"><?= e(trim(Brand::name() . ' - ' . $siteTagline, ' -')) ?></h1>
 
     <?php if ($activeTemplate === 'classic_techwd'): ?>
         <!-- ================= 🗞️ TEMPLATE 2: AUTHENTIC TECH-WD MAGAZINE LAYOUT ================= -->
