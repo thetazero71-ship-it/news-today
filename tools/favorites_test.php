@@ -75,5 +75,23 @@ t('removal targets the toggled source', strpos($fav, "getElementById('pinForm_' 
 t('it no longer relies on focus', strpos($fav, 'document.activeElement') === false);
 t('the last removal restores the empty state', strpos($fav, 'window.location.reload()') !== false);
 
+echo "\n--- the publish button publishes (it used to only navigate) ---\n";
+t('translate & publish endpoint is wired', strpos($fav, "admin/news-feeds/translate-publish") !== false);
+t('fast publish endpoint is wired', strpos($fav, "admin/news-feeds/fast-publish") !== false);
+t('draft endpoint is wired', strpos($fav, "admin/news-feeds/draft-article") !== false);
+t('the three forms are POST forms', substr_count($fav, 'method="post"') >= 4);
+t('item data travels with every form', strpos($fav, '$favPublishFields = function (array $item, string $sourceName)') !== false);
+t('all publish fields are included', strpos($fav, "'source_url' => (string) (\$item['link'] ?? '')") !== false
+    && strpos($fav, "'source_name' => \$sourceName") !== false
+    && strpos($fav, "'featured_image' => (string) (\$item['featured_image'] ?? '')") !== false);
+t('the menu offers the three actions', strpos($fav, 'ترجمة ونشر (عربي)') !== false
+    && strpos($fav, 'نشر فوري (بدون ترجمة)') !== false
+    && strpos($fav, 'تحرير كمسودة') !== false);
+t('the publish control is a dropdown button', strpos($fav, 'class="btn btn-sm btn-primary dropdown-toggle"') !== false);
+t('the old anchor-only publish button is gone', strpos($fav, 'class="btn btn-sm btn-primary">') === false);
+t('favourites now shows publish feedback', strpos($fav, "Session::getFlash('success')") !== false
+    && strpos($fav, "Session::getFlash('error')") !== false);
+t('both endpoints return to the referring page', substr_count($agg, '$referer = $_SERVER[\'HTTP_REFERER\']') >= 2);
+
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

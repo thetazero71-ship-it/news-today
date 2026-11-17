@@ -2,6 +2,21 @@
 /**
  * تبويب المفضلة — كل المصادر المفضلة وأحدث أخبارها في مكان واحد.
  */
+$favPublishFields = function (array $item, string $sourceName) {
+    $fields = array(
+        'title' => (string) ($item['title'] ?? ''),
+        'excerpt' => (string) ($item['excerpt'] ?? ''),
+        'content' => (string) ($item['content'] ?? ''),
+        'source_url' => (string) ($item['link'] ?? ''),
+        'source_name' => $sourceName,
+        'featured_image' => (string) ($item['featured_image'] ?? ''),
+    );
+    $html = '';
+    foreach ($fields as $name => $value) {
+        $html .= '<input type="hidden" name="' . admin_e($name) . '" value="' . admin_e($value) . '">';
+    }
+    return $html;
+};
 ?>
 <style>
 .fav-thumb { width: 72px; height: 54px; border-radius: 10px; overflow: hidden; background: #eef2f7; display: flex; align-items: center; justify-content: center; }
@@ -9,6 +24,19 @@
 .fav-thumb-ph { color: #94a3b8; font-size: 1.1rem; }
 </style>
 <div class="container-fluid">
+
+ <?php if ($msg = Session::getFlash('success')): ?>
+ <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+ <i class="bi bi-check-circle-fill me-1"></i> <?= admin_e($msg) ?>
+ <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+ </div>
+ <?php endif; ?>
+ <?php if ($msg = Session::getFlash('error')): ?>
+ <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+ <i class="bi bi-exclamation-triangle-fill me-1"></i> <?= admin_e($msg) ?>
+ <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+ </div>
+ <?php endif; ?>
 
  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
   <div>
@@ -128,10 +156,41 @@
       class="btn btn-sm btn-light border" title="الرابط الأصلي">
       <i class="bi bi-box-arrow-up-right"></i> المصدر
       </a>
-      <a href="<?= admin_e(app_url('admin/news-feeds?source_id=' . (int) $src['id'])) ?>"
-      class="btn btn-sm btn-primary">
+      <div class="btn-group">
+      <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="اختر طريقة النشر">
       <i class="bi bi-lightning-charge"></i> نشر
-      </a>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+      <li>
+      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/translate-publish')) ?>" class="m-0">
+      <?= CSRF::field() ?>
+      <?= $favPublishFields($item, (string) $src['name']) ?>
+      <button type="submit" class="dropdown-item fw-semibold">
+      <i class="bi bi-stars text-success me-1"></i> ترجمة ونشر (عربي)
+      </button>
+      </form>
+      </li>
+      <li>
+      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/fast-publish')) ?>" class="m-0">
+      <?= CSRF::field() ?>
+      <?= $favPublishFields($item, (string) $src['name']) ?>
+      <button type="submit" class="dropdown-item fw-semibold">
+      <i class="bi bi-lightning-charge-fill text-primary me-1"></i> نشر فوري (بدون ترجمة)
+      </button>
+      </form>
+      </li>
+      <li><hr class="dropdown-divider"></li>
+      <li>
+      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/draft-article')) ?>" class="m-0">
+      <?= CSRF::field() ?>
+      <?= $favPublishFields($item, (string) $src['name']) ?>
+      <button type="submit" class="dropdown-item">
+      <i class="bi bi-pencil-square me-1"></i> تحرير كمسودة
+      </button>
+      </form>
+      </li>
+      </ul>
+      </div>
       <?php endif; ?>
      </div>
     </li>
