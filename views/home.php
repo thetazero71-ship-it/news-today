@@ -221,45 +221,9 @@ require_once APP_ROOT . '/views/partials/header.php';
                 <?php endforeach; ?>
             </div>
 
-            <!-- 3 Quick Pulse Cards Row -->
-            <div class="bento-pulse-row" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-top:20px">
-                <!-- Pulse 1: AI Radar -->
-                <div class="bento-cell bento-cell-compact">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <strong class="text-cyan small d-flex align-items-center gap-2"><?= ui_icon('ai', 'text-primary', 16) ?> رادار الذكاء الاصطناعي</strong>
-                        <span class="badge bg-primary-subtle text-primary small">مباشر</span>
-                    </div>
-                    <?php if (!empty($radar[0])): ?>
-                        <h4 class="small fw-bold mb-1 text-dark"><?= e($radar[0]['name']) ?> - <?= e($radar[0]['label'] ?? 'تريند تقني') ?></h4>
-                        <small class="text-muted"><?= e($radar[0]['desc']) ?></small>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Pulse 2: Breaking Flash -->
-                <div class="bento-cell bento-cell-compact">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <strong class="text-danger small d-flex align-items-center gap-2"><?= ui_icon('flame', 'text-danger', 16) ?> عاجل ومهم</strong>
-                        <span class="badge bg-danger-subtle text-danger small">الآن</span>
-                    </div>
-                    <?php $breakingItem = $latest[2] ?? $featured; ?>
-                    <?php if ($breakingItem): ?>
-                        <h4 class="small fw-bold mb-1 text-dark"><a href="<?= e(app_url('article/' . $breakingItem['slug'])) ?>" class="text-dark text-decoration-none"><?= e(mb_substr($breakingItem['title'], 0, 75)) ?>...</a></h4>
-                        <small class="text-muted"><?= e(fmt_date($breakingItem['published_at'] ?: $breakingItem['created_at'])) ?></small>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Pulse 3: Academy Tutorials -->
-                <div class="bento-cell bento-cell-compact">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <strong class="text-success small d-flex align-items-center gap-2"><?= ui_icon('tutorials', 'text-success', 16) ?> جديد الشروحات</strong>
-                        <a href="<?= e(app_url('tutorials')) ?>" class="text-success small text-decoration-none fw-bold">الأكاديمية ↗</a>
-                    </div>
-                    <?php if (!empty($tutorials[0])): ?>
-                        <h4 class="small fw-bold mb-1 text-dark"><a href="<?= e(app_url('tutorials/' . ($tutorials[0]['slug'] ?? $tutorials[0]['id']))) ?>" class="text-dark text-decoration-none"><?= e(mb_substr($tutorials[0]['title'], 0, 75)) ?>...</a></h4>
-                        <small class="text-muted"><?= (int)$tutorials[0]['steps_count'] ?> خطوات مصورة</small>
-                    <?php endif; ?>
-                </div>
-            </div>
+            <?php /* The 3-card "quick pulse" row was removed: it duplicated the
+                     radar / breaking / tutorials content already shown in the
+                     dedicated sections, so the hero now ends at the bento grid. */ ?>
         </section>
 
         <!-- Bento Multi-Stream Feed Section -->
