@@ -5316,10 +5316,10 @@ body.zen-reading-mode .article-card-main {
   background: transparent;
   background-image: linear-gradient(
     to right,
-    transparent calc(50% - 2px),
-    #0a0a0a calc(50% - 2px),
-    #0a0a0a calc(50% + 2px),
-    transparent calc(50% + 2px)
+    transparent calc(50% - 1.5px),
+    #0a0a0a calc(50% - 1.5px),
+    #0a0a0a calc(50% + 1.5px),
+    transparent calc(50% + 1.5px)
   );
   background-repeat: no-repeat;
 }
@@ -5349,10 +5349,10 @@ html[data-theme] .fav-items-scrollable::-webkit-scrollbar-track {
   background: transparent;
   background-image: linear-gradient(
     to right,
-    transparent calc(50% - 2px),
-    #0a0a0a calc(50% - 2px),
-    #0a0a0a calc(50% + 2px),
-    transparent calc(50% + 2px)
+    transparent calc(50% - 1.5px),
+    #0a0a0a calc(50% - 1.5px),
+    #0a0a0a calc(50% + 1.5px),
+    transparent calc(50% + 1.5px)
   );
   background-repeat: no-repeat;
 }

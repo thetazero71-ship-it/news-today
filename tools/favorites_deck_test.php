@@ -75,9 +75,9 @@ t('live search exists', strpos($view, 'filterFavNewsLive') !== false
 
 echo "\n--- the admin scrollbar is the capsule-on-rail style ---\n";
 $adminCss = (string) file_get_contents($root . '/assets/css/admin-bootstrap.css');
-t('the admin rail is centred and 4px', strpos($adminCss, 'calc(50% - 2px)') !== false
-    && strpos($adminCss, 'calc(50% + 2px)') !== false);
-t('the admin rail is deep black', strpos($adminCss, '#0a0a0a calc(50% - 2px)') !== false);
+t('the admin rail is centred and 3px', strpos($adminCss, 'calc(50% - 1.5px)') !== false
+    && strpos($adminCss, 'calc(50% + 1.5px)') !== false);
+t('the admin rail is deep black', strpos($adminCss, '#0a0a0a calc(50% - 1.5px)') !== false);
 t('the admin thumb is a capsule', strpos($adminCss, 'border-radius: 9999px;') !== false
     && strpos($adminCss, 'min-height: 72px;') !== false);
 t('the admin scrollbar is 12px wide', strpos($adminCss, '::-webkit-scrollbar { width: 12px; height: 12px; }') !== false);
@@ -85,7 +85,7 @@ t('inline favorites styles no longer override it', strpos($view, '.fav-items-scr
 $adminLayout = (string) file_get_contents($root . '/views/layouts/admin.php');
 t('the admin stylesheet is cache-busted', strpos($adminLayout, "admin-bootstrap.css') . '?v='") !== false);
 t('the admin sidebar uses the same capsule rail', strpos($adminLayout, '.sidebar-nav::-webkit-scrollbar-track') !== false
-    && strpos($adminLayout, 'calc(50% - 2px)') !== false);
+    && strpos($adminLayout, 'calc(50% - 1.5px)') !== false);
 
 echo "\n--- pinned box sits below all sources ---\n";
 $aggView = (string) file_get_contents($root . '/views/admin/aggregator/index.php');
