@@ -1033,6 +1033,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
 // Full-page cache: answering from disk keeps the shared-host worker pool free,
 // which is what causes the intermittent "502 Bad Gateway" under bursts.
 $__pageCacheable = PageCache::isCacheableRequest();
+if ($__pageCacheable) {
+    header('Cache-Control: public, max-age=60, stale-while-revalidate=300');
+} else {
+    $__reqPath = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    if (!preg_match('#\.(css|js|mjs|json|webmanifest|png|jpe?g|gif|svg|ico|webp|avif|woff2?|ttf|eot|map|xml|txt)$#i', $__reqPath)) {
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    }
+}
 if ($__pageCacheable && PageCache::serve()) {
     // A cache hit must not open a database connection just to log the visit.
     // Bots and uncached routes are still recorded by the shutdown hook below.
