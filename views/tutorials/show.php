@@ -144,11 +144,13 @@ require_once APP_ROOT . '/views/partials/header.php';
         <div class="side-widget-card" style="text-align:center;padding:32px;border-radius:var(--radius-card)">
             <h3 style="font-weight:800;margin-bottom:10px;color:var(--text-main)">🎉 تهانينا! أتممت تطبيق الشرح بالكامل</h3>
             <p style="color:var(--text-muted);margin-bottom:20px">هل أعجبك هذا الشرح؟ شاركه مع زملائك ومجتمعك التقني:</p>
-            <div style="display:flex;justify-content:center;gap:10px">
-                <a class="action-btn" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على X">𝕏</a>
-                <a class="action-btn" target="_blank" rel="noopener" href="https://wa.me/?text=<?= rawurlencode($shareTitle . ' ' . $shareUrl) ?>" title="مشاركة على واتساب">💬</a>
-                <a class="action-btn" target="_blank" rel="noopener" href="https://t.me/share/url?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على تليجرام">✈️</a>
-                <button class="action-btn" onclick="navigator.clipboard.writeText('<?= view_e($shareUrl) ?>');showToast('تم نسخ رابط الشرح بنجاح!','📋')" title="نسخ الرابط">🔗</button>
+            <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap">
+                <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://twitter.com/intent/tweet?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على X" aria-label="مشاركة على X"><?= ui_icon('twitter-x', '', 16) ?></a>
+                <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://www.facebook.com/sharer/sharer.php?u=<?= rawurlencode($shareUrl) ?>" title="مشاركة على فيسبوك" aria-label="مشاركة على فيسبوك"><?= ui_icon('facebook', '', 16) ?></a>
+                <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://wa.me/?text=<?= rawurlencode($shareTitle . ' ' . $shareUrl) ?>" title="مشاركة على واتساب" aria-label="مشاركة على واتساب"><?= ui_icon('whatsapp', '', 16) ?></a>
+                <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://t.me/share/url?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على تليجرام" aria-label="مشاركة على تليجرام"><?= ui_icon('telegram', '', 16) ?></a>
+                <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://www.linkedin.com/sharing/share-offsite/?url=<?= rawurlencode($shareUrl) ?>" title="مشاركة على لينكد إن" aria-label="مشاركة على لينكد إن"><?= ui_icon('linkedin', '', 16) ?></a>
+                <button class="action-btn share-brand" type="button" onclick="navigator.clipboard.writeText('<?= view_e($shareUrl) ?>');showToast('تم نسخ رابط الشرح بنجاح!','📋')" title="نسخ الرابط" aria-label="نسخ الرابط"><?= ui_icon('copy', '', 16) ?></button>
             </div>
         </div>
 

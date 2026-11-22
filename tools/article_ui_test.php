@@ -27,9 +27,9 @@ $css = (string) file_get_contents($root . '/assets/css/site.css');
 
 echo "--- the sidebar gets both datasets ---\n";
 t('latest stories are queried', strpos($controller, '$latestStories = $db->fetchAll(') !== false);
-t('latest is ordered by publish time', strpos($controller, 'ORDER BY published_at DESC, id DESC LIMIT 6') !== false);
+t('latest is ordered by publish time', strpos($controller, 'ORDER BY a.published_at DESC, a.id DESC LIMIT 6') !== false);
 t('most viewed is queried', strpos($controller, '$mostViewedStories = $db->fetchAll(') !== false);
-t('most viewed is ordered by views', strpos($controller, 'ORDER BY views_count DESC') !== false);
+t('most viewed is ordered by views', strpos($controller, 'ORDER BY a.views_count DESC') !== false);
 t('both reach the view', strpos($controller, "'latestStories' => \$latestStories") !== false
     && strpos($controller, "'mostViewedStories' => \$mostViewedStories") !== false);
 
@@ -81,6 +81,34 @@ t('it glows', strpos($css, 'box-shadow: inset 0 0 6px rgba(34, 211, 238, 0.45)')
 t('firefox gets a thin colored bar', strpos($css, 'scrollbar-color: rgba(34, 211, 238, 0.55) transparent') !== false);
 t('the share buttons keep an accessible style', strpos($css, '.action-btn.share-brand') !== false);
 t('the footer circles have hover motion', strpos($css, '.footer-social-link:hover') !== false);
+
+echo "\n--- the tutorials share bar matches the article ---\n";
+$tutorial = (string) file_get_contents($root . '/views/tutorials/show.php');
+foreach (['twitter-x', 'facebook', 'whatsapp', 'telegram', 'linkedin', 'copy'] as $icon) {
+    t('tutorials use the ' . $icon . ' icon', strpos($tutorial, "ui_icon('" . $icon . "'") !== false);
+}
+t('the textual X is gone from tutorials', strpos($tutorial, '>𝕏<') === false);
+t('the emoji share icons are gone', strpos($tutorial, '>💬<') === false
+    && strpos($tutorial, '>✈️<') === false
+    && strpos($tutorial, '>🔗<') === false);
+t('tutorial links are safe', strpos($tutorial, 'rel="noopener nofollow"') !== false);
+t('tutorial copy still works', strpos($tutorial, 'navigator.clipboard.writeText') !== false);
+
+echo "\n--- the sidebar now carries thumbnails, tags and an arrow ---\n";
+t('items carry thumbnails', strpos($view, 'side-tab-thumb') !== false);
+t('thumbnails use the real image', strpos($view, "\$story['featured_image']") !== false);
+t('the category tag is shown', strpos($view, 'side-tab-cat') !== false
+    && strpos($view, "\$story['category_name']") !== false);
+t('time is machine-readable for the relative engine', strpos($view, 'news-time-ago-static') !== false
+    && strpos($view, "date('c', \$storyTs ?: time())") !== false);
+t('an arrow marks each item', strpos($view, 'side-tab-arrow') !== false);
+t('the controller joins categories', strpos($controller, 'LEFT JOIN categories c ON c.id = a.category_id') !== false);
+t('it selects the thumbnail and category', strpos($controller, 'a.featured_image') !== false
+    && strpos($controller, 'c.name AS category_name') !== false);
+t('the styles include thumbnail and arrow rules', strpos($css, '.side-tab-thumb') !== false
+    && strpos($css, '.side-tab-arrow') !== false);
+t('the scrollbar has a central wire', strpos($css, 'rgba(148, 163, 184, 0.22)') !== false);
+t('the footer brand is bolder', strpos($css, 'font-size: 1.25rem; font-weight: 900') !== false);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

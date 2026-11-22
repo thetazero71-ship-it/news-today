@@ -517,12 +517,30 @@ require_once APP_ROOT . '/views/partials/header.php';
 
                         <div class="sidebar-tab-panel sidebar-panel-latest">
                             <?php foreach ($latestStories as $idx => $story): ?>
-                                <a class="side-tab-item" href="<?= article_e(app_url('article/' . $story['slug'])) ?>">
-                                    <span class="side-tab-rank"><?= $idx + 1 ?></span>
+                                <?php
+                                $storyImg = trim((string) ($story['featured_image'] ?? ''));
+                                $storyImgUrl = ($storyImg !== '' && preg_match('#^https?://#i', $storyImg))
+                                    ? $storyImg
+                                    : ($storyImg !== '' ? app_url($storyImg) : '');
+                                $storyTs = strtotime((string) ($story['published_at'] ?: $story['created_at']));
+                                ?>
+                                <a class="side-tab-item" href="<?= article_e(app_url('article/' . $story['slug'])) ?>" <?= news_card_attrs($story) ?>>
+                                    <span class="side-tab-thumb">
+                                        <?php if ($storyImgUrl !== ''): ?>
+                                            <img src="<?= article_e($storyImgUrl) ?>" alt="" loading="lazy" onerror="this.style.display='none'">
+                                        <?php else: ?>
+                                            <span class="side-tab-thumb-ph"><?= ui_icon('general', '', 18) ?></span>
+                                        <?php endif; ?>
+                                        <span class="side-tab-rank"><?= $idx + 1 ?></span>
+                                    </span>
                                     <span class="side-tab-text">
                                         <span class="side-tab-title"><?= article_e($story['title']) ?></span>
-                                        <span class="side-tab-meta"><?= article_e(fmt_date($story['published_at'] ?: $story['created_at'])) ?></span>
+                                        <span class="side-tab-meta">
+                                            <?php if (!empty($story['category_name'])): ?><span class="side-tab-cat"><?= article_e($story['category_name']) ?></span><?php endif; ?>
+                                            <time class="news-time-ago-static" datetime="<?= article_e(date('c', $storyTs ?: time())) ?>"><?= article_e(fmt_date($story['published_at'] ?: $story['created_at'])) ?></time>
+                                        </span>
                                     </span>
+                                    <span class="side-tab-arrow" aria-hidden="true">‹</span>
                                 </a>
                             <?php endforeach; ?>
                             <?php if (empty($latestStories)): ?>
@@ -532,12 +550,29 @@ require_once APP_ROOT . '/views/partials/header.php';
 
                         <div class="sidebar-tab-panel sidebar-panel-viewed">
                             <?php foreach ($mostViewedStories as $idx => $story): ?>
-                                <a class="side-tab-item" href="<?= article_e(app_url('article/' . $story['slug'])) ?>">
-                                    <span class="side-tab-rank"><?= $idx + 1 ?></span>
+                                <?php
+                                $storyImg = trim((string) ($story['featured_image'] ?? ''));
+                                $storyImgUrl = ($storyImg !== '' && preg_match('#^https?://#i', $storyImg))
+                                    ? $storyImg
+                                    : ($storyImg !== '' ? app_url($storyImg) : '');
+                                ?>
+                                <a class="side-tab-item" href="<?= article_e(app_url('article/' . $story['slug'])) ?>" <?= news_card_attrs($story) ?>>
+                                    <span class="side-tab-thumb">
+                                        <?php if ($storyImgUrl !== ''): ?>
+                                            <img src="<?= article_e($storyImgUrl) ?>" alt="" loading="lazy" onerror="this.style.display='none'">
+                                        <?php else: ?>
+                                            <span class="side-tab-thumb-ph"><?= ui_icon('general', '', 18) ?></span>
+                                        <?php endif; ?>
+                                        <span class="side-tab-rank"><?= $idx + 1 ?></span>
+                                    </span>
                                     <span class="side-tab-text">
                                         <span class="side-tab-title"><?= article_e($story['title']) ?></span>
-                                        <span class="side-tab-meta"><?= ui_icon('eye', '', 12) ?> <?= number_format((int) ($story['views_count'] ?? 0)) ?> مشاهدة</span>
+                                        <span class="side-tab-meta">
+                                            <?php if (!empty($story['category_name'])): ?><span class="side-tab-cat"><?= article_e($story['category_name']) ?></span><?php endif; ?>
+                                            <span class="side-tab-views"><?= ui_icon('eye', '', 12) ?> <?= number_format((int) ($story['views_count'] ?? 0)) ?> مشاهدة</span>
+                                        </span>
                                     </span>
+                                    <span class="side-tab-arrow" aria-hidden="true">‹</span>
                                 </a>
                             <?php endforeach; ?>
                             <?php if (empty($mostViewedStories)): ?>

@@ -5022,3 +5022,69 @@ body.zen-reading-mode .article-card-main {
   background: linear-gradient(180deg, #67e8f9, #818cf8);
   background-clip: padding-box;
 }
+
+/* ===================== Reading UI parity (thumbnails, meta, arrow) ===================== */
+.side-tab-item { align-items: center; gap: 10px; }
+.side-tab-thumb {
+  position: relative;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  display: grid;
+  place-items: center;
+}
+.side-tab-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.side-tab-thumb-ph { color: var(--text-muted); display: grid; place-items: center; }
+.side-tab-thumb .side-tab-rank {
+  position: absolute;
+  inset-inline-start: 4px;
+  bottom: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  font-size: 0.66rem;
+  background: rgba(8, 12, 20, 0.78);
+  color: #67e8f9;
+  border: 1px solid rgba(34, 211, 238, 0.45);
+}
+.side-tab-text { flex: 1 1 auto; min-width: 0; }
+.side-tab-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.side-tab-meta { flex-wrap: wrap; gap: 6px; }
+.side-tab-cat {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+}
+.side-tab-views { display: inline-flex; align-items: center; gap: 3px; }
+.side-tab-arrow {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform .18s ease, color .18s ease;
+}
+.side-tab-item:hover .side-tab-arrow { color: var(--accent-primary); transform: translateX(-3px); }
+
+/* Stronger footer identity */
+.footer-brand-name { font-size: 1.25rem; font-weight: 900; letter-spacing: .2px; text-shadow: 0 0 18px rgba(34, 211, 238, 0.25); }
+
+/* Thin central wire behind the capsule thumb */
+::-webkit-scrollbar-track {
+  background: linear-gradient(to right, transparent 4px, rgba(148, 163, 184, 0.22) 4px, rgba(148, 163, 184, 0.22) 6px, transparent 6px);
+}
