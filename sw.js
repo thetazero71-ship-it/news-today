@@ -1,9 +1,15 @@
 /**
  * AsabTech - Advanced Progressive Web App Service Worker
- * Version: 2.0.0
+ * Version: 3.0.0
+ *
+ * Hardening notes:
+ * - Only same-origin GET requests are intercepted. Third-party scripts,
+ *   analytics and ad frames must never break the worker.
+ * - Every respondWith() path resolves to a real Response (never undefined).
+ * - Cache name is versioned so a deploy can retire stale shells cleanly.
  */
 
-const CACHE_NAME = 'tech-news-pwa-v2';
+const CACHE_NAME = 'tech-news-pwa-v3';
 const OFFLINE_URL = '/offline';
 
 // Core assets to pre-cache immediately on install
@@ -18,13 +24,25 @@ const PRECACHE_ASSETS = [
   '/assets/images/icons/favicon-32x32.png'
 ];
 
-// 1. Install Event: Pre-cache core shell & activate immediately
+function offlineResponse() {
+  return new Response('Offline - No connection', {
+    status: 503,
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  });
+}
+
+// 1. Install Event: Pre-cache core shell & activate immediately.
+// Each asset is cached independently so one 404 cannot empty the whole shell.
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS).catch((err) => {
-        console.warn('[PWA SW] Pre-cache partial warning:', err);
-      });
+      return Promise.all(
+        PRECACHE_ASSETS.map((asset) =>
+          cache.add(new Request(asset, { cache: 'reload' })).catch((err) => {
+            console.warn('[PWA SW] Skipped asset:', asset, err && err.message);
+          })
+        )
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -39,6 +57,7 @@ self.addEventListener('activate', (event) => {
             console.log('[PWA SW] Removing old cache:', key);
             return caches.delete(key);
           }
+          return Promise.resolve();
         })
       );
     }).then(() => self.clients.claim())
@@ -49,10 +68,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
-  // Only handle GET requests
+  // Only handle same-origin GET requests
   if (req.method !== 'GET') return;
 
-  const url = new URL(req.url);
+  let url;
+  try {
+    url = new URL(req.url);
+  } catch (e) {
+    return;
+  }
+
+  if (url.origin !== self.location.origin) return;
 
   // Do not intercept or cache Admin panel or API mutation routes
   if (url.pathname.startsWith('/admin') || url.pathname.startsWith('/api/')) {
@@ -66,7 +92,7 @@ self.addEventListener('fetch', (event) => {
         .then((networkRes) => {
           if (networkRes && networkRes.status === 200) {
             const resCopy = networkRes.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, resCopy));
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, resCopy)).catch(() => {});
           }
           return networkRes;
         })
@@ -75,10 +101,7 @@ self.addEventListener('fetch', (event) => {
           if (cachedRes) return cachedRes;
           const offlineFallback = await caches.match(OFFLINE_URL);
           if (offlineFallback) return offlineFallback;
-          return new Response('Offline - No connection', {
-            status: 503,
-            headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-          });
+          return offlineResponse();
         })
     );
     return;
@@ -86,7 +109,7 @@ self.addEventListener('fetch', (event) => {
 
   // Strategy B: Static Assets (CSS, JS, Images, Fonts) - Stale-While-Revalidate
   if (
-    url.pathname.match(/\.(css|js|woff2?|ttf|eot|svg|png|jpe?g|webp|ico|gif)$/i) ||
+    url.pathname.match(/\.(css|js|woff2?|ttf|eot|svg|png|jpe?g|webp|avif|ico|gif)$/i) ||
     url.pathname.startsWith('/assets/') ||
     url.pathname.startsWith('/uploads/')
   ) {
@@ -96,11 +119,11 @@ self.addEventListener('fetch', (event) => {
           .then((networkRes) => {
             if (networkRes && networkRes.status === 200) {
               const resCopy = networkRes.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(req, resCopy));
+              caches.open(CACHE_NAME).then((cache) => cache.put(req, resCopy)).catch(() => {});
             }
             return networkRes;
           })
-          .catch(() => cachedRes);
+          .catch(() => cachedRes || offlineResponse());
 
         return cachedRes || fetchPromise;
       })
@@ -114,11 +137,14 @@ self.addEventListener('fetch', (event) => {
       .then((networkRes) => {
         if (networkRes && networkRes.status === 200) {
           const resCopy = networkRes.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, resCopy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, resCopy)).catch(() => {});
         }
         return networkRes;
       })
-      .catch(() => caches.match(req))
+      .catch(async () => {
+        const cachedRes = await caches.match(req);
+        return cachedRes || offlineResponse();
+      })
   );
 });
 

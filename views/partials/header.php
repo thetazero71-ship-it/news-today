@@ -150,7 +150,7 @@ $ga4Id              = Settings::get('google_analytics_id');
     <?php endif; ?>
 
     <!-- Progressive Web App (PWA) & Mobile Metadata -->
-    <link rel="manifest" href="<?= view_e(app_url('manifest.json')) ?>">
+    <link rel="manifest" href="<?= view_e(app_url('manifest.json')) ?>" crossorigin="use-credentials">
     <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)">
     <meta name="mobile-web-app-capable" content="yes">
@@ -276,6 +276,11 @@ if (!empty($showTicker) && $showTicker !== '0' && $showTicker !== false):
         </form>
 
         <div class="header-actions">
+            <!-- Install App (PWA) -->
+            <button class="action-btn pwa-install-trigger" type="button" onclick="window.openPwaGuide && window.openPwaGuide()" title="تثبيت التطبيق على جهازك" aria-label="تثبيت التطبيق">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+            </button>
+
             <!-- Bookmarks Drawer Trigger -->
             <button class="action-btn open-bookmarks-drawer" type="button" title="قائمة القراءة والمفضلة" aria-label="قائمة القراءة">
                 <?= ui_icon('bookmark', 'action-icon-bookmark', 18) ?>

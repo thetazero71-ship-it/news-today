@@ -104,6 +104,10 @@ $siteDesc = Settings::get('meta_description', 'منصة عربية رائدة ف
                 <?php if (Auth::isAdmin()): ?>
                     <a href="<?= view_e(app_url('admin')) ?>" class="footer-admin-btn" style="display:inline-flex;align-items:center;gap:6px"><?= ui_icon('admin', '', 14) ?> <span>لوحة الإدارة</span></a>
                 <?php endif; ?>
+                <button type="button" class="footer-rss-btn pwa-install-trigger" style="display:inline-flex;align-items:center;gap:6px" onclick="window.openPwaGuide && window.openPwaGuide()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+                    <span>تثبيت التطبيق</span>
+                </button>
                 <a href="<?= view_e(app_url('feed/rss')) ?>" class="footer-rss-btn" style="display:inline-flex;align-items:center;gap:6px"><?= ui_icon('rss', '', 14) ?> <span>RSS Feed</span></a>
             </div>
         </div>

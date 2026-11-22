@@ -973,10 +973,110 @@
     deferredPrompt = null;
     const banner = document.getElementById('pwa-install-banner');
     if (banner) banner.remove();
+    hideInstallTriggers();
     if (window.showToast) {
       showToast('🎉 تهانينا! تم تثبيت تطبيق ' + (window.SITE_NAME || '') + ' بنجاح.', '🚀');
     }
   });
+
+  // D. Install entry points (header + footer buttons)
+  function hideInstallTriggers() {
+    document.querySelectorAll('.pwa-install-trigger').forEach((el) => {
+      el.style.display = 'none';
+    });
+  }
+
+  window.installPwa = async function () {
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+      if (window.showToast) showToast('التطبيق مثبّت على جهازك بالفعل.', '✅');
+      return;
+    }
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice && choice.outcome === 'accepted' && window.showToast) {
+        showToast('جاري تثبيت التطبيق...', '🎉');
+      }
+      deferredPrompt = null;
+      return;
+    }
+    window.openPwaGuide();
+  };
+
+  window.openPwaGuide = function () {
+    if (deferredPrompt) {
+      window.installPwa();
+      return;
+    }
+    if (document.getElementById('pwa-guide-modal')) return;
+
+    const ua = navigator.userAgent || '';
+    const isIOS = /iphone|ipad|ipod/i.test(ua) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isAndroid = /android/i.test(ua);
+
+    let steps;
+    if (isIOS) {
+      steps = [
+        'افتح الموقع في متصفح <strong>Safari</strong> (التثبيت لا يعمل من متصفحات أخرى على iOS).',
+        'اضغط زر <strong>المشاركة</strong> (المربع مع السهم لأعلى) في شريط Safari.',
+        'اختر <strong>«إضافة إلى الشاشة الرئيسية»</strong> ثم اضغط «إضافة».'
+      ];
+    } else if (isAndroid) {
+      steps = [
+        'افتح قائمة المتصفح (⋮) أعلى يمين <strong>Chrome</strong>.',
+        'اختر <strong>«تثبيت التطبيق»</strong> أو «إضافة إلى الشاشة الرئيسية».',
+        'أكّد التثبيت، وسيظهر التطبيق بين تطبيقات جهازك.'
+      ];
+    } else {
+      steps = [
+        'افتح الموقع في <strong>Chrome</strong> أو <strong>Edge</strong> على الحاسوب.',
+        'اضغط أيقونة <strong>التثبيت</strong> (شاشة صغيرة مع سهم) في شريط العنوان.',
+        'أو استخدم قائمة المتصفح ثم <strong>«تثبيت التطبيق»</strong>.',
+        'إن لم يظهر الخيار، أعد تحميل الصفحة ثم جرّب مرة أخرى.'
+      ];
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'pwa-guide-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'دليل تثبيت التطبيق');
+    modal.style.cssText = 'position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(2,6,23,.72);backdrop-filter:blur(4px)';
+
+    const stepsHtml = steps.map((s, i) =>
+      '<li style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px">' +
+      '<span style="flex:0 0 26px;height:26px;border-radius:50%;background:#0ea5e9;color:#fff;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem">' + (i + 1) + '</span>' +
+      '<span style="line-height:1.8">' + s + '</span></li>'
+    ).join('');
+
+    modal.innerHTML =
+      '<div style="width:100%;max-width:460px;border-radius:20px;background:#0f172a;color:#e2e8f0;border:1px solid #334155;box-shadow:0 30px 80px rgba(0,0,0,.6);padding:24px 22px;text-align:right">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+      '<h3 style="margin:0;font-size:1.15rem;color:#f8fafc">تثبيت التطبيق</h3>' +
+      '<button type="button" id="pwa-guide-close" aria-label="إغلاق" style="border:0;background:transparent;color:#94a3b8;font-size:1.5rem;line-height:1;cursor:pointer">&times;</button>' +
+      '</div>' +
+      '<p style="margin:0 0 18px;color:#94a3b8;font-size:.86rem">ثبّت المنصة كتطبيق لتصلك الأخبار أسرع وتعمل دون اتصال.</p>' +
+      '<ol style="list-style:none;margin:0;padding:0;font-size:.9rem">' + stepsHtml + '</ol>' +
+      '<button type="button" id="pwa-guide-ok" style="width:100%;margin-top:8px;padding:11px 16px;border-radius:12px;border:1px solid rgba(14,165,233,.5);background:rgba(14,165,233,.15);color:#7dd3fc;font-weight:700;cursor:pointer">فهمت</button>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+    const closeBtn = document.getElementById('pwa-guide-close');
+    const okBtn = document.getElementById('pwa-guide-ok');
+    if (closeBtn) closeBtn.addEventListener('click', close);
+    if (okBtn) okBtn.addEventListener('click', close);
+    document.addEventListener('keydown', function onEsc(e) {
+      if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
+    });
+  };
+
+  if (isStandaloneApp) {
+    hideInstallTriggers();
+  }
 
   // --- 11. Article Reader Comfort & Typography Controls ---
   const readerContent = document.querySelector('.reader-article-content');
