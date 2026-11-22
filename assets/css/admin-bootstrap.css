@@ -493,8 +493,8 @@ html.admin-dark code {
   background-image: linear-gradient(
     to right,
     transparent calc(50% - 1px),
-    rgba(100, 116, 139, 0.45) calc(50% - 1px),
-    rgba(100, 116, 139, 0.45) calc(50% + 1px),
+    #1f2937 calc(50% - 1px),
+    #1f2937 calc(50% + 1px),
     transparent calc(50% + 1px)
   );
   background-repeat: no-repeat;

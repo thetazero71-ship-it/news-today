@@ -86,6 +86,7 @@ t('the thumb has no side border', strpos($css, "border: 0;\n  border-radius: 999
 t('the thumb has a minimum capsule length', strpos($css, 'min-height: 72px;') !== false);
 t('the rail is thin and centred', strpos($css, 'calc(50% - 1px)') !== false
     && strpos($css, 'calc(50% + 1px)') !== false);
+t('the rail is near-black', strpos($css, '#1f2937 calc(50% - 1px)') !== false);
 t('the scrollbar is 12px wide', strpos($css, 'width: 12px;') !== false);
 t('the favourites list uses the same capsule', strpos($css, '.fav-items-scrollable::-webkit-scrollbar-thumb') !== false);
 

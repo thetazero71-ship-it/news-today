@@ -77,6 +77,7 @@ echo "\n--- the admin scrollbar is the capsule-on-rail style ---\n";
 $adminCss = (string) file_get_contents($root . '/assets/css/admin-bootstrap.css');
 t('the admin rail is centred and thin', strpos($adminCss, 'calc(50% - 1px)') !== false
     && strpos($adminCss, 'calc(50% + 1px)') !== false);
+t('the admin rail is black', strpos($adminCss, '#1f2937 calc(50% - 1px)') !== false);
 t('the admin thumb is a capsule', strpos($adminCss, 'border-radius: 9999px;') !== false
     && strpos($adminCss, 'min-height: 72px;') !== false);
 t('the admin scrollbar is 12px wide', strpos($adminCss, '::-webkit-scrollbar { width: 12px; height: 12px; }') !== false);
