@@ -465,6 +465,15 @@ function filterSourceCategory(cat, btn) {
 
 // Live News Items Filtering Engine
 let currentNewsStatusFilter = 'all';
+let hideDuplicates = false;
+
+function toggleDuplicateFilter(btn) {
+ hideDuplicates = !hideDuplicates;
+ btn.classList.toggle('btn-warning', hideDuplicates);
+ btn.classList.toggle('text-dark', hideDuplicates);
+ btn.classList.toggle('btn-light', !hideDuplicates);
+ filterNewsLive();
+}
 
 function filterNewsStatus(status, btn) {
  currentNewsStatusFilter = status;
@@ -494,8 +503,9 @@ function filterNewsLive() {
  const matchesStatus = (currentNewsStatusFilter === 'all') 
  || (currentNewsStatusFilter === 'new' && (!status || status === 'new'))
  || (status === currentNewsStatusFilter);
+ const isDuplicate = card.getAttribute('data-news-duplicate') === '1';
 
- if (matchesQuery && matchesStatus) {
+ if (matchesQuery && matchesStatus && !(hideDuplicates && isDuplicate)) {
  card.style.display = '';
  visibleCount++;
  } else {
@@ -566,6 +576,9 @@ document.addEventListener('DOMContentLoaded', function () {
  <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" onclick="filterNewsStatus('new', this)"> غير منشور</button>
  <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" onclick="filterNewsStatus('published', this)">منشور</button>
  <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" onclick="filterNewsStatus('draft', this)">مسودات</button>
+ <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" id="duplicateFilterBtn" onclick="toggleDuplicateFilter(this)" title="إخفاء النسخ المكررة من نفس الخبر">
+ <i class="bi bi-files me-1"></i> إخفاء المكرر (<span id="duplicateCount"><?= (int) ($duplicateCount ?? 0) ?></span>)
+ </button>
  </div>
  </div>
 
@@ -601,7 +614,8 @@ document.addEventListener('DOMContentLoaded', function () {
  <div class="col-md-6 col-lg-4 news-item-col" 
  data-news-title="<?= admin_e(mb_strtolower($item['title'], 'UTF-8')) ?>"
  data-news-excerpt="<?= admin_e(mb_strtolower($item['excerpt'], 'UTF-8')) ?>"
- data-news-status="<?= admin_e($item['import_status'] ?? 'new') ?>">
+ data-news-status="<?= admin_e($item['import_status'] ?? 'new') ?>"
+ data-news-duplicate="<?= !empty($item['duplicate_of']) ? '1' : '0' ?>">
  <div class="card border-0 shadow-sm rounded-4 h-100 bg-white overflow-hidden d-flex flex-column" style="border: 1px solid #edf2f7!important">
  <!-- Image Preview -->
  <div style="height:175px;background:#0f172a;position:relative;overflow:hidden">
@@ -650,6 +664,16 @@ document.addEventListener('DOMContentLoaded', function () {
  <p class="text-muted small mb-3 flex-grow-1" style="line-height:1.6">
  <?= admin_e($item['excerpt']) ?>
  </p>
+
+ <?php if (!empty($item['duplicate_of'])): ?>
+ <div class="alert alert-warning py-2 px-3 small mb-2 d-flex align-items-start gap-2">
+ <i class="bi bi-files mt-1"></i>
+ <span>
+ خبر مكرر — الأصل: <strong><?= admin_e($item['duplicate_title'] ?: 'خبر سابق') ?></strong>
+ <span class="text-muted">(تشابه <?= (int) ($item['duplicate_score'] ?? 0) ?>%)</span>
+ </span>
+ </div>
+ <?php endif; ?>
 
  <?php if ($itemPublished && (!empty($item['publisher_name']) || !empty($item['published_at']))): ?>
  <div class="d-flex align-items-center flex-wrap gap-2 small mb-2" style="color:#0f766e">
@@ -891,6 +915,10 @@ const bar = form.closest('.d-flex.gap-1.flex-wrap');
    const freshBadge = doc.getElementById('activeSourceBadge');
    const badge = document.getElementById('activeSourceBadge');
    if (freshBadge && badge) badge.textContent = freshBadge.textContent;
+
+   const freshDup = doc.getElementById('duplicateCount');
+   const dupCount = document.getElementById('duplicateCount');
+   if (freshDup && dupCount) dupCount.textContent = freshDup.textContent;
 
    setActiveChip(url);
    if (typeof window.filterNewsLive === 'function') window.filterNewsLive();

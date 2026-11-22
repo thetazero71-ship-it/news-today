@@ -13,7 +13,22 @@ class NewsDeduplicator
     const DEFAULT_WINDOW_DAYS = 10;
 
     /** Token overlap above which two titles are "the same story". */
-    const SIMILARITY = 0.78;
+    const SIMILARITY = 0.80;
+
+    /** كلمات شائعة لا تحمل معنى تمييزياً — تُستبعد قبل المقارنة. */
+    const STOPWORDS = [
+        // عربية
+        'من', 'في', 'على', 'الى', 'إلى', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'تلك',
+        'الذي', 'التي', 'الذين', 'كما', 'قد', 'لا', 'ما', 'ان', 'أن', 'إن', 'او', 'أو',
+        'ثم', 'بعد', 'قبل', 'بين', 'كل', 'بعض', 'هو', 'هي', 'هم', 'كان', 'كانت',
+        'يكون', 'عند', 'منذ', 'حول', 'دون', 'ضد', 'عبر', 'حتى', 'لكن', 'يا', 'اي', 'أي',
+        'اكثر', 'أكثر', 'اقل', 'أقل', 'اليوم', 'امس', 'أمس', 'جديد', 'جديدة',
+        // إنجليزية
+        'the', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'with', 'at',
+        'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'this', 'that',
+        'these', 'those', 'as', 'it', 'its', 'new', 'says', 'said', 'report',
+        'update', 'updates', 'breaking', 'news',
+    ];
 
     /** How many recent titles are compared (the window query is ordered by id). */
     const COMPARE_LIMIT = 400;
@@ -108,10 +123,77 @@ $t = strtr((string) $t, array(
 
     private static function tokens(string $normalised): array
     {
-        $words = array_values(array_unique(array_filter(explode(' ', $normalised), function ($w) {
-            return mb_strlen($w) >= 3;
+        $stop = array_flip(self::STOPWORDS);
+        $words = array_values(array_unique(array_filter(explode(' ', $normalised), function ($w) use ($stop) {
+            return mb_strlen($w) >= 3 && !isset($stop[$w]);
         })));
         return $words;
+    }
+
+    /**
+     * وسم العناصر المكررة داخل قائمة خلاصة واحدة.
+     *
+     * القاعدة: أول ظهور للخبر يبقى «الأصل» متاحاً للنشر، وكل ظهور لاحق
+     * يُوسم بـ duplicate_of (فهرس الأصل) كي تستطيع الواجهة تمييزه وإخفاءه.
+     *
+     * @param array<int, array> $items
+     * @return array<int, array>
+     */
+    public static function annotateDuplicates(array $items): array
+    {
+        $seen = array();
+
+        foreach ($items as $i => &$item) {
+            $item['duplicate_of'] = null;
+            $item['duplicate_score'] = 0;
+            $item['duplicate_title'] = '';
+
+            $norm = self::normalise((string) ($item['title'] ?? ''));
+            if ($norm === '' || mb_strlen($norm) < 8) {
+                continue;
+            }
+            $tokens = self::tokens($norm);
+            if (count($tokens) < 2) {
+                continue;
+            }
+
+            $bestIndex = null;
+            $bestScore = 0.0;
+
+            foreach ($seen as $j => $prev) {
+                if ($prev['norm'] === $norm) {
+                    $bestIndex = $j;
+                    $bestScore = 1.0;
+                    break;
+                }
+
+                // عنوان داخل عنوان («عاجل: X» مقابل «X»).
+                $short = mb_strlen($prev['norm']) <= mb_strlen($norm) ? $prev['norm'] : $norm;
+                $long = $short === $prev['norm'] ? $norm : $prev['norm'];
+                if (mb_strlen($short) >= 20 && strpos($long, $short) !== false && $bestScore < 0.95) {
+                    $bestIndex = $j;
+                    $bestScore = 0.95;
+                    continue;
+                }
+
+                $score = self::similarity($tokens, $prev['tokens']);
+                if ($score >= self::SIMILARITY && $score > $bestScore) {
+                    $bestIndex = $j;
+                    $bestScore = $score;
+                }
+            }
+
+            if ($bestIndex !== null) {
+                $item['duplicate_of'] = (int) $bestIndex;
+                $item['duplicate_score'] = (int) round($bestScore * 100);
+                $item['duplicate_title'] = (string) ($items[$bestIndex]['title'] ?? '');
+            } else {
+                $seen[$i] = array('norm' => $norm, 'tokens' => $tokens);
+            }
+        }
+        unset($item);
+
+        return $items;
     }
 
 /**
@@ -135,7 +217,7 @@ private static function similarity(array $a, array $b): float
   $coverage = $shared / min(count($a), count($b));
   $blend = $shared / count(array_unique(array_merge($a, $b)));
 
-  if ($coverage >= 0.85) {
+  if ($coverage >= 0.80) {
   return $coverage;
   }
   return $blend;

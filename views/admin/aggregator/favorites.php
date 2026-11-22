@@ -132,7 +132,7 @@ $favPublishFields = function (array $item, string $sourceName) {
      $thumb = '';
     }
     ?>
-    <li class="list-group-item d-flex align-items-center gap-3 fav-item" data-url="<?= admin_e($item['link'] ?? '') ?>">
+    <li class="list-group-item d-flex align-items-center gap-3 fav-item" data-url="<?= admin_e($item['link'] ?? '') ?>" data-fav-duplicate="<?= !empty($item['duplicate_of']) ? '1' : '0' ?>">
      <div class="fav-thumb flex-shrink-0">
       <?php if ($thumb !== ''): ?>
       <img src="<?= admin_e($thumb) ?>" alt="" loading="lazy" width="72" height="54"
@@ -144,6 +144,11 @@ $favPublishFields = function (array $item, string $sourceName) {
      <div class="flex-grow-1">
       <div class="fw-semibold" style="line-height:1.5"><?= admin_e($item['title']) ?></div>
       <div class="small text-muted" dir="ltr"><span class="font-monospace"><?= admin_e($item['pubDate'] ?? '') ?></span></div>
+      <?php if (!empty($item['duplicate_of'])): ?>
+      <div class="small text-warning-emphasis" title="مطابق لخبر سابق: <?= admin_e($item['duplicate_title'] ?? '') ?>">
+      <i class="bi bi-files me-1"></i>خبر مكرر
+      </div>
+      <?php endif; ?>
       <?php if ($published && (!empty($item['publisher_name']) || !empty($item['published_at']))): ?>
       <div class="small d-flex align-items-center flex-wrap gap-1" style="color:#0f766e">
       <i class="bi bi-person-check-fill"></i>

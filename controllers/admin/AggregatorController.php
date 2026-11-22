@@ -158,8 +158,16 @@ public function index()
  }
  unset($it);
 
-// عدّاد الأخبار الجديدة غير المنشورة (لكل بطاقة + للمصدر المحدد)
+ // وسم المكرر داخل نفس الخلاصة: الأصل يبقى أولاً، واللاحق يُوسم فقط.
+ $items = NewsDeduplicator::annotateDuplicates($items);
+ $duplicateCount = 0;
+ foreach ($items as $it) {
+ if (!empty($it['duplicate_of'])) $duplicateCount++;
+ }
+
+ // عدّاد الأخبار الجديدة غير المنشورة (الأصل فقط، لا نسخه المكررة)
   foreach ($items as $it) {
+  if (!empty($it['duplicate_of'])) continue;
   if (($it['import_status'] ?? null) !== 'published') $unpublishedCount++;
   }
 
@@ -208,6 +216,7 @@ public function index()
  'items' => $items,
  'error' => $error,
  'unpublishedCount' => $unpublishedCount,
+ 'duplicateCount' => $duplicateCount ?? 0,
  'fromCache' => !empty($feedData['from_cache'] ?? false),
  'cachedAt' => (int) ($feedData['cached_at'] ?? 0),
  ]);
@@ -699,6 +708,7 @@ public function addSource()
   $this->applyArticleStatus($item, $statusMap);
   $items[] = $item;
   }
+  $items = NewsDeduplicator::annotateDuplicates($items);
   } else {
   $feedErrors++;
   }
