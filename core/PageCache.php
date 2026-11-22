@@ -40,7 +40,13 @@ class PageCache
         if (!empty($_POST)) {
             return false;
         }
-        foreach (array('PHPSESSID', 'auth_token', 'remember_token') as $cookie) {
+        // Guests still carry a PHP session cookie (CSRF token, flash messages),
+        // so PHPSESSID alone must not disable the cache. Only a real signed-in
+        // session is personal and bypasses it.
+        if (class_exists('Session') && (int) Session::get('auth_user_id') > 0) {
+            return false;
+        }
+        foreach (array('auth_token', 'remember_token') as $cookie) {
             if (!empty($_COOKIE[$cookie])) {
                 return false;
             }

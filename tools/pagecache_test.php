@@ -26,6 +26,15 @@ function app_url($p = '')
     return 'http://localhost/' . ltrim((string) $p, '/');
 }
 
+class Session
+{
+    public static $userId = 0;
+    public static function get($key)
+    {
+        return $key === 'auth_user_id' ? self::$userId : null;
+    }
+}
+
 require_once APP_ROOT . '/core/PageCache.php';
 
 function request(string $method, string $uri, array $get = [], array $post = [], array $cookies = [], array $headers = [])
@@ -67,7 +76,12 @@ request('POST', '/search', [], ['q' => 'x']);
 t('POST is NOT cached', PageCache::isCacheableRequest() === false);
 
 request('GET', '/', [], [], ['PHPSESSID' => 'abc123']);
-t('a logged-in visitor is NOT cached', PageCache::isCacheableRequest() === false);
+t('a guest session cookie is still cached', PageCache::isCacheableRequest() === true);
+
+Session::$userId = 5;
+request('GET', '/', [], [], ['PHPSESSID' => 'abc123']);
+t('a signed-in visitor is NOT cached', PageCache::isCacheableRequest() === false);
+Session::$userId = 0;
 
 request('GET', '/', [], [], ['auth_token' => 'zzz']);
 t('auth cookie is NOT cached', PageCache::isCacheableRequest() === false);
