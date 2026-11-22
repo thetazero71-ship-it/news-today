@@ -78,8 +78,7 @@ if (!function_exists('app_url')) {
             $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1:8000';
             $base = $scheme . '://' . $host;
         }
-        $path = ltrim((string) $path, '/');
-        return $path === '' ? $base : $base . '/' . $path;
+        return AppUrl::make($path, $base);
     }
 }
 
