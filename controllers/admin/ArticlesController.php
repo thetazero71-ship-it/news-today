@@ -25,6 +25,11 @@ class ArticlesController extends AdminController
  $where[] = 'a.status = :status';
  $params[':status'] = $status;
  }
+ $authorId = (int) ($_GET['author_id'] ?? 0);
+ if ($authorId > 0) {
+ $where[] = 'a.author_id = :author_id';
+ $params[':author_id'] = $authorId;
+ }
 
  $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
  $totalRow = $db->fetch("SELECT COUNT(*) as total FROM articles a {$whereSql}", $params);
@@ -53,6 +58,7 @@ class ArticlesController extends AdminController
  'total' => $total,
  'totalPages' => $totalPages,
  'offset' => $offset,
+ 'authorId' => $authorId,
  ));
  }
 

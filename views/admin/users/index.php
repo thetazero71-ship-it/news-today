@@ -56,6 +56,7 @@
  <th>البريد الإلكتروني</th>
  <th>الدور والصلاحية</th>
  <th>الحالة</th>
+ <th class="text-center">الأخبار المنشورة</th>
  <th>تاريخ التسجيل</th>
  <th class="text-end" style="width:140px">الإجراءات</th>
  </tr>
@@ -63,7 +64,7 @@
  <tbody>
  <?php if (empty($users)): ?>
  <tr>
- <td colspan="7" class="text-center py-5 text-muted">
+ <td colspan="8" class="text-center py-5 text-muted">
  <i class="bi bi-people d-block mb-2" style="font-size:2rem"></i>
  لا يوجد مستخدمون مطابقون لبحثك.
  </td>
@@ -90,6 +91,18 @@
  <span class="badge bg-<?= $u['status'] === 'active' ? 'success' : 'danger' ?>-subtle text-<?= $u['status'] === 'active' ? 'success' : 'danger' ?>">
  <?= $u['status'] === 'active' ? 'نشط' : ($u['status'] === 'banned' ? 'محظور' : 'معلق') ?>
  </span>
+ </td>
+ <td class="text-center">
+ <?php $pubCount = (int) ($u['published_articles_count'] ?? 0); ?>
+ <?php if ($pubCount > 0): ?>
+ <a href="<?= admin_e(app_url('admin/articles?author_id=' . (int) $u['id'] . '&status=published')) ?>"
+ class="badge bg-primary-subtle text-primary text-decoration-none border border-primary-subtle"
+ title="عرض أخبار هذا المستخدم المنشورة">
+ <i class="bi bi-newspaper me-1"></i><?= number_format($pubCount) ?>
+ </a>
+ <?php else: ?>
+ <span class="text-muted small">0</span>
+ <?php endif; ?>
  </td>
  <td><small class="text-muted"><?= htmlspecialchars(fmt_date($u['created_at'], 'Y-m-d')) ?></small></td>
  <td class="text-end">

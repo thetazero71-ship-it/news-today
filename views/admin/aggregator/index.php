@@ -585,6 +585,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <?php else: ?>
  <div class="row g-4" id="newsFeedGrid">
  <?php foreach ($items as $item): ?>
+ <?php $itemPublished = ($item['import_status'] ?? '') === 'published'; ?>
  <div class="col-md-6 col-lg-4 news-item-col" 
  data-news-title="<?= admin_e(mb_strtolower($item['title'], 'UTF-8')) ?>"
  data-news-excerpt="<?= admin_e(mb_strtolower($item['excerpt'], 'UTF-8')) ?>"
@@ -638,6 +639,14 @@ document.addEventListener('DOMContentLoaded', function () {
  <?= admin_e($item['excerpt']) ?>
  </p>
 
+ <?php if ($itemPublished && (!empty($item['publisher_name']) || !empty($item['published_at']))): ?>
+ <div class="d-flex align-items-center flex-wrap gap-2 small mb-2" style="color:#0f766e">
+ <i class="bi bi-person-check-fill"></i>
+ <?php if (!empty($item['publisher_name'])): ?><strong><?= admin_e($item['publisher_name']) ?></strong><?php endif; ?>
+ <?php if (!empty($item['published_at'])): ?><span class="text-muted">·</span><span dir="ltr" class="font-monospace text-muted"><?= admin_e(fmt_date($item['published_at'], 'Y-m-d H:i')) ?></span><?php endif; ?>
+ </div>
+ <?php endif; ?>
+
  <!-- Actions Bar -->
  <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-auto flex-wrap gap-2">
  <a href="<?= admin_e($item['link']) ?>" target="_blank" class="btn btn-sm btn-outline-secondary" title="زيارة الرابط الأصلي">
@@ -645,7 +654,6 @@ document.addEventListener('DOMContentLoaded', function () {
  </a>
 
 <div class="d-flex gap-1 flex-wrap">
-  <?php $itemPublished = ($item['import_status'] ?? '') === 'published'; ?>
   <?php $editUrl = !empty($item['article_id']) ? app_url('admin/articles/' . (int) $item['article_id'] . '/edit') : null; ?>
   <?php if ($itemPublished): ?>
   <!-- Already published: status + a direct way to edit the live article -->

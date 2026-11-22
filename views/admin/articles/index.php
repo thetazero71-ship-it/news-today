@@ -182,6 +182,9 @@ $offset = (int) ($offset ?? 0);
 <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
  <div class="card-body p-3">
  <form method="get" action="<?= admin_e(app_url('admin/articles')) ?>" class="row g-2 align-items-center">
+ <?php if (!empty($authorId)): ?>
+ <input type="hidden" name="author_id" value="<?= (int) $authorId ?>">
+ <?php endif; ?>
  <div class="col-md-4">
  <input type="text" class="form-control" name="q" placeholder="ابحث بالعنوان أو الرابط..." value="<?= admin_e($q ?? '') ?>">
  </div>
@@ -207,7 +210,7 @@ $offset = (int) ($offset ?? 0);
  <div class="col-md-2">
  <button type="submit" class="btn btn-dark w-100"><i class="bi bi-funnel me-1"></i> تصفية</button>
  </div>
- <?php if (!empty($q) || !empty($status)): ?>
+ <?php if (!empty($q) || !empty($status) || !empty($authorId)): ?>
  <div class="col-md-2">
  <a href="<?= admin_e(app_url('admin/articles?per_page=' . (int) $perPage)) ?>" class="btn btn-outline-secondary w-100">إلغاء الفلتر</a>
  </div>
@@ -382,6 +385,7 @@ $allCategoriesList = (new Database())->fetchAll("SELECT id, name, slug FROM cate
  $paginationBase = array_filter(array(
  'q' => $q ?? '',
  'status' => $status ?? '',
+ 'author_id' => (int) ($authorId ?? 0),
  'per_page' => (int) $perPage,
  ), function ($v) { return $v !== '' && $v !== null; });
  $pageUrl = function ($p) use ($paginationBase) {

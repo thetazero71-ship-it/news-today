@@ -149,22 +149,10 @@ public function index()
 // Check against existing articles in DB with real status
   // المطابقة على الرابط المُطبَّع (لا حرفياً): الخلاصات تضيف sometimes
   // معاملات تتبّع أو / أو www، فيظهر الخبر المنشور تلقائياً كأنه "جديد".
-  $existingArticles = $db->fetchAll("SELECT id, source_url, status FROM articles WHERE source_url IS NOT NULL");
-  $urlStatusMap = [];
-  foreach ($existingArticles as $row) {
-  $key = $this->normaliseItemUrl((string) $row['source_url']);
-  if ($key === '') {
-  continue;
-  }
-  $urlStatusMap[$key] = $row['status'];
-  $urlStatusMap[$key . '#id'] = (int) $row['id'];
-  }
+  $existingArticles = $this->articleStatusMap($db);
 
  foreach ($items as &$it) {
- $key = $this->normaliseItemUrl((string) ($it['link'] ?? ''));
- $it['import_status'] = $urlStatusMap[$key] ?? null;
- $it['article_id'] = $urlStatusMap[$key . '#id'] ?? null;
- $it['is_imported'] = !empty($it['import_status']);
+ $this->applyArticleStatus($it, $existingArticles);
  $it['source_name'] = $activeSourceName;
  $it['category_id'] = $activeCategoryId;
  }
@@ -694,16 +682,7 @@ public function addSource()
     ORDER BY s.id ASC"
   );
 
-  $existing = $db->fetchAll("SELECT id, source_url, status FROM articles WHERE source_url IS NOT NULL");
-  $statusMap = array();
-  foreach ($existing as $row) {
-  $key = $this->normaliseItemUrl((string) $row['source_url']);
-  if ($key === '') {
-  continue;
-  }
-  $statusMap[$key] = $row['status'];
-  $statusMap[$key . '#id'] = (int) $row['id'];
-  }
+  $statusMap = $this->articleStatusMap($db);
 
   $perSource = (int) ($_GET['per'] ?? 5);
   $perSource = max(1, min(10, $perSource));
@@ -715,9 +694,7 @@ public function addSource()
   $items = array();
   if (!empty($feed['success'])) {
   foreach (array_slice($feed['items'] ?? array(), 0, $perSource) as $item) {
-  $key = $this->normaliseItemUrl((string) ($item['link'] ?? ''));
-  $item['import_status'] = $statusMap[$key] ?? null;
-  $item['article_id'] = $statusMap[$key . '#id'] ?? null;
+  $this->applyArticleStatus($item, $statusMap);
   $items[] = $item;
   }
   } else {
@@ -732,6 +709,43 @@ public function addSource()
   'feedErrors' => $feedErrors,
   ));
   return null;
+ }
+
+ /**
+ * خريطة حالة النشر لكل رابط خبر: الحالة + تاريخ النشر + اسم الناشر.
+ * استعلام واحد يخدم المجمّع والمفضلة، فلا يختلف العرض بين التبويبين.
+ */
+ private function articleStatusMap($db)
+ {
+ $rows = $db->fetchAll(
+ "SELECT a.id, a.source_url, a.status, a.published_at, a.created_at, u.username AS author_name
+ FROM articles a
+ LEFT JOIN users u ON u.id = a.author_id
+ WHERE a.source_url IS NOT NULL"
+ );
+ $map = [];
+ foreach ($rows as $row) {
+ $key = $this->normaliseItemUrl((string) $row['source_url']);
+ if ($key === '') { continue; }
+ $map[$key] = $row['status'];
+ $map[$key . '#id'] = (int) $row['id'];
+ $map[$key . '#published_at'] = (string) ($row['published_at'] ?: $row['created_at']);
+ $map[$key . '#publisher'] = (string) ($row['author_name'] ?? '');
+ }
+ return $map;
+ }
+
+ /**
+ * يوسم عنصر الخلاصة بحالة النشر وتاريخه واسم ناشره.
+ */
+ private function applyArticleStatus(array &$item, array $map)
+ {
+ $key = $this->normaliseItemUrl((string) ($item['link'] ?? ''));
+ $item['import_status'] = $map[$key] ?? null;
+ $item['article_id'] = $map[$key . '#id'] ?? null;
+ $item['published_at'] = $map[$key . '#published_at'] ?? '';
+ $item['publisher_name'] = $map[$key . '#publisher'] ?? '';
+ $item['is_imported'] = !empty($item['import_status']);
  }
 
  private function normaliseItemUrl(string $url): string

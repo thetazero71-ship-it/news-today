@@ -27,8 +27,9 @@ $workflow = (string) file_get_contents($root . '/.github/workflows/auto-fetch-ne
 echo "--- an auto-published item shows up as published ---\n";
 t('feed urls are normalised before matching', strpos($agg, 'normaliseItemUrl') !== false);
 t('the map is keyed by the normalised url', strpos($agg, "\$key = \$this->normaliseItemUrl((string) \$row['source_url'])") !== false);
-t('items look up the normalised key', strpos($agg, "\$urlStatusMap[\$key] ?? null") !== false);
-t('the article id travels with the status', strpos($agg, "\$urlStatusMap[\$key . '#id']") !== false);
+t('items look up the normalised key', strpos($agg, '$this->applyArticleStatus($it, $existingArticles)') !== false);
+t('the article id travels with the status', strpos($agg, "\$map[\$key . '#id']") !== false
+    && strpos($agg, "\$item['article_id'] = \$map[\$key . '#id']") !== false);
 t('tracking parameters are stripped', strpos($agg, 'utm_') !== false && strpos($agg, 'fbclid') !== false);
 t('scheme/www/slash are normalised', strpos($agg, "#^www\\.#i") !== false && strpos($agg, "rtrim(\$url, '/')") !== false);
 t('manual publishing also finds a known article', strpos($agg, 'findArticleByNormalisedUrl') !== false);

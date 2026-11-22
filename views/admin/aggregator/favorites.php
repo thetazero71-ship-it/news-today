@@ -139,6 +139,13 @@ $favPublishFields = function (array $item, string $sourceName) {
      <div class="flex-grow-1">
       <div class="fw-semibold" style="line-height:1.5"><?= admin_e($item['title']) ?></div>
       <div class="small text-muted" dir="ltr"><span class="font-monospace"><?= admin_e($item['pubDate'] ?? '') ?></span></div>
+      <?php if ($published && (!empty($item['publisher_name']) || !empty($item['published_at']))): ?>
+      <div class="small d-flex align-items-center flex-wrap gap-1" style="color:#0f766e">
+      <i class="bi bi-person-check-fill"></i>
+      <?php if (!empty($item['publisher_name'])): ?><strong><?= admin_e($item['publisher_name']) ?></strong><?php endif; ?>
+      <?php if (!empty($item['published_at'])): ?><span class="text-muted">·</span><span dir="ltr" class="font-monospace text-muted"><?= admin_e(fmt_date($item['published_at'], 'Y-m-d H:i')) ?></span><?php endif; ?>
+      </div>
+      <?php endif; ?>
      </div>
      <div class="d-flex flex-column gap-1" style="min-width:150px">
       <?php if ($published): ?>

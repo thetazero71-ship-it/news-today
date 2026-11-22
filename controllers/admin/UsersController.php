@@ -11,7 +11,8 @@ class UsersController extends AdminController
  $status = trim($_GET['status'] ?? '');
 
  $sql = "
- SELECT u.*, r.name as role_name, r.name_ar as role_name_ar
+ SELECT u.*, r.name as role_name, r.name_ar as role_name_ar,
+ (SELECT COUNT(*) FROM articles a WHERE a.author_id = u.id AND a.status = 'published') AS published_articles_count
  FROM users u
  LEFT JOIN roles r ON u.role_id = r.id
  WHERE 1=1
