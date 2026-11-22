@@ -29,17 +29,13 @@ $totalAll = (int) ($totalAll ?? 0);
   overflow: hidden;
 }
 
-/* Custom Sleek Scrollbar for News Lists */
+/* Independent scrollable news stream (shape comes from admin-bootstrap.css) */
 .fav-items-scrollable {
   max-height: 480px;
   overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
 }
-.fav-items-scrollable::-webkit-scrollbar { width: 6px; }
-.fav-items-scrollable::-webkit-scrollbar-track { background: #f8fafc; border-radius: 8px; }
-.fav-items-scrollable::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
-.fav-items-scrollable::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 .fav-item {
   transition: background-color 0.3s ease, opacity 0.25s ease, transform 0.25s ease;
@@ -58,8 +54,6 @@ $totalAll = (int) ($totalAll ?? 0);
   color: #ffffff;
 }
 
-html.admin-dark .fav-items-scrollable::-webkit-scrollbar-track { background: #0f172a; }
-html.admin-dark .fav-items-scrollable::-webkit-scrollbar-thumb { background: #334155; }
 html.admin-dark .fav-item.is-published-item { background-color: rgba(15, 23, 42, 0.4); }
 html.admin-dark .publisher-info-badge,
 html.admin-dark .publish-time-badge {

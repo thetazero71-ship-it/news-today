@@ -29,7 +29,7 @@ if (!function_exists('is_admin_active')) {
  <title><?= admin_e($title ?? 'لوحة التحكم') ?> | <?= admin_e(Brand::name()) ?></title>
  <?= function_exists('site_favicon_tag') ? site_favicon_tag() : '' ?>
  <!-- Bootstrap 5 RTL with Local Robust Fallback -->
- <link rel="stylesheet" href="<?= htmlspecialchars(app_url('assets/css/admin-bootstrap.css'), ENT_QUOTES, 'UTF-8') ?>">
+ <link rel="stylesheet" href="<?= htmlspecialchars(app_url('assets/css/admin-bootstrap.css') . '?v=' . @filemtime(APP_ROOT . '/assets/css/admin-bootstrap.css'), ENT_QUOTES, 'UTF-8') ?>">
  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
  <!-- Bootstrap Icons -->
  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -145,17 +145,21 @@ if (!function_exists('is_admin_active')) {
  scroll-behavior: auto !important;
  }
  .sidebar-nav::-webkit-scrollbar {
- width: 5px;
+ width: 12px;
  }
  .sidebar-nav::-webkit-scrollbar-track {
- background: rgba(255,255,255,0.02);
+ background: transparent;
+ background-image: linear-gradient(to right, transparent calc(50% - 1px), rgba(148,163,184,0.45) calc(50% - 1px), rgba(148,163,184,0.45) calc(50% + 1px), transparent calc(50% + 1px));
+ background-repeat: no-repeat;
  }
  .sidebar-nav::-webkit-scrollbar-thumb {
- background: rgba(255,255,255,0.15);
- border-radius: 4px;
+ background: linear-gradient(180deg, #22d3ee, #0ea5e9);
+ border-radius: 9999px;
+ min-height: 64px;
+ box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
  }
  .sidebar-nav::-webkit-scrollbar-thumb:hover {
- background: rgba(0, 242, 254, 0.4);
+ background: linear-gradient(180deg, #67e8f9, #38bdf8);
  }
  /* ── collapsible nav groups ── */
  .admin-nav-group {

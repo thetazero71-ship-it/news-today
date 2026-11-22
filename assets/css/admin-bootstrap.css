@@ -482,3 +482,45 @@ html.admin-dark code {
   color: #38bdf8 !important;
   background-color: rgba(255,255,255,0.06) !important;
 }
+
+/* ==========================================================================
+   Capsule-on-rail scrollbar (admin panel)
+   Thin 2px centred rail + a thick rounded capsule thumb.
+   ========================================================================== */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track {
+  background: transparent;
+  background-image: linear-gradient(
+    to right,
+    transparent calc(50% - 1px),
+    rgba(100, 116, 139, 0.45) calc(50% - 1px),
+    rgba(100, 116, 139, 0.45) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+  background-repeat: no-repeat;
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #00f2fe, #38bdf8);
+  border: 0;
+  border-radius: 9999px;
+  min-height: 72px;
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.45);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #67e8f9, #0ea5e9);
+  box-shadow: 0 0 16px rgba(0, 242, 254, 0.7);
+}
+::-webkit-scrollbar-corner { background: transparent; }
+
+html.admin-dark ::-webkit-scrollbar-track {
+  background-image: linear-gradient(
+    to right,
+    transparent calc(50% - 1px),
+    rgba(148, 163, 184, 0.45) calc(50% - 1px),
+    rgba(148, 163, 184, 0.45) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+}
+html.admin-dark ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #22d3ee, #0ea5e9);
+}

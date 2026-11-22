@@ -22,6 +22,7 @@ function t($label, $cond, $extra = '')
 $root = dirname(__DIR__);
 $controller = (string) file_get_contents($root . '/controllers/admin/AggregatorController.php');
 $view = (string) file_get_contents($root . '/views/admin/aggregator/favorites.php');
+$adminCss = (string) file_get_contents($root . '/assets/css/admin-bootstrap.css');
 
 echo "--- fetching and sorting ---\n";
 t('up to 30 items are examined', strpos($controller, 'array_slice($feed[\'items\'] ?? array(), 0, 30)') !== false);
@@ -42,7 +43,7 @@ t('each source counts its own new/published', strpos($controller, "'new_count' =
 echo "\n--- the deck is scrollable ---\n";
 t('the card body is the scroll container', strpos($view, 'fav-items-scrollable') !== false);
 t('it is capped at 480px', strpos($view, 'max-height: 480px') !== false);
-t('a slim custom scrollbar is styled', strpos($view, '.fav-items-scrollable::-webkit-scrollbar') !== false);
+t('the scrollbar shape comes from the admin stylesheet', strpos($adminCss, '::-webkit-scrollbar-thumb') !== false);
 
 echo "\n--- explicit publishing buttons ---\n";
 t('translate & publish button', strpos($view, 'btn-fav-translate') !== false
@@ -71,6 +72,19 @@ t('status filter buttons exist', strpos($view, 'filterFavByStatus') !== false
 t('items expose data-status', strpos($view, "data-status=\"<?= \$published ? 'published' : 'new' ?>\"") !== false);
 t('live search exists', strpos($view, 'filterFavNewsLive') !== false
     && strpos($view, 'favSearchInput') !== false);
+
+echo "\n--- the admin scrollbar is the capsule-on-rail style ---\n";
+$adminCss = (string) file_get_contents($root . '/assets/css/admin-bootstrap.css');
+t('the admin rail is centred and thin', strpos($adminCss, 'calc(50% - 1px)') !== false
+    && strpos($adminCss, 'calc(50% + 1px)') !== false);
+t('the admin thumb is a capsule', strpos($adminCss, 'border-radius: 9999px;') !== false
+    && strpos($adminCss, 'min-height: 72px;') !== false);
+t('the admin scrollbar is 12px wide', strpos($adminCss, '::-webkit-scrollbar { width: 12px; height: 12px; }') !== false);
+t('inline favorites styles no longer override it', strpos($view, '.fav-items-scrollable::-webkit-scrollbar') === false);
+$adminLayout = (string) file_get_contents($root . '/views/layouts/admin.php');
+t('the admin stylesheet is cache-busted', strpos($adminLayout, "admin-bootstrap.css') . '?v='") !== false);
+t('the admin sidebar uses the same capsule rail', strpos($adminLayout, '.sidebar-nav::-webkit-scrollbar-track') !== false
+    && strpos($adminLayout, 'calc(50% - 1px)') !== false);
 
 echo "\n--- pinned box sits below all sources ---\n";
 $aggView = (string) file_get_contents($root . '/views/admin/aggregator/index.php');

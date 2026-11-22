@@ -5008,7 +5008,6 @@ body.zen-reading-mode .article-card-main {
 }
 
 /* ===================== Glowing capsule scrollbar ===================== */
-:root { scrollbar-width: thin; scrollbar-color: rgba(34, 211, 238, 0.55) transparent; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
@@ -5297,9 +5296,13 @@ body.zen-reading-mode .article-card-main {
 /* ===================== Capsule-on-rail scrollbar (final override) ===================== */
 /* Thin centered rail + a thick rounded capsule thumb, exactly like the reference
    mockup. Colour follows the active template accent, never a fixed red. */
-html {
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent-primary, #22d3ee) transparent;
+/* Firefox has no WebKit pseudo-elements; Chrome must NOT see scrollbar-width or
+   it switches to native overlay bars and ignores the capsule rules below. */
+@supports (-moz-appearance: none) {
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary, #22d3ee) transparent;
+  }
 }
 
 ::-webkit-scrollbar,
