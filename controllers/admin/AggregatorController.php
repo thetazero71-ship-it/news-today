@@ -158,16 +158,45 @@ public function index()
  }
  unset($it);
 
- // وسم المكرر داخل نفس الخلاصة: الأصل يبقى أولاً، واللاحق يُوسم فقط.
- $items = NewsDeduplicator::annotateDuplicates($items);
+ // كشف الأخبار المكررة عبر المصادر أو المقالات المنشورة مسبقاً.
+ $recentPublished = NewsDeduplicator::getRecentArticles($db, 7);
  $duplicateCount = 0;
- foreach ($items as $it) {
- if (!empty($it['duplicate_of'])) $duplicateCount++;
+ $seenFeedItems = array();
+ foreach ($items as &$it) {
+ $itTitle = $it['title'] ?? '';
+ $itLink = $it['link'] ?? '';
+ $match = NewsDeduplicator::findMatchInArticles($recentPublished, $itTitle, 0.80);
+ if ($match) {
+ $it['duplicate_info'] = array(
+ 'is_duplicate' => true,
+ 'is_published' => true,
+ 'matched_title' => $match['title'],
+ 'matched_source' => $match['source'] ?: Brand::name(),
+ 'matched_id' => $match['id'],
+ 'score' => $match['score'],
+ );
+ $duplicateCount++;
+ continue;
  }
+ $crossMatch = NewsDeduplicator::findMatchInFeedItems($itTitle, $seenFeedItems, $itLink, 0.80);
+ if ($crossMatch) {
+ $it['duplicate_info'] = array(
+ 'is_duplicate' => true,
+ 'is_published' => false,
+ 'matched_title' => $crossMatch['title'],
+ 'matched_source' => $crossMatch['source'] ?: $activeSourceName,
+ 'matched_id' => null,
+ 'score' => $crossMatch['score'],
+ );
+ $duplicateCount++;
+ } else {
+ $seenFeedItems[] = array('title' => $itTitle, 'link' => $itLink, 'source_name' => $activeSourceName);
+ }
+ }
+ unset($it);
 
- // عدّاد الأخبار الجديدة غير المنشورة (الأصل فقط، لا نسخه المكررة)
+ // عدّاد الأخبار الجديدة غير المنشورة (لكل بطاقة + للمصدر المحدد)
   foreach ($items as $it) {
-  if (!empty($it['duplicate_of'])) continue;
   if (($it['import_status'] ?? null) !== 'published') $unpublishedCount++;
   }
 
@@ -389,6 +418,8 @@ if (!$existing && !empty($title)) {
  'success' => true,
  'article_id' => $okArticleId,
  'edit_url' => app_url('admin/articles/' . $okArticleId . '/edit'),
+ 'author_name' => Auth::user()['username'] ?? 'مدير النظام',
+ 'published_at' => fmt_date('now', 'Y-m-d H:i'),
   'message' => "تمت الترجمة والنشر بنجاح بعنوان: \"{$titleAr}\"!",
  ])) return;
 
@@ -515,6 +546,8 @@ $this->audit('direct_publish', 'article', $newId, null, ['source' => $sourceName
  'success' => true,
  'article_id' => $okArticleId,
  'edit_url' => app_url('admin/articles/' . $okArticleId . '/edit'),
+ 'author_name' => Auth::user()['username'] ?? 'مدير النظام',
+ 'published_at' => fmt_date('now', 'Y-m-d H:i'),
   'message' => "تم النشر الفوري المباشر بنجاح بدون ترجمة بعنوان: \"{$title}\"!",
  ])) return;
 
@@ -695,42 +728,91 @@ public function addSource()
 
   $statusMap = $this->articleStatusMap($db);
 
-  $perSource = (int) ($_GET['per'] ?? 5);
-  $perSource = max(1, min(10, $perSource));
+  $perSource = (int) ($_GET['per'] ?? 8);
+  $perSource = max(1, min(20, $perSource));
+
+  $recentPublished = NewsDeduplicator::getRecentArticles($db, 3);
 
   $groups = array();
   $feedErrors = 0;
+  $totalNew = 0;
+  $totalPublished = 0;
+  $totalAll = 0;
+
   foreach ($favorites as $source) {
-  $feed = $this->fetchRss(trim((string) $source['url']));
-  $items = array();
-  if (!empty($feed['success'])) {
-  foreach (array_slice($feed['items'] ?? array(), 0, $perSource) as $item) {
-  $this->applyArticleStatus($item, $statusMap);
-  $items[] = $item;
-  }
-  $items = NewsDeduplicator::annotateDuplicates($items);
-  // Rapid deck order: new items first, published ones sink to the bottom.
-  usort($items, function ($a, $b) {
-  $aPub = (($a['import_status'] ?? '') === 'published') ? 1 : 0;
-  $bPub = (($b['import_status'] ?? '') === 'published') ? 1 : 0;
-  return $aPub <=> $bPub;
-  });
-  } else {
-  $feedErrors++;
-  }
-  $groups[] = array(
-  'source' => $source,
-  'items' => $items,
-  'error' => $feed['error'] ?? null,
-  'from_cache' => !empty($feed['from_cache']),
-  'cached_at' => (int) ($feed['cached_at'] ?? 0),
-  );
+   $feed = $this->fetchRss(trim((string) $source['url']));
+   $items = array();
+   $sourceNew = 0;
+   $sourcePub = 0;
+
+   if (!empty($feed['success'])) {
+    $rawItems = array_slice($feed['items'] ?? array(), 0, 30);
+    $unpubItems = array();
+    $pubItems = array();
+
+    foreach ($rawItems as $item) {
+     $key = $this->normaliseItemUrl((string) ($item['link'] ?? ''));
+     $item['import_status'] = $statusMap[$key] ?? null;
+     $item['article_id'] = $statusMap[$key . '#id'] ?? null;
+     $item['author_name'] = $statusMap[$key . '#publisher'] ?? null;
+     $item['published_at'] = $statusMap[$key . '#published_at'] ?? null;
+     $item['source_id'] = (int) $source['id'];
+     $item['source_name'] = $source['name'];
+     $item['category_id'] = $source['category_id'];
+
+     $match = NewsDeduplicator::findMatchInArticles($recentPublished, $item['title'] ?? '', 0.80);
+     if ($match) {
+      $item['duplicate_info'] = array(
+       'is_duplicate' => true,
+       'is_published' => true,
+       'matched_title' => $match['title'],
+       'matched_source' => $match['source'] ?: Brand::name(),
+       'matched_id' => $match['id'],
+       'score' => $match['score'],
+      );
+     }
+
+     if (($item['import_status'] ?? '') === 'published') {
+      $pubItems[] = $item;
+      $sourcePub++;
+      $totalPublished++;
+     } else {
+      $unpubItems[] = $item;
+      $sourceNew++;
+      $totalNew++;
+     }
+     $totalAll++;
+    }
+
+    // غير المنشور أولاً، والمنشور يسكن الأسفل.
+    $sorted = array_merge($unpubItems, $pubItems);
+    $items = array_slice($sorted, 0, max($perSource, count($unpubItems)));
+   } else {
+    $feedErrors++;
+   }
+
+   $source['new_count'] = $sourceNew;
+   $source['published_count'] = $sourcePub;
+   $source['total_count'] = count($items);
+
+   $groups[] = array(
+    'source' => $source,
+    'items' => $items,
+    'new_count' => $sourceNew,
+    'published_count' => $sourcePub,
+    'error' => !empty($feed['success']) ? null : ($feed['error'] ?? 'تعذّر جلب الخلاصة'),
+    'from_cache' => !empty($feed['from_cache']),
+    'cached_at' => (int) ($feed['cached_at'] ?? 0),
+   );
   }
 
   $this->view('admin/aggregator/favorites', array(
-  'groups' => $groups,
-  'perSource' => $perSource,
-  'feedErrors' => $feedErrors,
+   'groups' => $groups,
+   'perSource' => $perSource,
+   'feedErrors' => $feedErrors,
+   'totalNew' => $totalNew,
+   'totalPublished' => $totalPublished,
+   'totalAll' => $totalAll,
   ));
   return null;
  }

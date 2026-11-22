@@ -15,20 +15,129 @@ class NewsDeduplicator
     /** Token overlap above which two titles are "the same story". */
     const SIMILARITY = 0.80;
 
-    /** كلمات شائعة لا تحمل معنى تمييزياً — تُستبعد قبل المقارنة. */
+    /** كلمات شائعة وأفعال نشر لا تحمل معنى تمييزياً — تُستبعد قبل المقارنة. */
     const STOPWORDS = [
-        // عربية
-        'من', 'في', 'على', 'الى', 'إلى', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'تلك',
-        'الذي', 'التي', 'الذين', 'كما', 'قد', 'لا', 'ما', 'ان', 'أن', 'إن', 'او', 'أو',
-        'ثم', 'بعد', 'قبل', 'بين', 'كل', 'بعض', 'هو', 'هي', 'هم', 'كان', 'كانت',
-        'يكون', 'عند', 'منذ', 'حول', 'دون', 'ضد', 'عبر', 'حتى', 'لكن', 'يا', 'اي', 'أي',
-        'اكثر', 'أكثر', 'اقل', 'أقل', 'اليوم', 'امس', 'أمس', 'جديد', 'جديدة',
-        // إنجليزية
-        'the', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'with', 'at',
-        'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been', 'this', 'that',
-        'these', 'those', 'as', 'it', 'its', 'new', 'says', 'said', 'report',
-        'update', 'updates', 'breaking', 'news',
+        'في', 'من', 'على', 'إلى', 'عن', 'مع', 'هذا', 'هذه', 'ذلك', 'تلك', 'التي', 'الذي', 'الذين',
+        'اللتين', 'اللتان', 'كل', 'أو', 'ثم', 'بعد', 'قبل', 'خلال', 'حول', 'بين', 'حيث', 'كيف',
+        'لماذا', 'ماذا', 'نحو', 'ضد', 'تحت', 'فوق', 'دون', 'غير', 'كما', 'كان', 'كانت', 'يكون',
+        'تكون', 'تعلن', 'تطلق', 'يطلق', 'يعلن', 'يكشف', 'تكشف', 'تحديث', 'جديد', 'جديدة', 'جديداً',
+        'رسمياً', 'رسمي', 'ميزة', 'ميزات', 'خصائص', 'خاصية', 'تقنية', 'تطبيق', 'برنامج', 'نظام',
+        'أجهزة', 'هواتف', 'هاتف', 'شركة', 'مستخدمي', 'مستخدمين', 'عبر', 'أول', 'أحدث',
+        'the', 'and', 'for', 'with', 'from', 'this', 'that', 'these', 'those', 'which', 'what',
+        'when', 'where', 'how', 'why', 'who', 'whom', 'all', 'any', 'some', 'about', 'after',
+        'before', 'between', 'into', 'through', 'during', 'over', 'under', 'again', 'further',
+        'then', 'once', 'here', 'there', 'both', 'each', 'few', 'more', 'most', 'other', 'only',
+        'own', 'same', 'than', 'too', 'very', 'can', 'will', 'just', 'should', 'now', 'launches',
+        'launch', 'released', 'releases', 'release', 'announces', 'announced', 'announce',
+        'unveils', 'unveiled', 'updates', 'updated', 'update', 'features', 'feature', 'official',
+        'officially', 'first', 'look', 'review', 'guide', 'best', 'using',
     ];
+
+    /** كاش داخلي للمقالات الحديثة أثناء مسح عدة خلاصات في طلب واحد. */
+    private static $cachedRecentArticles = null;
+
+    /** تصفير الكاش (للاختبارات أو بعد نشر خبر جديد في نفس الطلب). */
+    public static function clearCache(): void
+    {
+        self::$cachedRecentArticles = null;
+    }
+
+    /**
+     * المقالات المنشورة حديثاً مع كاش داخلي (بدل استعلام لكل خبر).
+     */
+    public static function getRecentArticles($db, int $windowDays = self::DEFAULT_WINDOW_DAYS): array
+    {
+        if (self::$cachedRecentArticles !== null) {
+            return self::$cachedRecentArticles;
+        }
+        try {
+            self::$cachedRecentArticles = $db->fetchAll(
+                "SELECT id, title, title_ar, slug, source_name, created_at, published_at
+                 FROM articles
+                 WHERE created_at >= (NOW() - INTERVAL " . (int) $windowDays . " DAY)
+                 ORDER BY id DESC
+                 LIMIT " . (int) self::COMPARE_LIMIT
+            );
+        } catch (Throwable $e) {
+            self::$cachedRecentArticles = [];
+        }
+        return self::$cachedRecentArticles;
+    }
+
+    /**
+     * مطابقة عنوان مع قائمة مقالات سبق تحميلها.
+     */
+    public static function findMatchInArticles(array $rows, string $title, float $threshold = 0.65): ?array
+    {
+        $needle = self::normalise($title);
+        if (mb_strlen($needle) < 8) {
+            return null;
+        }
+        $needleTokens = self::tokens($needle);
+
+        foreach ($rows as $row) {
+            foreach (array($row['title'] ?? '', $row['title_ar'] ?? '') as $stored) {
+                $storedNorm = self::normalise((string) $stored);
+                if ($storedNorm === '') {
+                    continue;
+                }
+                if ($storedNorm === $needle) {
+                    return self::match($row, 1.0);
+                }
+                $short = mb_strlen($storedNorm) <= mb_strlen($needle) ? $storedNorm : $needle;
+                $long = $short === $storedNorm ? $needle : $storedNorm;
+                if (mb_strlen($short) >= 20 && strpos($long, $short) !== false) {
+                    return self::match($row, 0.95);
+                }
+                $score = self::similarity($needleTokens, self::tokens($storedNorm));
+                if ($score >= $threshold) {
+                    return self::match($row, $score);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * مطابقة عنوان مع عناصر خلاصة أخرى (كشف التكرار بين المصادر).
+     */
+    public static function findMatchInFeedItems(string $title, array $feedItems, string $currentLink = '', float $threshold = 0.65): ?array
+    {
+        $needle = self::normalise($title);
+        if (mb_strlen($needle) < 8) {
+            return null;
+        }
+        $needleTokens = self::tokens($needle);
+        $normCurrentLink = trim(strtolower($currentLink));
+
+        foreach ($feedItems as $item) {
+            $otherLink = trim(strtolower($item['link'] ?? ''));
+            if ($normCurrentLink !== '' && $otherLink !== '' && $normCurrentLink === $otherLink) {
+                continue;
+            }
+            $otherTitle = (string) ($item['title'] ?? '');
+            $otherNorm = self::normalise($otherTitle);
+            if ($otherNorm === '') {
+                continue;
+            }
+            if ($otherNorm === $needle) {
+                return ['is_duplicate' => true, 'is_published' => false, 'title' => $otherTitle,
+                    'source' => (string) ($item['source_name'] ?? 'مصدر آخر'), 'score' => 100];
+            }
+            $short = mb_strlen($otherNorm) <= mb_strlen($needle) ? $otherNorm : $needle;
+            $long = $short === $otherNorm ? $needle : $otherNorm;
+            if (mb_strlen($short) >= 20 && strpos($long, $short) !== false) {
+                return ['is_duplicate' => true, 'is_published' => false, 'title' => $otherTitle,
+                    'source' => (string) ($item['source_name'] ?? 'مصدر آخر'), 'score' => 95];
+            }
+            $score = self::similarity($needleTokens, self::tokens($otherNorm));
+            if ($score >= $threshold) {
+                return ['is_duplicate' => true, 'is_published' => false, 'title' => $otherTitle,
+                    'source' => (string) ($item['source_name'] ?? 'مصدر آخر'), 'score' => round($score * 100)];
+            }
+        }
+        return null;
+    }
 
     /** How many recent titles are compared (the window query is ordered by id). */
     const COMPARE_LIMIT = 400;
@@ -38,52 +147,8 @@ class NewsDeduplicator
      */
     public static function findMatch($db, string $title, string $content = '', int $windowDays = self::DEFAULT_WINDOW_DAYS): ?array
     {
-        $needle = self::normalise($title);
-        if (mb_strlen($needle) < 8) {
-            return null; // too short to judge safely
-        }
-        $needleTokens = self::tokens($needle);
-
-        try {
-            $rows = $db->fetchAll(
-                "SELECT id, title, title_ar, slug, source_name, created_at, published_at
-                 FROM articles
-                 WHERE created_at >= (NOW() - INTERVAL " . (int) $windowDays . " DAY)
-                 ORDER BY id DESC
-                 LIMIT " . (int) self::COMPARE_LIMIT
-            );
-        } catch (Throwable $e) {
-            return null;
-        }
-
-        foreach ($rows as $row) {
-            foreach (array($row['title'] ?? '', $row['title_ar'] ?? '') as $stored) {
-                $storedNorm = self::normalise((string) $stored);
-                if ($storedNorm === '') {
-                    continue;
-                }
-
-                // 1) exact match after normalisation - the common case
-                if ($storedNorm === $needle) {
-                    return self::match($row, 1.0);
-                }
-
-                // 2) one title contains the other (" Breaking: X " vs "X")
-                $short = mb_strlen($storedNorm) <= mb_strlen($needle) ? $storedNorm : $needle;
-                $long = $short === $storedNorm ? $needle : $storedNorm;
-                if (mb_strlen($short) >= 20 && strpos($long, $short) !== false) {
-                    return self::match($row, 0.95);
-                }
-
-                // 3) token overlap: catches reworded headlines
-                $score = self::similarity($needleTokens, self::tokens($storedNorm));
-                if ($score >= self::SIMILARITY) {
-                    return self::match($row, $score);
-                }
-            }
-        }
-
-        return null;
+        $rows = self::getRecentArticles($db, $windowDays);
+        return self::findMatchInArticles($rows, $title, self::SIMILARITY);
     }
 
     private static function match(array $row, float $score): array
@@ -206,18 +271,18 @@ $t = strtr((string) $t, array(
  */
 private static function similarity(array $a, array $b): float
  {
-  if (!$a || !$b) {
+  if (count($a) < 2 || count($b) < 2) {
   return 0.0;
   }
   $shared = count(array_intersect($a, $b));
-  if ($shared === 0) {
+  if ($shared < 2) {
   return 0.0;
   }
 
   $coverage = $shared / min(count($a), count($b));
   $blend = $shared / count(array_unique(array_merge($a, $b)));
 
-  if ($coverage >= 0.80) {
+  if ($coverage >= 0.85) {
   return $coverage;
   }
   return $blend;

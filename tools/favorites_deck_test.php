@@ -1,6 +1,6 @@
 <?php
 /**
- * Favorites rapid publishing deck: sort, scroll, counters, AJAX, quick filter.
+ * Favorites rapid publishing deck (reference-aligned).
  *
  * Run: php tools/favorites_deck_test.php
  */
@@ -22,37 +22,65 @@ function t($label, $cond, $extra = '')
 $root = dirname(__DIR__);
 $controller = (string) file_get_contents($root . '/controllers/admin/AggregatorController.php');
 $view = (string) file_get_contents($root . '/views/admin/aggregator/favorites.php');
-$css = (string) file_get_contents($root . '/assets/css/site.css');
 
-echo "--- new stories float, published ones sink ---\n";
-t('the deck is sorted', strpos($controller, '// Rapid deck order: new items first, published ones sink to the bottom.') !== false);
-t('published is the sort key', strpos($controller, "\$aPub = ((\$a['import_status'] ?? '') === 'published') ? 1 : 0;") !== false
-    && strpos($controller, "return \$aPub <=> \$bPub;") !== false);
+echo "--- fetching and sorting ---\n";
+t('up to 30 items are examined', strpos($controller, 'array_slice($feed[\'items\'] ?? array(), 0, 30)') !== false);
+t('unpublished and published are split', strpos($controller, '$unpubItems = array();') !== false
+    && strpos($controller, '$pubItems = array();') !== false);
+t('unpublished comes first', strpos($controller, '$sorted = array_merge($unpubItems, $pubItems);') !== false);
+t('all unpublished are kept even beyond the limit', strpos($controller, 'max($perSource, count($unpubItems))') !== false);
+t('the default is 8 per source', strpos($controller, "\$_GET['per'] ?? 8") !== false);
+t('totals are computed', strpos($controller, '$totalNew++') !== false
+    && strpos($controller, '$totalPublished++') !== false
+    && strpos($controller, '$totalAll++') !== false);
+t('the view receives all three totals', strpos($controller, "'totalNew' => \$totalNew") !== false
+    && strpos($controller, "'totalPublished' => \$totalPublished") !== false
+    && strpos($controller, "'totalAll' => \$totalAll") !== false);
+t('each source counts its own new/published', strpos($controller, "'new_count' => \$sourceNew") !== false
+    && strpos($controller, "'published_count' => \$sourcePub") !== false);
 
-echo "\n--- the stream scrolls on its own ---\n";
-t('the list is a scroll container', strpos($view, 'fav-list-scroll') !== false);
-t('the CSS caps its height', strpos($css, '.fav-list-scroll { max-height: 560px; overflow-y: auto;') !== false);
+echo "\n--- the deck is scrollable ---\n";
+t('the card body is the scroll container', strpos($view, 'fav-items-scrollable') !== false);
+t('it is capped at 480px', strpos($view, 'max-height: 480px') !== false);
+t('a slim custom scrollbar is styled', strpos($view, '.fav-items-scrollable::-webkit-scrollbar') !== false);
 
-echo "\n--- live counters per source ---\n";
-t('a new-items counter exists', strpos($view, 'fav-new-count') !== false);
-t('the counter is keyed by source', strpos($view, "data-source-id=\"<?= (int) \$src['id'] ?>\"") !== false);
-t('it counts unpublished items', strpos($view, "if ((\$gi['import_status'] ?? '') !== 'published') \$newCount++;") !== false);
-t('it is decremented after publishing', strpos($view, 'function refreshCounter(sourceId)') !== false);
+echo "\n--- explicit publishing buttons ---\n";
+t('translate & publish button', strpos($view, 'btn-fav-translate') !== false
+    && strpos($view, 'ترجمة ونشر') !== false);
+t('fast publish button', strpos($view, 'نشر فوري') !== false);
+t('source link button', strpos($view, 'المصدر') !== false);
+t('three publish forms', substr_count($view, 'fav-publish-form') === 3);
+t('the AJAX endpoint header is used', strpos($view, "'X-Requested-With': 'XMLHttpRequest'") !== false);
+t('published items swap to edit + source', strpos($view, 'fav-actions-col') !== false
+    && strpos($view, "data.edit_url") !== false);
 
-echo "\n--- publishing happens in place ---\n";
-t('all three publish forms are marked', substr_count($view, 'fav-publish-form') === 4); // 3 forms + selector in JS
-t('the action is carried for draft handling', strpos($view, 'data-action="draft"') !== false);
-t('the submit is intercepted', strpos($view, "form.addEventListener('submit', async function (event)") !== false);
-t('it posts as AJAX', strpos($view, "'X-Requested-With': 'XMLHttpRequest'") !== false);
-t('success swaps the action bar', strpos($view, 'function markItem(item, state, editUrl, label)') !== false);
-t('an edit link is kept', strpos($view, "btn-outline-primary\" href=\"' + String(editUrl)") !== false);
-t('drafts are labelled differently', strpos($view, "markItem(item, 'draft'") !== false);
-t('errors are shown as toasts', strpos($view, "deckToast(err.message || 'تعذر تنفيذ العملية.', 'error')") !== false);
+echo "\n--- live counters and sorting after publish ---\n";
+t('global live counters exist', strpos($view, 'favLiveNewCount') !== false
+    && strpos($view, 'favLivePubCount') !== false
+    && strpos($view, 'favLiveTotalCount') !== false);
+t('per-source counters exist', strpos($view, 'source-badge-new') !== false
+    && strpos($view, 'source-badge-pub') !== false);
+t('published rows move to the bottom', strpos($view, 'parentList.appendChild(itemLi)') !== false);
+t('a green flash marks the published row', strpos($view, 'just-published-flash') !== false);
+t('the publisher and exact time are injected', strpos($view, 'publisher-info-badge') !== false
+    && strpos($view, 'publish-time-badge') !== false);
 
-echo "\n--- quick filtering ---\n";
-t('filter buttons exist', substr_count($view, 'data-fav-filter=') >= 3);
-t('items expose their status', strpos($view, "data-fav-status=\"<?= \$published ? 'published' : 'new' ?>\"") !== false);
-t('new means anything not published', strpos($view, "status !== 'published' : status === currentFilter") !== false);
+echo "\n--- filtering and search ---\n";
+t('status filter buttons exist', strpos($view, 'filterFavByStatus') !== false
+    && substr_count($view, 'data-filter=') >= 3);
+t('items expose data-status', strpos($view, "data-status=\"<?= \$published ? 'published' : 'new' ?>\"") !== false);
+t('live search exists', strpos($view, 'filterFavNewsLive') !== false
+    && strpos($view, 'favSearchInput') !== false);
+
+echo "\n--- pinned box sits below all sources ---\n";
+$aggView = (string) file_get_contents($root . '/views/admin/aggregator/index.php');
+$chipsPos = strpos($aggView, 'id="sourcesChipsGrid"');
+$pinnedPos = strpos($aggView, 'id="pinnedSourcesSection"');
+t('the chips grid exists', $chipsPos !== false);
+t('the pinned box exists', $pinnedPos !== false);
+t('pinned comes after the chips', $chipsPos !== false && $pinnedPos !== false && $pinnedPos > $chipsPos);
+t('the old top placement marker is gone', strpos($aggView, 'Pinned Sources Top Section') === false);
+t('the favorites tab counter exists', strpos($aggView, 'id="favTabCount"') !== false);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

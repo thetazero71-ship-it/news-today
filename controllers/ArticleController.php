@@ -130,6 +130,8 @@ class ArticleController extends Controller
             'related'     => $related,
             'latestStories' => $latestStories,
             'mostViewedStories' => $mostViewedStories,
+            'latestArticles' => $latestStories,
+            'popularArticles' => $mostViewedStories,
             'reactions'   => $reactionCounts,
             'userReacted' => $userReacted,
         ));

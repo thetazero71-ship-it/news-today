@@ -51,8 +51,8 @@ t('the badge only appears for published cards', strpos($aggView, "\$itemPublishe
 
 echo "\n--- favorites shows the same badge ---\n";
 $favView = (string) file_get_contents($root . '/views/admin/aggregator/favorites.php');
-t('favorites has the publisher badge', strpos($favView, 'bi-person-check-fill') !== false);
-t('favorites uses the publisher name', strpos($favView, "\$item['publisher_name']") !== false);
+t('favorites has the publisher badge', strpos($favView, 'publisher-info-badge') !== false);
+t('favorites uses the publisher name', strpos($favView, "\$item['author_name']") !== false);
 t('favorites uses the publish time', strpos($favView, "\$item['published_at']") !== false);
 t('favorites keeps the feed date LTR', strpos($favView, 'dir="ltr"') !== false
     && strpos($favView, 'font-monospace') !== false);

@@ -108,6 +108,21 @@ if (!function_exists('site_dt')) {
     }
 }
 
+if (!function_exists('article_image_url')) {
+    /**
+     * رابط صورة المقال: يترك الروابط المطلقة كما هي ويبني النسبية فقط.
+     * يستخدم صورة احتياطية بدل رابط مكسور عندما تكون القيمة فارغة.
+     */
+    function article_image_url($image)
+    {
+        $image = trim((string) $image);
+        if ($image === '') {
+            return \FallbackImage::general();
+        }
+        return AppUrl::isAbsolute($image) ? $image : app_url($image);
+    }
+}
+
 if (!function_exists('fmt_date')) {
     function fmt_date($dateStr, $format = null, $fallback = '-')
     {

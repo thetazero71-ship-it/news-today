@@ -486,12 +486,78 @@ require_once APP_ROOT . '/views/partials/header.php';
 
     <!-- ================= 📊 SIDEBAR (Visible on Non-Minimalist Templates) ================= -->
     <?php if ($activeTemplate !== 'minimal_techcrunch'): ?>
-        <?php $latestStories = $latestStories ?? []; ?>
-        <?php $mostViewedStories = $mostViewedStories ?? []; ?>
+        <?php $latestArticles = $latestArticles ?? ($latestStories ?? []); ?>
+        <?php $popularArticles = $popularArticles ?? ($mostViewedStories ?? []); ?>
         <aside class="sidebar-sticky-wrap">
-            
+
             <!-- Sidebar Ad Slot -->
             <?= site_ad_slot('ad_sidebar_slot', 'side-widget-card sidebar-ad-slot text-center') ?>
+
+            <!-- Tabbed Latest & Most Viewed News Widget -->
+            <div class="side-widget-card sidebar-news-tabs-widget">
+                <div class="sidebar-news-tabs-header" role="tablist">
+                    <button type="button" class="sidebar-news-tab-btn active" data-tab="tab-latest-news" role="tab" aria-selected="true" aria-controls="tab-latest-news">
+                        <span class="tab-indicator-arrow">◀</span>
+                        <span>آخر الأخبار</span>
+                    </button>
+                    <button type="button" class="sidebar-news-tab-btn" data-tab="tab-popular-news" role="tab" aria-selected="false" aria-controls="tab-popular-news">
+                        <span class="tab-indicator-arrow">◀</span>
+                        <span>الأكثر مشاهدة</span>
+                    </button>
+                </div>
+
+                <div class="sidebar-news-tabs-body">
+                    <div class="sidebar-news-pane active" id="tab-latest-news" role="tabpanel">
+                        <?php if (!empty($latestArticles)): ?>
+                            <div class="sidebar-news-stream">
+                                <?php foreach ($latestArticles as $item): ?>
+                                    <a href="<?= article_e(app_url('article/' . $item['slug'])) ?>" class="sidebar-news-item" <?= news_card_attrs($item) ?>>
+                                        <div class="sidebar-news-thumb-box">
+                                            <?php $itemImg = !empty($item['featured_image']) ? article_image_url($item['featured_image']) : \FallbackImage::general(); ?>
+                                            <img src="<?= article_e($itemImg) ?>" alt="<?= article_e($item['title']) ?>" loading="lazy" onerror="this.onerror=null;this.src='<?= article_e(\FallbackImage::general()) ?>';">
+                                        </div>
+                                        <div class="sidebar-news-content">
+                                            <h5 class="sidebar-news-title"><?= article_e($item['title']) ?></h5>
+                                            <div class="sidebar-news-meta">
+                                                <span class="sidebar-news-cat"><?= article_e($item['category_name'] ?: 'تقنية عامة') ?></span>
+                                                <span class="sidebar-news-sep">|</span>
+                                                <span class="sidebar-news-time"><?= article_e(fmt_relative_time($item['published_at'] ?: $item['created_at'])) ?></span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="sidebar-news-empty">لا توجد أخبار حديثة حالياً.</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="sidebar-news-pane" id="tab-popular-news" role="tabpanel">
+                        <?php if (!empty($popularArticles)): ?>
+                            <div class="sidebar-news-stream">
+                                <?php foreach ($popularArticles as $item): ?>
+                                    <a href="<?= article_e(app_url('article/' . $item['slug'])) ?>" class="sidebar-news-item" <?= news_card_attrs($item) ?>>
+                                        <div class="sidebar-news-thumb-box">
+                                            <?php $itemImg = !empty($item['featured_image']) ? article_image_url($item['featured_image']) : \FallbackImage::general(); ?>
+                                            <img src="<?= article_e($itemImg) ?>" alt="<?= article_e($item['title']) ?>" loading="lazy" onerror="this.onerror=null;this.src='<?= article_e(\FallbackImage::general()) ?>';">
+                                        </div>
+                                        <div class="sidebar-news-content">
+                                            <h5 class="sidebar-news-title"><?= article_e($item['title']) ?></h5>
+                                            <div class="sidebar-news-meta">
+                                                <span class="sidebar-news-cat"><?= article_e($item['category_name'] ?: 'تقنية عامة') ?></span>
+                                                <span class="sidebar-news-sep">|</span>
+                                                <span class="sidebar-news-time"><?= article_e(fmt_relative_time($item['published_at'] ?: $item['created_at'])) ?></span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="sidebar-news-empty">لا توجد إحصائيات مشاهدة كافية بعد.</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
 
             <!-- Editorial Desk Card -->
             <div class="side-widget-card">
@@ -504,84 +570,6 @@ require_once APP_ROOT . '/views/partials/header.php';
                     <span>فريق تحرير نشط على مدار الساعة</span>
                 </div>
             </div>
-
-            <!-- Latest / Most Viewed Tabs (CSS-only, works without JS) -->
-            <?php if (!empty($latestStories) || !empty($mostViewedStories)): ?>
-                <div class="side-widget-card sidebar-tabs-card">
-                    <h4>متابعة سريعة</h4>
-                    <div class="sidebar-tabs">
-                        <input class="sidebar-tab-input" type="radio" name="article-side-tab" id="side-tab-latest" checked>
-                        <input class="sidebar-tab-input" type="radio" name="article-side-tab" id="side-tab-viewed">
-                        <label class="sidebar-tab-label" for="side-tab-latest">آخر الأخبار</label>
-                        <label class="sidebar-tab-label" for="side-tab-viewed">الأكثر مشاهدة</label>
-
-                        <div class="sidebar-tab-panel sidebar-panel-latest">
-                            <?php foreach ($latestStories as $idx => $story): ?>
-                                <?php
-                                $storyImg = trim((string) ($story['featured_image'] ?? ''));
-                                $storyImgUrl = ($storyImg !== '' && preg_match('#^https?://#i', $storyImg))
-                                    ? $storyImg
-                                    : ($storyImg !== '' ? app_url($storyImg) : '');
-                                $storyTs = strtotime((string) ($story['published_at'] ?: $story['created_at']));
-                                ?>
-                                <a class="side-tab-item" href="<?= article_e(app_url('article/' . $story['slug'])) ?>" <?= news_card_attrs($story) ?>>
-                                    <span class="side-tab-thumb">
-                                        <?php if ($storyImgUrl !== ''): ?>
-                                            <img src="<?= article_e($storyImgUrl) ?>" alt="" loading="lazy" onerror="this.style.display='none'">
-                                        <?php else: ?>
-                                            <span class="side-tab-thumb-ph"><?= ui_icon('general', '', 18) ?></span>
-                                        <?php endif; ?>
-                                        <span class="side-tab-rank"><?= $idx + 1 ?></span>
-                                    </span>
-                                    <span class="side-tab-text">
-                                        <span class="side-tab-title"><?= article_e($story['title']) ?></span>
-                                        <span class="side-tab-meta">
-                                            <?php if (!empty($story['category_name'])): ?><span class="side-tab-cat"><?= article_e($story['category_name']) ?></span><?php endif; ?>
-                                            <time class="news-time-ago-static" datetime="<?= article_e(date('c', $storyTs ?: time())) ?>"><?= article_e(fmt_date($story['published_at'] ?: $story['created_at'])) ?></time>
-                                        </span>
-                                    </span>
-                                    <span class="side-tab-arrow" aria-hidden="true">‹</span>
-                                </a>
-                            <?php endforeach; ?>
-                            <?php if (empty($latestStories)): ?>
-                                <span class="side-tab-empty">لا توجد أخبار منشورة بعد.</span>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="sidebar-tab-panel sidebar-panel-viewed">
-                            <?php foreach ($mostViewedStories as $idx => $story): ?>
-                                <?php
-                                $storyImg = trim((string) ($story['featured_image'] ?? ''));
-                                $storyImgUrl = ($storyImg !== '' && preg_match('#^https?://#i', $storyImg))
-                                    ? $storyImg
-                                    : ($storyImg !== '' ? app_url($storyImg) : '');
-                                ?>
-                                <a class="side-tab-item" href="<?= article_e(app_url('article/' . $story['slug'])) ?>" <?= news_card_attrs($story) ?>>
-                                    <span class="side-tab-thumb">
-                                        <?php if ($storyImgUrl !== ''): ?>
-                                            <img src="<?= article_e($storyImgUrl) ?>" alt="" loading="lazy" onerror="this.style.display='none'">
-                                        <?php else: ?>
-                                            <span class="side-tab-thumb-ph"><?= ui_icon('general', '', 18) ?></span>
-                                        <?php endif; ?>
-                                        <span class="side-tab-rank"><?= $idx + 1 ?></span>
-                                    </span>
-                                    <span class="side-tab-text">
-                                        <span class="side-tab-title"><?= article_e($story['title']) ?></span>
-                                        <span class="side-tab-meta">
-                                            <?php if (!empty($story['category_name'])): ?><span class="side-tab-cat"><?= article_e($story['category_name']) ?></span><?php endif; ?>
-                                            <span class="side-tab-views"><?= ui_icon('eye', '', 12) ?> <?= number_format((int) ($story['views_count'] ?? 0)) ?> مشاهدة</span>
-                                        </span>
-                                    </span>
-                                    <span class="side-tab-arrow" aria-hidden="true">‹</span>
-                                </a>
-                            <?php endforeach; ?>
-                            <?php if (empty($mostViewedStories)): ?>
-                                <span class="side-tab-empty">لا توجد إحصاءات مشاهدة بعد.</span>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            <?php endif; ?>
 
             <!-- Related Articles -->
             <?php if (!empty($related)): ?>
@@ -629,5 +617,29 @@ require_once APP_ROOT . '/views/partials/header.php';
     <?php endif; ?>
 
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var tabBtns = document.querySelectorAll('.sidebar-news-tab-btn');
+    tabBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var targetId = btn.getAttribute('data-tab');
+            var widget = btn.closest('.sidebar-news-tabs-widget');
+            if (!widget) return;
+            widget.querySelectorAll('.sidebar-news-tab-btn').forEach(function (b) {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+            });
+            widget.querySelectorAll('.sidebar-news-pane').forEach(function (p) {
+                p.classList.remove('active');
+            });
+            btn.classList.add('active');
+            btn.setAttribute('aria-selected', 'true');
+            var pane = widget.querySelector('#' + targetId);
+            if (pane) pane.classList.add('active');
+        });
+    });
+});
+</script>
 
 <?php require_once APP_ROOT . '/views/partials/footer.php'; ?>

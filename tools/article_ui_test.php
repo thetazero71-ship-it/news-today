@@ -31,21 +31,25 @@ t('latest is ordered by publish time', strpos($controller, 'ORDER BY a.published
 t('most viewed is queried', strpos($controller, '$mostViewedStories = $db->fetchAll(') !== false);
 t('most viewed is ordered by views', strpos($controller, 'ORDER BY a.views_count DESC') !== false);
 t('both reach the view', strpos($controller, "'latestStories' => \$latestStories") !== false
-    && strpos($controller, "'mostViewedStories' => \$mostViewedStories") !== false);
+    && strpos($controller, "'mostViewedStories' => \$mostViewedStories") !== false
+    && strpos($controller, "'latestArticles' => \$latestStories") !== false
+    && strpos($controller, "'popularArticles' => \$mostViewedStories") !== false);
 
-echo "\n--- two CSS-only tabs ---\n";
-t('the tab card exists', strpos($view, 'sidebar-tabs-card') !== false);
-t('the latest tab is checked by default', strpos($view, 'id="side-tab-latest" checked') !== false);
-t('the viewed tab exists', strpos($view, 'id="side-tab-viewed"') !== false);
-t('there are two radio inputs', substr_count($view, 'class="sidebar-tab-input"') === 2);
-t('labels name both tabs', strpos($view, 'آخر الأخبار') !== false && strpos($view, 'الأكثر مشاهدة') !== false);
-t('the latest panel exists', strpos($view, 'sidebar-panel-latest') !== false);
-t('the viewed panel exists', strpos($view, 'sidebar-panel-viewed') !== false);
-t('viewed items show the view count', strpos($view, 'مشاهدة') !== false && strpos($view, "number_format((int) (\$story['views_count']") !== false);
-t('empty panels have a message', strpos($view, 'side-tab-empty') !== false);
-t('tabs need no JavaScript', strpos($view, 'article-side-tab') !== false
-    && strpos($css, '#side-tab-latest:checked ~ .sidebar-panel-latest') !== false
-    && strpos($css, '#side-tab-viewed:checked ~ .sidebar-panel-viewed') !== false);
+echo "\n--- reference tabbed sidebar ---\n";
+t('the reference widget exists', strpos($view, 'sidebar-news-tabs-widget') !== false);
+t('two tab buttons exist', substr_count($view, 'sidebar-news-tab-btn') >= 2);
+t('the latest pane is active by default', strpos($view, 'id="tab-latest-news" role="tabpanel"') !== false
+    && strpos($view, 'sidebar-news-pane active') !== false);
+t('the popular pane exists', strpos($view, 'id="tab-popular-news"') !== false);
+t('the arrow indicator exists', strpos($view, 'tab-indicator-arrow') !== false);
+t('thumbnails are 82x60', strpos($view, 'sidebar-news-thumb-box') !== false
+    && strpos($css, 'width: 82px;') !== false);
+t('category and relative time are shown', strpos($view, 'sidebar-news-cat') !== false
+    && strpos($view, 'fmt_relative_time(') !== false);
+t('tabs switch in place', strpos($view, "querySelectorAll('.sidebar-news-tab-btn')") !== false
+    && strpos($view, "classList.add('active')") !== false);
+t('the reference styles are present', strpos($css, '.sidebar-news-tabs-widget') !== false
+    && strpos($css, '.sidebar-news-item:hover') !== false);
 
 echo "\n--- brand share icons replace text and emoji ---\n";
 foreach (['twitter-x', 'facebook', 'whatsapp', 'telegram', 'linkedin', 'copy'] as $icon) {
@@ -63,15 +67,17 @@ t('the old bare "in" is gone', strpos($view, '>in</a>') === false);
 t('the old generic link icons are gone from sharing', substr_count($view, "ui_icon('link', '', 16)") === 0);
 
 echo "\n--- footer identity and social icons ---\n";
-t('the brand block keeps the name', strpos($footer, 'footer-brand-name') !== false);
-t('a social row is rendered', strpos($footer, 'footer-social-row') !== false);
-t('each icon is a link', strpos($footer, 'class="footer-social-link"') !== false
-    && strpos($footer, 'href="<?= view_e($social[\'url\']) ?>"') !== false);
-t('icons come from real settings', strpos($footer, "Settings::get(\$social['key']") !== false);
-t('empty settings are skipped', strpos($footer, "\$socialUrl !== ''") !== false);
-t('at most five are shown', strpos($footer, 'array_slice($footerSocialLinks, 0, 5)') !== false);
-t('icons use the brand SVGs', strpos($footer, "ui_icon(\$social['icon']") !== false);
-t('external links are safe', strpos($footer, 'rel="external noopener nofollow"') !== false);
+t('the hero brand block keeps the name', strpos($footer, 'footer-hero-brand-name') !== false);
+t('a five-icon social strip is rendered', strpos($footer, 'footer-hero-social-strip') !== false);
+foreach (['rss', 'instagram', 'youtube', 'twitter-x', 'facebook'] as $footerIcon) {
+    t('the strip contains the ' . $footerIcon . ' icon', strpos($footer, "ui_icon('" . $footerIcon . "'") !== false);
+}
+t('icons come from real settings', strpos($footer, "Settings::get('social_instagram'") !== false
+    && strpos($footer, "Settings::get('social_youtube'") !== false
+    && strpos($footer, "Settings::get('social_facebook'") !== false);
+t('external social links are safe', strpos($footer, 'target="_blank" rel="noopener"') !== false);
+t('the strip is styled', strpos($css, '.footer-hero-social-icon') !== false
+    && strpos($css, '.footer-hero-social-icon:hover') !== false);
 
 echo "\n--- the capsule scrollbar ---\n";
 t('the gradient thumb exists', strpos($css, '::-webkit-scrollbar-thumb') !== false
@@ -80,7 +86,7 @@ t('the thumb is a capsule', strpos($css, 'border-radius: 999px') !== false);
 t('it glows', strpos($css, 'box-shadow: inset 0 0 6px rgba(34, 211, 238, 0.45)') !== false);
 t('firefox gets a thin colored bar', strpos($css, 'scrollbar-color: rgba(34, 211, 238, 0.55) transparent') !== false);
 t('the share buttons keep an accessible style', strpos($css, '.action-btn.share-brand') !== false);
-t('the footer circles have hover motion', strpos($css, '.footer-social-link:hover') !== false);
+t('the footer circles have hover motion', strpos($css, '.footer-hero-social-icon:hover') !== false);
 
 echo "\n--- the tutorials share bar matches the article ---\n";
 $tutorial = (string) file_get_contents($root . '/views/tutorials/show.php');
@@ -95,20 +101,19 @@ t('tutorial links are safe', strpos($tutorial, 'rel="noopener nofollow"') !== fa
 t('tutorial copy still works', strpos($tutorial, 'navigator.clipboard.writeText') !== false);
 
 echo "\n--- the sidebar now carries thumbnails, tags and an arrow ---\n";
-t('items carry thumbnails', strpos($view, 'side-tab-thumb') !== false);
-t('thumbnails use the real image', strpos($view, "\$story['featured_image']") !== false);
-t('the category tag is shown', strpos($view, 'side-tab-cat') !== false
-    && strpos($view, "\$story['category_name']") !== false);
-t('time is machine-readable for the relative engine', strpos($view, 'news-time-ago-static') !== false
-    && strpos($view, "date('c', \$storyTs ?: time())") !== false);
-t('an arrow marks each item', strpos($view, 'side-tab-arrow') !== false);
+t('items carry thumbnails', strpos($view, 'sidebar-news-thumb-box') !== false);
+t('thumbnails use the real image', strpos($view, "\$item['featured_image']") !== false);
+t('the category tag is shown', strpos($view, 'sidebar-news-cat') !== false
+    && strpos($view, "\$item['category_name']") !== false);
+t('relative time is used', strpos($view, 'fmt_relative_time(') !== false);
+t('an arrow marks the active tab', strpos($view, 'tab-indicator-arrow') !== false);
 t('the controller joins categories', strpos($controller, 'LEFT JOIN categories c ON c.id = a.category_id') !== false);
 t('it selects the thumbnail and category', strpos($controller, 'a.featured_image') !== false
     && strpos($controller, 'c.name AS category_name') !== false);
-t('the styles include thumbnail and arrow rules', strpos($css, '.side-tab-thumb') !== false
-    && strpos($css, '.side-tab-arrow') !== false);
-t('the scrollbar has a central wire', strpos($css, 'rgba(148, 163, 184, 0.22)') !== false);
-t('the footer brand is bolder', strpos($css, 'font-size: 1.25rem; font-weight: 900') !== false);
+t('the styles include thumbnail and item rules', strpos($css, '.sidebar-news-thumb-box') !== false
+    && strpos($css, '.sidebar-news-item:hover') !== false);
+t('the scrollbar has a central wire', strpos($css, 'calc(50% - 1px)') !== false);
+t('the footer brand matches the reference size', strpos($css, 'font-size: 2.35rem') !== false);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

@@ -77,22 +77,31 @@ $footerSocialLinks = array_slice($footerSocialLinks, 0, 5);
     <div class="container">
         <div class="footer-grid">
             <div class="footer-col footer-brand-col">
-                <div class="footer-brand-header" style="display:flex;align-items:center;gap:8px">
-                    <span class="footer-brand-icon" style="display:grid;place-items:center"><?= ui_icon('ai', 'text-primary', 20) ?></span>
-                    <strong class="footer-brand-name"><?= view_e($siteName) ?></strong>
+                <div class="footer-hero-brand">
+                    <a href="<?= view_e(app_url()) ?>" class="footer-hero-brand-link" title="<?= view_e($siteName) ?>">
+                        <span class="footer-hero-brand-name"><?= view_e($siteName) ?></span>
+                    </a>
+                    <div class="footer-hero-social-strip" aria-label="وسائل التواصل الاجتماعي">
+                        <a href="<?= view_e(app_url('feed/rss')) ?>" class="footer-hero-social-icon" aria-label="خلاصة RSS" title="RSS Feed">
+                            <?= ui_icon('rss', '', 20) ?>
+                        </a>
+                        <a href="<?= view_e(Settings::get('social_instagram', '#')) ?>" class="footer-hero-social-icon" aria-label="انستغرام" title="Instagram" target="_blank" rel="noopener">
+                            <?= ui_icon('instagram', '', 20) ?>
+                        </a>
+                        <a href="<?= view_e(Settings::get('social_youtube', '#')) ?>" class="footer-hero-social-icon" aria-label="يوتيوب" title="YouTube" target="_blank" rel="noopener">
+                            <?= ui_icon('youtube', '', 20) ?>
+                        </a>
+                        <a href="<?= view_e(Settings::get('social_x', Settings::get('social_twitter', '#'))) ?>" class="footer-hero-social-icon" aria-label="منصة X" title="منصة X" target="_blank" rel="noopener">
+                            <?= ui_icon('twitter-x', '', 20) ?>
+                        </a>
+                        <a href="<?= view_e(Settings::get('social_facebook', '#')) ?>" class="footer-hero-social-icon" aria-label="فيسبوك" title="Facebook" target="_blank" rel="noopener">
+                            <?= ui_icon('facebook', '', 20) ?>
+                        </a>
+                    </div>
                 </div>
                 <p class="footer-brand-desc">
                     <?= view_e($siteDesc) ?>
                 </p>
-                <?php if (!empty($footerSocialLinks)): ?>
-                    <div class="footer-social-row" aria-label="حسابات المنصة على مواقع التواصل">
-                        <?php foreach ($footerSocialLinks as $social): ?>
-                            <a class="footer-social-link" href="<?= view_e($social['url']) ?>" target="_blank" rel="external noopener nofollow" title="<?= view_e($social['label']) ?>" aria-label="<?= view_e($social['label']) ?>">
-                                <?= ui_icon($social['icon'], '', 16) ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
             </div>
             <div class="footer-col">
                 <h4>أقسام وتغطيات</h4>

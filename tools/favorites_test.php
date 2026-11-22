@@ -78,17 +78,18 @@ t('the last removal restores the empty state', strpos($fav, 'window.location.rel
 echo "\n--- the publish button publishes (it used to only navigate) ---\n";
 t('translate & publish endpoint is wired', strpos($fav, "admin/news-feeds/translate-publish") !== false);
 t('fast publish endpoint is wired', strpos($fav, "admin/news-feeds/fast-publish") !== false);
-t('draft endpoint is wired', strpos($fav, "admin/news-feeds/draft-article") !== false);
-t('the three forms are POST forms', substr_count($fav, 'method="post"') >= 4);
-t('item data travels with every form', strpos($fav, '$favPublishFields = function (array $item, string $sourceName)') !== false);
-t('all publish fields are included', strpos($fav, "'source_url' => (string) (\$item['link'] ?? '')") !== false
-    && strpos($fav, "'source_name' => \$sourceName") !== false
-    && strpos($fav, "'featured_image' => (string) (\$item['featured_image'] ?? '')") !== false);
-t('the menu offers the three actions', strpos($fav, 'ترجمة ونشر (عربي)') !== false
-    && strpos($fav, 'نشر فوري (بدون ترجمة)') !== false
-    && strpos($fav, 'تحرير كمسودة') !== false);
-t('the publish control is a dropdown button', strpos($fav, 'class="btn btn-sm btn-primary dropdown-toggle"') !== false);
-t('the old anchor-only publish button is gone', strpos($fav, 'class="btn btn-sm btn-primary">') === false);
+t('the draft endpoint still exists server-side', strpos($agg, "public function draftArticle") !== false);
+t('the deck forms are POST forms', substr_count($fav, 'method="post"') >= 3);
+t('each form carries the item data', strpos($fav, 'name="title"') !== false
+    && strpos($fav, 'name="source_url"') !== false
+    && strpos($fav, 'name="source_name"') !== false
+    && strpos($fav, 'name="featured_image"') !== false);
+t('an explicit translate & publish button exists', strpos($fav, 'ترجمة ونشر') !== false
+    && strpos($fav, 'btn-fav-translate') !== false);
+t('an explicit fast publish button exists', strpos($fav, 'نشر فوري') !== false);
+t('publishing happens in place', strpos($fav, 'fav-publish-form') !== false
+    && strpos($fav, "'X-Requested-With': 'XMLHttpRequest'") !== false);
+t('the old dropdown is gone', strpos($fav, 'dropdown-toggle') === false);
 t('favourites now shows publish feedback', strpos($fav, "Session::getFlash('success')") !== false
     && strpos($fav, "Session::getFlash('error')") !== false);
 t('both endpoints return to the referring page', substr_count($agg, '$referer = $_SERVER[\'HTTP_REFERER\']') >= 2);

@@ -56,26 +56,29 @@ t('the threshold is 80%', NewsDeduplicator::SIMILARITY === 0.80);
 t('Arabic stopwords exist', in_array('من', NewsDeduplicator::STOPWORDS, true));
 t('English stopwords exist', in_array('the', NewsDeduplicator::STOPWORDS, true));
 
-echo "\n--- the controller annotates both tabs ---\n";
+echo "\n--- the controller marks both tabs ---\n";
 $controller = (string) file_get_contents($root . '/controllers/admin/AggregatorController.php');
-t('the aggregator annotates items', strpos($controller, '$items = NewsDeduplicator::annotateDuplicates($items);') !== false);
-t('favorites annotates them too', substr_count($controller, 'NewsDeduplicator::annotateDuplicates($items)') === 2);
-t('duplicates are excluded from the new counter', strpos($controller, "if (!empty(\$it['duplicate_of'])) continue;") !== false);
+t('recent published articles are loaded once', strpos($controller, 'NewsDeduplicator::getRecentArticles($db, 7)') !== false
+    && strpos($controller, 'NewsDeduplicator::getRecentArticles($db, 3)') !== false);
+t('the aggregator checks published matches', strpos($controller, 'NewsDeduplicator::findMatchInArticles($recentPublished, $itTitle, 0.80)') !== false);
+t('the aggregator checks feed matches', strpos($controller, 'NewsDeduplicator::findMatchInFeedItems($itTitle, $seenFeedItems, $itLink, 0.80)') !== false);
+t('favorites checks published matches too', strpos($controller, "NewsDeduplicator::findMatchInArticles(\$recentPublished, \$item['title'] ?? '', 0.80)") !== false);
+t('the duplicate info carries the matched title', strpos($controller, "'matched_title' => \$match['title']") !== false);
 t('the duplicate count reaches the view', strpos($controller, "'duplicateCount' => \$duplicateCount ?? 0") !== false);
 
 echo "\n--- the card exposes the mark ---\n";
 $view = (string) file_get_contents($root . '/views/admin/aggregator/index.php');
 $fav = (string) file_get_contents($root . '/views/admin/aggregator/favorites.php');
-t('cards carry a duplicate flag', strpos($view, 'data-news-duplicate="<?= !empty($item[\'duplicate_of\']) ? \'1\' : \'0\' ?>"') !== false);
-t('a duplicate badge is rendered', strpos($view, 'خبر مكرر — الأصل:') !== false);
-t('the badge shows the original title', strpos($view, "\$item['duplicate_title']") !== false);
-t('the similarity percent is shown', strpos($view, "\$item['duplicate_score']") !== false);
-t('a quick hide button exists', strpos($view, 'id="duplicateFilterBtn"') !== false
-    && strpos($view, 'toggleDuplicateFilter(this)') !== false);
+t('cards carry a duplicate flag', strpos($view, 'data-is-duplicate="<?= !empty($item[\'duplicate_info\'][\'is_duplicate\']) ? \'1\' : \'0\' ?>"') !== false);
+t('a duplicate warning is rendered', strpos($view, 'تغطية مكررة (تشابه') !== false);
+t('a published match links to its article', strpos($view, 'نُشر مسبقاً بموقعك:') !== false);
+t('a feed match names the source', strpos($view, 'تناوله المصدر') !== false);
+t('a quick hide button exists', strpos($view, 'id="toggleDupFilterBtn"') !== false
+    && strpos($view, 'toggleDuplicateCards(this)') !== false);
 t('the live filter respects the toggle', strpos($view, 'hideDuplicates && isDuplicate') !== false);
-t('the AJAX switch refreshes the count', strpos($view, "getElementById('duplicateCount')") !== false);
-t('favorites marks duplicates', strpos($fav, 'data-fav-duplicate=') !== false
-    && strpos($fav, 'خبر مكرر') !== false);
+t('the AJAX switch refreshes the count', strpos($view, "getElementById('dupBadgeCount')") !== false);
+t('favorites marks duplicates', strpos($fav, 'duplicate_info') !== false
+    && strpos($fav, 'مكرر') !== false);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);

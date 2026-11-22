@@ -122,29 +122,17 @@ foreach ($sources as $srcRow) {
     }
 }
 ?>
- <!-- Pinned Sources Top Section (Favorites) -->
- <div id="pinnedSourcesSection" class="p-2 mb-3 rounded-3 pinned-sources-box">
- <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
- <div class="d-flex align-items-center gap-2">
- <span class="badge bg-warning text-dark p-1 px-2 fw-bold"><i class="bi bi-pin-angle-fill me-1"></i>المصادر المثبتة المفضلة</span>
- <small class="text-muted" style="font-size:0.75rem">المصادر التي قمت بتثبيتها للوصول السريع</small>
- </div>
- <small class="text-muted" style="font-size:0.75rem">انقر على لإلغاء التثبيت</small>
- </div>
- <div id="pinnedSourcesList" class="d-flex align-items-center gap-2 flex-wrap">
- <?php if (empty($favoriteSources)): ?>
- <span id="noPinnedNotice" class="text-muted small py-1 px-2 fst-italic">لم تقم بتثبيت أي مصدر بعد. انقر على أيقونة الدبوس بجانب أي مصدر لتثبيته هنا!</span>
- <?php else: ?>
- <?php foreach ($favoriteSources as $favSrc): ?>
- <div class="pinned-source-chip d-inline-flex align-items-center rounded-pill px-2 py-1 shadow-xs me-1 mb-1" data-fav-id="<?= (int) $favSrc['id'] ?>">
- <a href="<?= admin_e(app_url('admin/news-feeds?source_id=' . (int) $favSrc['id'])) ?>" class="text-decoration-none fw-bold small me-1"><?= admin_e($favSrc['name']) ?></a>
- <button type="button" class="btn btn-link text-danger p-0 ms-1 text-decoration-none js-unpin" data-id="<?= (int) $favSrc['id'] ?>" title="إلغاء التثبيت" style="font-size:0.75rem">
- <i class="bi bi-x-circle-fill"></i>
- </button>
- </div>
- <?php endforeach; ?>
- <?php endif; ?>
- </div>
+ <!-- Unified Top Navigation Tabs: 1. All Sites | 2. Favorites -->
+ <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom flex-wrap">
+ <a href="<?= admin_e(app_url('admin/news-feeds')) ?>" class="btn btn-sm btn-dark fw-bold px-3 py-2 shadow-xs">
+ <i class="bi bi-collection me-1"></i> كل المواقع والخلاصات
+ <span class="badge bg-light text-dark ms-1"><?= count($sources) ?></span>
+ </a>
+ <a href="<?= admin_e(app_url('admin/news-feeds?tab=favorites')) ?>" class="btn btn-sm btn-outline-dark fw-bold px-3 py-2 shadow-xs" id="favTabLink">
+ <i class="bi bi-pin-angle-fill text-warning me-1"></i> المصادر المفضلة والمثبتة
+ <span class="badge bg-warning text-dark ms-1" id="favTabCount"><?= count($favoriteSources) ?></span>
+ </a>
+ <span class="text-muted small ms-auto d-none d-md-inline">اضغط أيقونة الدبوس 📌 بجانب أي مصدر لتثبيته في المفضلة</span>
  </div>
 
  <!-- Search & Category Filters Bar -->
@@ -257,7 +245,32 @@ foreach ($sources as $srcRow) {
  </div>
  <?php endforeach; ?>
  </div>
-</div>
+
+ <!-- Pinned Sources Section (Favorites) - Positioned after All Sources -->
+ <div id="pinnedSourcesSection" class="p-2 mb-3 rounded-3 pinned-sources-box">
+ <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+ <div class="d-flex align-items-center gap-2">
+ <span class="badge bg-warning text-dark p-1 px-2 fw-bold"><i class="bi bi-pin-angle-fill me-1"></i>المصادر المثبتة المفضلة</span>
+ <small class="text-muted" style="font-size:0.75rem">المصادر التي قمت بتثبيتها للوصول السريع</small>
+ </div>
+ <small class="text-muted" style="font-size:0.75rem">انقر على × لإلغاء التثبيت</small>
+ </div>
+ <div id="pinnedSourcesList" class="d-flex align-items-center gap-2 flex-wrap">
+ <?php if (empty($favoriteSources)): ?>
+ <span id="noPinnedNotice" class="text-muted small py-1 px-2 fst-italic">لم تقم بتثبيت أي مصدر بعد. انقر على أيقونة الدبوس بجانب أي مصدر لتثبيته هنا!</span>
+ <?php else: ?>
+ <?php foreach ($favoriteSources as $favSrc): ?>
+ <div class="pinned-source-chip d-inline-flex align-items-center rounded-pill px-2 py-1 shadow-xs me-1 mb-1" data-fav-id="<?= (int) $favSrc['id'] ?>">
+ <a href="<?= admin_e(app_url('admin/news-feeds?source_id=' . (int) $favSrc['id'])) ?>" class="text-decoration-none fw-bold small me-1"><?= admin_e($favSrc['name']) ?></a>
+ <button type="button" class="btn btn-link text-danger p-0 ms-1 text-decoration-none js-unpin" data-id="<?= (int) $favSrc['id'] ?>" title="إلغاء التثبيت" style="font-size:0.75rem">
+ <i class="bi bi-x-circle-fill"></i>
+ </button>
+ </div>
+ <?php endforeach; ?>
+ <?php endif; ?>
+ </div>
+ </div>
+ </div>
 
 <style>
 .text-cyan { color: #00f2fe !important; }
@@ -467,11 +480,18 @@ function filterSourceCategory(cat, btn) {
 let currentNewsStatusFilter = 'all';
 let hideDuplicates = false;
 
-function toggleDuplicateFilter(btn) {
+function toggleDuplicateCards(btn) {
  hideDuplicates = !hideDuplicates;
- btn.classList.toggle('btn-warning', hideDuplicates);
- btn.classList.toggle('text-dark', hideDuplicates);
- btn.classList.toggle('btn-light', !hideDuplicates);
+ const badgeCount = document.getElementById('dupBadgeCount')?.innerText || '';
+ if (hideDuplicates) {
+  btn.classList.remove('btn-outline-warning');
+  btn.classList.add('btn-warning', 'text-dark');
+  btn.innerHTML = '<i class="bi bi-eye-fill me-1"></i> إظهار المكرر (' + badgeCount + ')';
+ } else {
+  btn.classList.remove('btn-warning', 'text-dark');
+  btn.classList.add('btn-outline-warning');
+  btn.innerHTML = '<i class="bi bi-intersect me-1"></i> إخفاء المكرر (' + badgeCount + ')';
+ }
  filterNewsLive();
 }
 
@@ -503,7 +523,7 @@ function filterNewsLive() {
  const matchesStatus = (currentNewsStatusFilter === 'all') 
  || (currentNewsStatusFilter === 'new' && (!status || status === 'new'))
  || (status === currentNewsStatusFilter);
- const isDuplicate = card.getAttribute('data-news-duplicate') === '1';
+ const isDuplicate = card.getAttribute('data-is-duplicate') === '1';
 
  if (matchesQuery && matchesStatus && !(hideDuplicates && isDuplicate)) {
  card.style.display = '';
@@ -576,9 +596,12 @@ document.addEventListener('DOMContentLoaded', function () {
  <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" onclick="filterNewsStatus('new', this)"> غير منشور</button>
  <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" onclick="filterNewsStatus('published', this)">منشور</button>
  <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" onclick="filterNewsStatus('draft', this)">مسودات</button>
- <button type="button" class="btn btn-sm btn-light border rounded-pill px-3" id="duplicateFilterBtn" onclick="toggleDuplicateFilter(this)" title="إخفاء النسخ المكررة من نفس الخبر">
- <i class="bi bi-files me-1"></i> إخفاء المكرر (<span id="duplicateCount"><?= (int) ($duplicateCount ?? 0) ?></span>)
+ <?php $duplicateCount = (int) ($duplicateCount ?? 0); ?>
+ <?php if ($duplicateCount > 0): ?>
+ <button type="button" class="btn btn-sm btn-outline-warning rounded-pill px-3" id="toggleDupFilterBtn" onclick="toggleDuplicateCards(this)" title="إخفاء أو إظهار الأخبار المكررة التي وردت من مصادر أخرى أو نُشرت سابقاً">
+ <i class="bi bi-intersect me-1"></i> إخفاء المكرر (<span id="dupBadgeCount"><?= $duplicateCount ?></span>)
  </button>
+ <?php endif; ?>
  </div>
  </div>
 
@@ -615,7 +638,7 @@ document.addEventListener('DOMContentLoaded', function () {
  data-news-title="<?= admin_e(mb_strtolower($item['title'], 'UTF-8')) ?>"
  data-news-excerpt="<?= admin_e(mb_strtolower($item['excerpt'], 'UTF-8')) ?>"
  data-news-status="<?= admin_e($item['import_status'] ?? 'new') ?>"
- data-news-duplicate="<?= !empty($item['duplicate_of']) ? '1' : '0' ?>">
+ data-is-duplicate="<?= !empty($item['duplicate_info']['is_duplicate']) ? '1' : '0' ?>">
  <div class="card border-0 shadow-sm rounded-4 h-100 bg-white overflow-hidden d-flex flex-column" style="border: 1px solid #edf2f7!important">
  <!-- Image Preview -->
  <div style="height:175px;background:#0f172a;position:relative;overflow:hidden">
@@ -665,13 +688,19 @@ document.addEventListener('DOMContentLoaded', function () {
  <?= admin_e($item['excerpt']) ?>
  </p>
 
- <?php if (!empty($item['duplicate_of'])): ?>
- <div class="alert alert-warning py-2 px-3 small mb-2 d-flex align-items-start gap-2">
- <i class="bi bi-files mt-1"></i>
- <span>
- خبر مكرر — الأصل: <strong><?= admin_e($item['duplicate_title'] ?: 'خبر سابق') ?></strong>
- <span class="text-muted">(تشابه <?= (int) ($item['duplicate_score'] ?? 0) ?>%)</span>
- </span>
+ <?php if (!empty($item['duplicate_info']['is_duplicate'])): ?>
+ <div class="alert alert-warning py-1 px-2 mb-2 border-warning rounded-3 duplicate-warning-box" style="font-size:0.75rem">
+ <div class="d-flex align-items-center gap-1 fw-bold text-warning-emphasis">
+ <i class="bi bi-intersect text-warning"></i>
+ <span>تغطية مكررة (تشابه <?= (int) $item['duplicate_info']['score'] ?>%)</span>
+ </div>
+ <div class="text-muted small mt-1 text-truncate" style="font-size:0.72rem" title="<?= admin_e($item['duplicate_info']['matched_title']) ?>">
+ <?php if (!empty($item['duplicate_info']['is_published'])): ?>
+ نُشر مسبقاً بموقعك: <a href="<?= admin_e(app_url('admin/articles/' . (int) $item['duplicate_info']['matched_id'] . '/edit')) ?>" target="_blank" class="fw-bold text-dark text-decoration-underline"><?= admin_e($item['duplicate_info']['matched_title']) ?></a>
+ <?php else: ?>
+ تناوله المصدر [<?= admin_e($item['duplicate_info']['matched_source']) ?>]: «<?= admin_e($item['duplicate_info']['matched_title']) ?>»
+ <?php endif; ?>
+ </div>
  </div>
  <?php endif; ?>
 
@@ -916,8 +945,8 @@ const bar = form.closest('.d-flex.gap-1.flex-wrap');
    const badge = document.getElementById('activeSourceBadge');
    if (freshBadge && badge) badge.textContent = freshBadge.textContent;
 
-   const freshDup = doc.getElementById('duplicateCount');
-   const dupCount = document.getElementById('duplicateCount');
+   const freshDup = doc.getElementById('dupBadgeCount');
+   const dupCount = document.getElementById('dupBadgeCount');
    if (freshDup && dupCount) dupCount.textContent = freshDup.textContent;
 
    setActiveChip(url);

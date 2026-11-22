@@ -72,7 +72,9 @@ t('it gives a confidence score', isset($exact['score']) && $exact['score'] > 0 &
 
 echo "\n--- safety rails ---\n";
 t('very short titles are not judged', NewsDeduplicator::findMatch($db, 'AI') === null);
+NewsDeduplicator::clearCache();
 t('an empty database yields nothing', NewsDeduplicator::findMatch(new FakeDb(array()), 'Israel launches satellite into orbit') === null);
+NewsDeduplicator::clearCache();
 t('a database failure does not block publishing', NewsDeduplicator::findMatch(new class { public function fetchAll($s, $p = array()) { throw new RuntimeException('down'); } }, 'Israel launches satellite into orbit') === null);
 
 echo "\n--- wired into both publishing paths ---\n";
