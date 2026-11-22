@@ -43,11 +43,11 @@ t('the old duplicated status query is gone', strpos($controller, 'SELECT id, sou
 echo "\n--- the aggregator card shows who and when ---\n";
 $aggView = (string) file_get_contents($root . '/views/admin/aggregator/index.php');
 t('published state is computed once per card', substr_count($aggView, "\$itemPublished =") === 1);
-t('a publisher badge is rendered', strpos($aggView, 'bi-person-check-fill') !== false);
+t('a publisher badge is rendered', strpos($aggView, 'publisher-info-badge') !== false);
 t('the publisher name is shown', strpos($aggView, "\$item['publisher_name']") !== false);
 t('the publish time is shown in site time', strpos($aggView, "fmt_date(\$item['published_at'], 'Y-m-d H:i')") !== false);
-t('the time is LTR monospace', strpos($aggView, 'dir="ltr" class="font-monospace text-muted"') !== false);
-t('the badge only appears for published cards', strpos($aggView, "\$itemPublished && (!empty(\$item['publisher_name'])") !== false);
+t('the time is LTR monospace', strpos($aggView, 'font-monospace" dir="ltr"') !== false);
+t('the badge only appears for published cards', strpos($aggView, '<?php if ($itemPublished): ?>') !== false);
 
 echo "\n--- favorites shows the same badge ---\n";
 $favView = (string) file_get_contents($root . '/views/admin/aggregator/favorites.php');

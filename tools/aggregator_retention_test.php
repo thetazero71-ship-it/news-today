@@ -48,6 +48,35 @@ file_put_contents($oldPath, json_encode($tmpData));
 t('an older copy is not "fresh"', $cache->getNewer($oldFreshUrl, 300) === null && $cache->get($oldFreshUrl) !== null);
 t('the dedupe cache can be reset', method_exists('NewsDeduplicator', 'clearCache'));
 
+echo "\n--- the cache accumulates instead of replacing ---\n";
+$accUrl = 'https://example.com/acc';
+$cache->accumulate($accUrl, [
+    ['title' => 'older', 'link' => 'https://example.com/a', 'pubDate' => '2026-11-20 08:00'],
+    ['title' => 'newer', 'link' => 'https://example.com/b', 'pubDate' => '2026-11-21 08:00'],
+]);
+$acc = $cache->accumulate($accUrl, [
+    ['title' => 'brand new', 'link' => 'https://example.com/c', 'pubDate' => '2026-11-22 08:00'],
+    ['title' => 'newer again', 'link' => 'https://example.com/b', 'pubDate' => '2026-11-21 09:00'],
+]);
+t('items from both fetches are kept', count($acc) === 3);
+t('the newest item is first', $acc[0]['link'] === 'https://example.com/c');
+$hitAcc = $cache->get($accUrl);
+t('first_seen_at is stamped', !empty($hitAcc['items'][0]['first_seen_at']));
+t('a disappeared item inside 48h survives', count($hitAcc['items']) === 3);
+
+$oldAcc = $cache->path('https://example.com/acc-old');
+file_put_contents($oldAcc, json_encode([
+    'url' => 'x',
+    'fetched_at' => time(),
+    'items' => [
+        ['title' => 'very old', 'link' => 'https://example.com/old', 'pubDate' => '2026-11-01 08:00', 'first_seen_at' => time() - FeedCache::TTL - 60],
+    ],
+]));
+$afterOld = $cache->accumulate('https://example.com/acc-old', [
+    ['title' => 'fresh', 'link' => 'https://example.com/fresh', 'pubDate' => '2026-11-22 08:00'],
+]);
+t('an expired disappeared item is dropped', count($afterOld) === 1 && $afterOld[0]['link'] === 'https://example.com/fresh');
+
 echo "\n--- normalisation keeps one file per feed ---\n";
 $cache->put('http://www.Example.com/feed/', $items);
 t('scheme, www and trailing slash collapse', $cache->path('https://example.com/feed') === $cache->path('http://www.Example.com/feed/'));
@@ -78,7 +107,7 @@ $favView = (string) file_get_contents($root . '/views/admin/aggregator/favorites
 t('the controller owns a cache', strpos($controller, 'private function feedCache(): FeedCache') !== false);
 t('a failed fetch reads the cache', strpos($controller, '$cached = $this->feedCache()->get($url);') !== false);
 t('the cached response is marked', strpos($controller, "'from_cache' => true") !== false);
-t('a successful fetch is stored', strpos($controller, '$this->feedCache()->put($url, $items);') !== false);
+t('a successful fetch is accumulated', strpos($controller, '$this->feedCache()->accumulate($url, $items);') !== false);
 t('the aggregator warns when serving cache', strpos($aggView, 'آخر نسخة محفوظة') !== false);
 t('the warning shows the cache time', strpos($aggView, "fmt_date(\$cachedAt, 'Y-m-d H:i')") !== false);
 t('favorites marks cached sources', strpos($favView, "!empty(\$group['from_cache'])") !== false);
@@ -105,15 +134,21 @@ $js = (string) file_get_contents($root . '/assets/js/tech-platform.js');
 t('the route exists', strpos($index, "'/home/load-more', 'HomeController@loadMore'") !== false);
 t('the action exists', strpos($home, 'public function loadMore()') !== false);
 t('it answers with json', strpos($home, "'Content-Type: application/json; charset=utf-8'") !== false);
-t('it compensates for the hidden featured card', strpos($home, '$offset = max(0, ($page - 1) * $perPage - 1);') !== false);
+t('it accepts an explicit offset', strpos($home, '$_GET[\'offset\']') !== false
+    && strpos($home, 'max(0, (int) $_GET[\'offset\'])') !== false);
 t('it asks for one extra row to detect more', strpos($home, 'getLatest($perPage + 1, $offset)') !== false);
 t('the query supports offsets', strpos($model, 'public function getLatest($limit = 10, $offset = 0)') !== false
     && strpos($model, '" OFFSET " . $offset') !== false);
 t('the card markup is shared', strpos($homeView, "require APP_ROOT . '/views/partials/home-news-cards.php'") !== false
     && $partial !== '');
-t('the grid has a stable id', strpos($homeView, 'id="homeNewsGrid"') !== false);
-t('the button carries the next page', strpos($homeView, 'id="homeLoadMoreBtn" data-next-page="2"') !== false);
-t('the script fetches the endpoint', strpos($js, "'/home/load-more?page='") !== false);
+t('the classic grid has a stable id', strpos($homeView, 'id="homeNewsGrid"') !== false);
+t('the bento grid has a stable id', strpos($homeView, 'id="homeBentoGrid"') !== false);
+t('the default grid has a stable id', strpos($homeView, 'id="homeDefaultGrid"') !== false);
+t('the button carries the next offset', strpos($homeView, 'data-next-offset=') !== false);
+t('the button carries the active template', strpos($homeView, 'data-template=') !== false);
+t('the script fetches the endpoint', strpos($js, "'/home/load-more?offset='") !== false);
+t('the endpoint renders the bento partial', strpos($home, "'home-news-cards-bento'") !== false);
+t('the endpoint renders the default partial', strpos($home, "'home-news-cards-default'") !== false);
 t('new cards are appended', strpos($js, "grid.insertAdjacentHTML('beforeend', data.html)") !== false);
 t('the button disappears at the end', strpos($js, "document.getElementById('homeLoadMoreWrap')") !== false);
 

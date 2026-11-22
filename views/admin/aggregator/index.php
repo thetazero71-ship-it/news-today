@@ -704,12 +704,19 @@ document.addEventListener('DOMContentLoaded', function () {
  </div>
  <?php endif; ?>
 
- <?php if ($itemPublished && (!empty($item['publisher_name']) || !empty($item['published_at']))): ?>
- <div class="d-flex align-items-center flex-wrap gap-2 small mb-2" style="color:#0f766e">
- <i class="bi bi-person-check-fill"></i>
- <?php if (!empty($item['publisher_name'])): ?><strong><?= admin_e($item['publisher_name']) ?></strong><?php endif; ?>
- <?php if (!empty($item['published_at'])): ?><span class="text-muted">·</span><span dir="ltr" class="font-monospace text-muted"><?= admin_e(fmt_date($item['published_at'], 'Y-m-d H:i')) ?></span><?php endif; ?>
+ <?php if ($itemPublished): ?>
+ <div class="d-flex align-items-center gap-2 mb-2 flex-wrap news-publisher-meta" style="font-size:0.75rem">
+ <span class="badge bg-light text-dark border small py-0 px-2 d-inline-flex align-items-center gap-1 publisher-info-badge" title="الناشر">
+ <i class="bi bi-person-fill text-primary"></i>
+ <span class="news-author-val"><?= admin_e($item['publisher_name'] ?: 'مدير النظام') ?></span>
+ </span>
+ <span class="badge bg-light text-muted border small py-0 px-2 d-inline-flex align-items-center gap-1 publish-time-badge font-monospace" dir="ltr" title="تاريخ ووقت النشر الدقيق">
+ <i class="bi bi-clock-history text-secondary"></i>
+ <span class="news-pubtime-val"><?= admin_e($item['published_at'] ? fmt_date($item['published_at'], 'Y-m-d H:i') : '') ?></span>
+ </span>
  </div>
+ <?php else: ?>
+ <div class="d-flex align-items-center gap-2 mb-2 flex-wrap news-publisher-meta" style="font-size:0.75rem;display:none"></div>
  <?php endif; ?>
 
  <!-- Actions Bar -->
@@ -864,6 +871,17 @@ const bar = form.closest('.d-flex.gap-1.flex-wrap');
      statusBadge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> منشور للعامة';
      card.setAttribute('data-news-status', 'published');
      filterNewsLive();
+    }
+
+    const metaBox = card ? card.querySelector('.news-publisher-meta') : null;
+    if (metaBox) {
+     const author = (data && data.author_name) ? data.author_name : 'مدير النظام';
+     const pTime = (data && data.published_at) ? data.published_at : '';
+     metaBox.innerHTML = '<span class="badge bg-light text-dark border small py-0 px-2 d-inline-flex align-items-center gap-1 publisher-info-badge" title="الناشر">'
+       + '<i class="bi bi-person-fill text-primary"></i> <span class="news-author-val">' + esc(author) + '</span></span>'
+       + '<span class="badge bg-light text-muted border small py-0 px-2 d-inline-flex align-items-center gap-1 publish-time-badge font-monospace" dir="ltr" title="تاريخ ووقت النشر الدقيق">'
+       + '<i class="bi bi-clock-history text-secondary"></i> <span class="news-pubtime-val">' + esc(pTime) + '</span></span>';
+     metaBox.style.display = 'flex';
     }
     if (btn && btn.isConnected) { btn.disabled = false; btn.innerHTML = originalHtml; }
 

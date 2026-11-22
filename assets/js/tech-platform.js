@@ -2086,8 +2086,7 @@
 // --- 11. Home: load more news without leaving the page ---
 (function () {
   const btn = document.getElementById('homeLoadMoreBtn');
-  const grid = document.getElementById('homeNewsGrid');
-  if (!btn || !grid || typeof window.fetch !== 'function') return;
+  if (!btn || typeof window.fetch !== 'function') return;
 
   let loading = false;
 
@@ -2095,14 +2094,18 @@
     if (loading) return;
     loading = true;
 
-    const page = parseInt(btn.getAttribute('data-next-page') || '2', 10);
+    const grid = document.getElementById(btn.getAttribute('data-grid') || 'homeNewsGrid');
+    const template = btn.getAttribute('data-template') || 'editorial_verge';
+    const nextOffset = parseInt(btn.getAttribute('data-next-offset') || '0', 10);
+    if (!grid) { loading = false; return; }
+
     const original = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span>جارٍ التحميل…</span>';
 
     try {
       const base = (window.APP_BASE_URL || window.location.origin).replace(/\/$/, '');
-      const res = await fetch(base + '/home/load-more?page=' + encodeURIComponent(page), {
+      const res = await fetch(base + '/home/load-more?offset=' + encodeURIComponent(nextOffset) + '&template=' + encodeURIComponent(template), {
         credentials: 'same-origin',
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
       });
@@ -2114,9 +2117,9 @@
       grid.insertAdjacentHTML('beforeend', data.html);
 
       if (data.has_more) {
-        btn.setAttribute('data-next-page', String(page + 1));
+        btn.setAttribute('data-next-offset', String(data.next_offset || (nextOffset + 12)));
       } else {
-        const wrap = document.getElementById('homeLoadMoreWrap');
+        const wrap = btn.closest('.home-load-more-wrap') || document.getElementById('homeLoadMoreWrap');
         if (wrap) wrap.remove();
       }
     } catch (err) {

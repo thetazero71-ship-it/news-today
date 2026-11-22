@@ -66,6 +66,85 @@ class FeedCache
     }
 
     /**
+     * التراكم الحقيقي: كل عنصر جديد يُحفظ دائماً، والعناصر التي اختفت من
+     * الخلاصة تبقى حتى 48 ساعة، ثم يُرتَّب الكل زمنياً من الأحدث للأقدم.
+     * يمنع فقدان أخبار المصادر السريعة (The Verge) بين الجلبات.
+     *
+     * @param array<int, array> $newItems
+     * @return array<int, array>
+     */
+    public function accumulate(string $url, array $newItems): array
+    {
+        $file = $this->path($url);
+        $cached = array();
+        if (is_file($file)) {
+            $raw = @file_get_contents($file);
+            if ($raw !== false && $raw !== '') {
+                $data = json_decode($raw, true);
+                if (is_array($data) && !empty($data['items']) && is_array($data['items'])) {
+                    $cached = $data['items'];
+                }
+            }
+        }
+
+        $now = time();
+        $map = array();
+
+        foreach ($newItems as $item) {
+            $key = self::itemKey($item);
+            if ($key === '') {
+                continue;
+            }
+            if (!isset($item['first_seen_at']) || (int) $item['first_seen_at'] <= 0) {
+                $item['first_seen_at'] = $now;
+            }
+            $item['last_seen_at'] = $now;
+            $map[$key] = $item;
+        }
+
+        foreach ($cached as $item) {
+            $key = self::itemKey($item);
+            if ($key === '' || isset($map[$key])) {
+                continue;
+            }
+            $firstSeen = (int) ($item['first_seen_at'] ?? ($item['last_seen_at'] ?? 0));
+            if ($firstSeen <= 0) {
+                $firstSeen = $now;
+            }
+            if (($now - $firstSeen) > self::TTL) {
+                continue; // أقدم من 48 ساعة وتختفي من الخلاصة الحية
+            }
+            $item['first_seen_at'] = $firstSeen;
+            $map[$key] = $item;
+        }
+
+        $items = array_values($map);
+        usort($items, function ($a, $b) {
+            $ta = strtotime((string) ($a['pubDate'] ?? ''));
+            $tb = strtotime((string) ($b['pubDate'] ?? ''));
+            if ($ta === false || $ta <= 0) { $ta = (int) ($a['first_seen_at'] ?? 0); }
+            if ($tb === false || $tb <= 0) { $tb = (int) ($b['first_seen_at'] ?? 0); }
+            return $tb <=> $ta;
+        });
+
+        $this->put($url, $items);
+
+        return $items;
+    }
+
+    /** مفتاح ثابت للعنصر: رابطه بعد إزالة البروتوكول/الـ www. */
+    private static function itemKey(array $item): string
+    {
+        $link = strtolower(trim((string) ($item['link'] ?? '')));
+        if ($link === '') {
+            return '';
+        }
+        $link = preg_replace('#^https?://#i', '', $link);
+        $link = preg_replace('#^www\.#i', '', $link);
+        return rtrim($link, '/');
+    }
+
+    /**
      * نسخة حديثة فقط (عمر أقل من $maxAge ثانية) — للاستجابة الفورية في
      * صفحات الإدارة بدل انتظار الشبكة في كل تحميل.
      *

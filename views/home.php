@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 if (!function_exists('e')) {
     function e($value)
     {
@@ -126,7 +126,7 @@ require_once APP_ROOT . '/views/partials/header.php';
                 </div>
 
                 <div class="home-load-more-wrap" id="homeLoadMoreWrap" style="text-align:center;margin:26px 0 6px">
-                    <button type="button" class="btn-primary-glow" id="homeLoadMoreBtn" data-next-page="2" aria-controls="homeNewsGrid">
+                    <button type="button" class="btn-primary-glow" id="homeLoadMoreBtn" data-template="classic_techwd" data-grid="homeNewsGrid" data-next-offset="<?= (int) count($latest) + 1 ?>" aria-controls="homeNewsGrid">
                         <span>تحميل المزيد</span>
                     </button>
                 </div>
@@ -231,27 +231,17 @@ require_once APP_ROOT . '/views/partials/header.php';
             <div class="section-head">
                 <h2 class="section-title">شبكة الأخبار والتحليلات المتخصصة</h2>
             </div>
-            <div class="news-grid" style="grid-template-columns:repeat(auto-fill, minmax(320px, 1fr))">
-                <?php foreach (array_slice($latest, 2) as $article): ?>
-                    <article class="news-card bento-card-item" <?= news_card_attrs($article) ?>>
-                        <div class="card-img-wrap">
-                            <span class="card-tag"><?= e($article['category_name'] ?: 'تقنية') ?></span>
-                            <?php if (!empty($article['featured_image'])): ?>
-                                <img src="<?= e(app_url($article['featured_image'])) ?>" alt="<?= e($article['title']) ?>" loading="lazy" onerror="this.onerror=null;this.src='<?= e(\FallbackImage::general()) ?>';">
-                            <?php else: ?>
-                                <div style="width:100%;height:100%;background:var(--bg-surface-elevated);display:grid;place-items:center;color:var(--accent-primary);font-size:2rem"><?= ui_icon('general', '', 32) ?></div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="card-body">
-                            <h3><a href="<?= e(app_url('article/' . $article['slug'])) ?>"><?= e($article['title']) ?></a></h3>
-                            <p><?= e($article['excerpt'] ?: 'تفاصيل شاملة حول أحدث الأخبار والتحليلات المتخصصة.') ?></p>
-                            <div class="card-footer">
-                                <small class="text-muted"><?= e(fmt_date($article['published_at'] ?: $article['created_at'])) ?></small>
-                                <a class="read-more-link" href="<?= e(app_url('article/' . $article['slug'])) ?>">قراءة ←</a>
-                            </div>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
+            <div class="news-grid" id="homeBentoGrid" style="grid-template-columns:repeat(auto-fill, minmax(320px, 1fr))">
+                <?php $articles = array_slice($latest, 2); require APP_ROOT . '/views/partials/home-news-cards-bento.php'; ?>
+            </div>
+
+            <div class="home-load-more-wrap" id="homeLoadMoreWrap" style="text-align:center;margin:26px 0 6px">
+                <button type="button" class="btn-primary-glow" id="homeLoadMoreBtn"
+                        data-template="bento_grid" data-grid="homeBentoGrid"
+                        data-next-offset="<?= (int) count($latest) + 1 ?>"
+                        aria-controls="homeBentoGrid">
+                    <span>تحميل المزيد</span>
+                </button>
             </div>
         </section>
 
@@ -443,33 +433,17 @@ require_once APP_ROOT . '/views/partials/header.php';
                 </div>
             </div>
 
-            <div class="news-grid">
-                <?php foreach ($latest as $article): ?>
-                    <article class="news-card" <?= news_card_attrs($article) ?>>
-                        <div class="card-img-wrap">
-                            <span class="card-tag"><?= e($article['category_name'] ?: 'تقنية') ?></span>
-                            <button class="card-bookmark-btn" 
-                                    data-article-id="<?= e($article['id']) ?>"
-                                    data-title="<?= e($article['title']) ?>"
-                                    data-url="<?= e(app_url('article/' . $article['slug'])) ?>"
-                                    data-category="<?= e($article['category_name'] ?: 'تقنية') ?>"
-                                    title="حفظ للقراءة"><?= ui_icon('bookmark-star', '', 14) ?></button>
-                            <?php if (!empty($article['featured_image'])): ?>
-                                <img src="<?= e(app_url($article['featured_image'])) ?>" alt="<?= e($article['title']) ?>" loading="lazy" onerror="this.onerror=null;this.src='<?= e(\FallbackImage::general()) ?>';">
-                            <?php else: ?>
-                                <div style="width:100%;height:100%;background:var(--bg-surface-elevated);display:grid;place-items:center;color:var(--accent-primary);font-size:2rem"><?= ui_icon('general', '', 32) ?></div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="card-body">
-                            <h3><a href="<?= e(app_url('article/' . $article['slug'])) ?>"><?= e($article['title']) ?></a></h3>
-                            <p><?= e($article['excerpt'] ?: 'تفاصيل شاملة حول أحدث الأخبار والتحليلات المتخصصة مع شرح مبسط وموثوق.') ?></p>
-                            <div class="card-footer">
-                                <span style="display:inline-flex;align-items:center;gap:5px"><?= ui_icon('author', '', 13) ?> بقلم <?= e($article['author_name'] ?: 'فريق التحرير') ?></span>
-                                <a class="read-more-link" href="<?= e(app_url('article/' . $article['slug'])) ?>">قراءة التفاصيل ←</a>
-                            </div>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
+            <div class="news-grid" id="homeDefaultGrid">
+                <?php $articles = $latest; require APP_ROOT . '/views/partials/home-news-cards-default.php'; ?>
+            </div>
+
+            <div class="home-load-more-wrap" id="homeLoadMoreWrap" style="text-align:center;margin:26px 0 6px">
+                <button type="button" class="btn-primary-glow" id="homeLoadMoreBtn"
+                        data-template="<?= e($activeTemplate) ?>" data-grid="homeDefaultGrid"
+                        data-next-offset="<?= (int) count($latest) + 1 ?>"
+                        aria-controls="homeDefaultGrid">
+                    <span>تحميل المزيد</span>
+                </button>
             </div>
         </section>
 

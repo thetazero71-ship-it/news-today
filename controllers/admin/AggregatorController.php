@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 class AggregatorController extends AdminController
 {
@@ -1253,7 +1253,8 @@ $suggestions = [];
  // Smart Fallback: Parse regular HTML webpage and extract news cards automatically!
  $htmlItems = $this->scrapeHtmlPage($xmlContent, $url);
  if (!empty($htmlItems)) {
- return ['success' => true, 'items' => $htmlItems, 'is_html_scraped' => true];
+ $htmlItems = $this->feedCache()->accumulate($url, $htmlItems);
+ return ['success' => true, 'items' => array_slice($htmlItems, 0, 60), 'is_html_scraped' => true];
  }
  $cached = $this->feedCache()->get($url);
  if ($cached !== null) {
@@ -1284,7 +1285,8 @@ $suggestions = [];
  // Try HTML scraper as secondary fallback
  $htmlItems = $this->scrapeHtmlPage($xmlContent, $url);
  if (!empty($htmlItems)) {
- return ['success' => true, 'items' => $htmlItems, 'is_html_scraped' => true];
+ $htmlItems = $this->feedCache()->accumulate($url, $htmlItems);
+ return ['success' => true, 'items' => array_slice($htmlItems, 0, 60), 'is_html_scraped' => true];
  }
  $cached = $this->feedCache()->get($url);
  if ($cached !== null) {
@@ -1293,8 +1295,8 @@ $suggestions = [];
   return ['success' => false, 'error' => 'لم يتم العثور على أي عناصر إخبارية داخل ملف الخلاصة.'];
  }
 
- $this->feedCache()->put($url, $items);
- return ['success' => true, 'items' => array_slice($items, 0, 30)];
+ $items = $this->feedCache()->accumulate($url, $items);
+ return ['success' => true, 'items' => array_slice($items, 0, 60)];
  }
 
  /**

@@ -42,8 +42,15 @@ class HomeController extends Controller
         if ($perPage < 1) $perPage = 12;
 
         $page = max(2, (int) ($_GET['page'] ?? 2));
-        // The first page hides the featured story, so it rendered perPage-1 cards.
-        $offset = max(0, ($page - 1) * $perPage - 1);
+        $offset = isset($_GET['offset'])
+            ? max(0, (int) $_GET['offset'])
+            : max(0, ($page - 1) * $perPage - 1);
+
+        $template = (string) ($_GET['template'] ?? 'editorial_verge');
+        $allowed = ['editorial_verge', 'minimal_techcrunch', 'cyber_futuristic', 'classic_techwd', 'bento_grid', 'digital_broadsheet'];
+        if (!in_array($template, $allowed, true)) {
+            $template = 'editorial_verge';
+        }
 
         $articleModel = new Article();
         $rows = $articleModel->getLatest($perPage + 1, $offset);
@@ -52,14 +59,24 @@ class HomeController extends Controller
             $rows = array_slice($rows, 0, $perPage);
         }
 
+        if ($template === 'bento_grid') {
+            $partial = 'home-news-cards-bento';
+        } elseif ($template === 'classic_techwd') {
+            $partial = 'home-news-cards';
+        } else {
+            $partial = 'home-news-cards-default';
+        }
+
         ob_start();
         $articles = $rows;
-        require APP_ROOT . '/views/partials/home-news-cards.php';
+        require APP_ROOT . '/views/partials/' . $partial . '.php';
         $html = (string) ob_get_clean();
 
         echo json_encode([
             'success' => true,
             'page' => $page,
+            'template' => $template,
+            'next_offset' => $offset + count($rows),
             'has_more' => $hasMore,
             'html' => $html,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
