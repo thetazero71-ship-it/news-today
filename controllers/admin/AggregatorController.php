@@ -739,7 +739,7 @@ public function addSource()
   $totalPublished = 0;
   $totalAll = 0;
   $startedAt = microtime(true);
-  $budgetSeconds = 12;
+  $budgetSeconds = 8;
 
   foreach ($favorites as $source) {
    $sourceUrl = trim((string) $source['url']);
@@ -1219,14 +1219,14 @@ $suggestions = [];
  private function fetchRss($url, $fast = false)
  {
  // كاش حديث (5 دقائق): صفحات الإدارة لا تنتظر الشبكة عند كل تحميل.
- $fresh = $this->feedCache()->getNewer($url, 300);
+ $fresh = $this->feedCache()->getNewer($url, 900);
  if ($fresh !== null) {
  return ['success' => true, 'items' => $fresh['items'], 'from_cache' => true, 'cache_fresh' => true, 'cached_at' => $fresh['fetched_at']];
  }
 
  // محرك مقاوم للحجب: يدوّر وكيل المستخدم عند 403، ويعيد المحاولة عند 429،
  // ويكشف التحويلات إلى خدمات متوقفة مثل FeedBurner.
- $fetch = FeedFetcher::fetchRaw($url, (bool) $fast, $fast ? 6000 : 0, $fast ? 4 : null, $fast ? 6 : null);
+ $fetch = FeedFetcher::fetchRaw($url, (bool) $fast, $fast ? 5000 : 0, $fast ? 3 : null, $fast ? 5 : null);
 
  if (!$fetch['success']) {
  $hint = '';

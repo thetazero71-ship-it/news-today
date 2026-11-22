@@ -11,10 +11,10 @@
 class PageCache
 {
     /** Seconds a page stays fresh. */
-    const TTL = 90;
+    const TTL = 300;
 
     /** Seconds a page may still be served (stale) while it is being rebuilt. */
-    const STALE_TTL = 900;
+    const STALE_TTL = 1800;
 
     private static $version = null;
 

@@ -1034,8 +1034,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
 // which is what causes the intermittent "502 Bad Gateway" under bursts.
 $__pageCacheable = PageCache::isCacheableRequest();
 if ($__pageCacheable && PageCache::serve()) {
+    // A cache hit must not open a database connection just to log the visit.
+    // Bots and uncached routes are still recorded by the shutdown hook below.
     if (class_exists('TrafficRadar')) {
-        TrafficRadar::recordHit();
+        TrafficRadar::skipLogging();
     }
     return;
 }

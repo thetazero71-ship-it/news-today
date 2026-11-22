@@ -3,10 +3,17 @@
 class TrafficRadar
 {
     private static $startTime = null;
+    private static $skip = false;
 
     public static function startTimer()
     {
         self::$startTime = microtime(true);
+    }
+
+    /** لا تُسجّل هذه الزيارة (مثلاً لأنها خُدمت من كاش الصفحات). */
+    public static function skipLogging(): void
+    {
+        self::$skip = true;
     }
 
     /**
@@ -16,6 +23,7 @@ class TrafficRadar
     {
         try {
             if (PHP_SAPI === 'cli') return;
+            if (self::$skip) return;
 
             $uri = $_SERVER['REQUEST_URI'] ?? '/';
             $path = parse_url($uri, PHP_URL_PATH) ?? '';
