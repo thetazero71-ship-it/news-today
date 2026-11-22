@@ -60,7 +60,9 @@ t('favorites keeps the feed date LTR', strpos($favView, 'dir="ltr"') !== false
 echo "\n--- the users table counts published articles ---\n";
 $usersController = (string) file_get_contents($root . '/controllers/admin/UsersController.php');
 $usersView = (string) file_get_contents($root . '/views/admin/users/index.php');
-t('the count is a real subquery', strpos($usersController, "SELECT COUNT(*) FROM articles a WHERE a.author_id = u.id AND a.status = 'published'") !== false);
+t('the count is a grouped join', strpos($usersController, 'LEFT JOIN (') !== false
+    && strpos($usersController, 'COUNT(*) AS published_count') !== false
+    && strpos($usersController, "WHERE status = 'published'") !== false);
 t('the count is aliased for the view', strpos($usersController, 'AS published_articles_count') !== false);
 t('the column exists in the table header', strpos($usersView, 'الأخبار المنشورة') !== false);
 t('the cell reads the count', strpos($usersView, "\$u['published_articles_count']") !== false);

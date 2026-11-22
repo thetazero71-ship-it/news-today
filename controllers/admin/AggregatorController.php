@@ -738,9 +738,22 @@ public function addSource()
   $totalNew = 0;
   $totalPublished = 0;
   $totalAll = 0;
+  $startedAt = microtime(true);
+  $budgetSeconds = 12;
 
   foreach ($favorites as $source) {
-   $feed = $this->fetchRss(trim((string) $source['url']));
+   $sourceUrl = trim((string) $source['url']);
+   if ((microtime(true) - $startedAt) > $budgetSeconds) {
+    // تجاوزنا ميزانية الصفحة: استخدم كاش 48 ساعة بدل تعليق الطلب.
+    $cached = $this->feedCache()->get($sourceUrl);
+    if ($cached !== null) {
+     $feed = ['success' => true, 'items' => $cached['items'], 'from_cache' => true, 'cached_at' => $cached['fetched_at']];
+    } else {
+     $feed = ['success' => false, 'error' => 'تأخر جلب هذا المصدر — سيُعاد المحاولة في التحديث القادم.'];
+    }
+   } else {
+    $feed = $this->fetchRss($sourceUrl, true);
+   }
    $items = array();
    $sourceNew = 0;
    $sourcePub = 0;
@@ -1203,11 +1216,17 @@ $suggestions = [];
  return $cache;
  }
 
- private function fetchRss($url)
+ private function fetchRss($url, $fast = false)
  {
+ // كاش حديث (5 دقائق): صفحات الإدارة لا تنتظر الشبكة عند كل تحميل.
+ $fresh = $this->feedCache()->getNewer($url, 300);
+ if ($fresh !== null) {
+ return ['success' => true, 'items' => $fresh['items'], 'from_cache' => true, 'cache_fresh' => true, 'cached_at' => $fresh['fetched_at']];
+ }
+
  // محرك مقاوم للحجب: يدوّر وكيل المستخدم عند 403، ويعيد المحاولة عند 429،
  // ويكشف التحويلات إلى خدمات متوقفة مثل FeedBurner.
- $fetch = FeedFetcher::fetchRaw($url);
+ $fetch = FeedFetcher::fetchRaw($url, (bool) $fast, $fast ? 6000 : 0, $fast ? 4 : null, $fast ? 6 : null);
 
  if (!$fetch['success']) {
  $hint = '';

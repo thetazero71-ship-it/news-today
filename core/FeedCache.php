@@ -66,6 +66,24 @@ class FeedCache
     }
 
     /**
+     * نسخة حديثة فقط (عمر أقل من $maxAge ثانية) — للاستجابة الفورية في
+     * صفحات الإدارة بدل انتظار الشبكة في كل تحميل.
+     *
+     * @return array{items: array, fetched_at: int}|null
+     */
+    public function getNewer(string $url, int $maxAge): ?array
+    {
+        $hit = $this->get($url);
+        if ($hit === null) {
+            return null;
+        }
+        if ($maxAge > 0 && (time() - $hit['fetched_at']) > $maxAge) {
+            return null;
+        }
+        return $hit;
+    }
+
+    /**
      * حفظ نتيجة جلب ناجح. يحذف الملفات المنتهية أحياناً باحتمال بسيط
      * حتى لا يتراكم الكاش على الاستضافة المشتركة.
      *

@@ -36,10 +36,30 @@ class NewsDeduplicator
     /** كاش داخلي للمقالات الحديثة أثناء مسح عدة خلاصات في طلب واحد. */
     private static $cachedRecentArticles = null;
 
+    /** كاش تطبيع العناوين: كل عنوان يُطبَّع مرة واحدة فقط في الطلب. */
+    private static $normCache = array();
+
     /** تصفير الكاش (للاختبارات أو بعد نشر خبر جديد في نفس الطلب). */
     public static function clearCache(): void
     {
         self::$cachedRecentArticles = null;
+        self::$normCache = array();
+    }
+
+    /**
+     * تطبيع + تقطيع عنوان مرة واحدة، ثم إعادة النتيجة من الكاش.
+     * يمنع إعادة تطبيع 400 عنوان منشور لكل عنصر خلاصة (سبب بطء اللوحة).
+     *
+     * @return array{norm: string, tokens: array<int, string>}
+     */
+    private static function cachedTitle(string $title): array
+    {
+        $key = md5($title);
+        if (!isset(self::$normCache[$key])) {
+            $norm = self::normalise($title);
+            self::$normCache[$key] = array('norm' => $norm, 'tokens' => self::tokens($norm));
+        }
+        return self::$normCache[$key];
     }
 
     /**
@@ -69,15 +89,17 @@ class NewsDeduplicator
      */
     public static function findMatchInArticles(array $rows, string $title, float $threshold = 0.65): ?array
     {
-        $needle = self::normalise($title);
+        $needleData = self::cachedTitle($title);
+        $needle = $needleData['norm'];
         if (mb_strlen($needle) < 8) {
             return null;
         }
-        $needleTokens = self::tokens($needle);
+        $needleTokens = $needleData['tokens'];
 
         foreach ($rows as $row) {
             foreach (array($row['title'] ?? '', $row['title_ar'] ?? '') as $stored) {
-                $storedNorm = self::normalise((string) $stored);
+                $storedData = self::cachedTitle((string) $stored);
+                $storedNorm = $storedData['norm'];
                 if ($storedNorm === '') {
                     continue;
                 }
@@ -89,7 +111,7 @@ class NewsDeduplicator
                 if (mb_strlen($short) >= 20 && strpos($long, $short) !== false) {
                     return self::match($row, 0.95);
                 }
-                $score = self::similarity($needleTokens, self::tokens($storedNorm));
+                $score = self::similarity($needleTokens, $storedData['tokens']);
                 if ($score >= $threshold) {
                     return self::match($row, $score);
                 }
@@ -103,11 +125,12 @@ class NewsDeduplicator
      */
     public static function findMatchInFeedItems(string $title, array $feedItems, string $currentLink = '', float $threshold = 0.65): ?array
     {
-        $needle = self::normalise($title);
+        $needleData = self::cachedTitle($title);
+        $needle = $needleData['norm'];
         if (mb_strlen($needle) < 8) {
             return null;
         }
-        $needleTokens = self::tokens($needle);
+        $needleTokens = $needleData['tokens'];
         $normCurrentLink = trim(strtolower($currentLink));
 
         foreach ($feedItems as $item) {
@@ -116,7 +139,8 @@ class NewsDeduplicator
                 continue;
             }
             $otherTitle = (string) ($item['title'] ?? '');
-            $otherNorm = self::normalise($otherTitle);
+            $otherData = self::cachedTitle($otherTitle);
+            $otherNorm = $otherData['norm'];
             if ($otherNorm === '') {
                 continue;
             }
@@ -130,7 +154,7 @@ class NewsDeduplicator
                 return ['is_duplicate' => true, 'is_published' => false, 'title' => $otherTitle,
                     'source' => (string) ($item['source_name'] ?? 'مصدر آخر'), 'score' => 95];
             }
-            $score = self::similarity($needleTokens, self::tokens($otherNorm));
+            $score = self::similarity($needleTokens, $otherData['tokens']);
             if ($score >= $threshold) {
                 return ['is_duplicate' => true, 'is_published' => false, 'title' => $otherTitle,
                     'source' => (string) ($item['source_name'] ?? 'مصدر آخر'), 'score' => round($score * 100)];
@@ -213,11 +237,12 @@ $t = strtr((string) $t, array(
             $item['duplicate_score'] = 0;
             $item['duplicate_title'] = '';
 
-            $norm = self::normalise((string) ($item['title'] ?? ''));
+            $itemData = self::cachedTitle((string) ($item['title'] ?? ''));
+            $norm = $itemData['norm'];
             if ($norm === '' || mb_strlen($norm) < 8) {
                 continue;
             }
-            $tokens = self::tokens($norm);
+            $tokens = $itemData['tokens'];
             if (count($tokens) < 2) {
                 continue;
             }

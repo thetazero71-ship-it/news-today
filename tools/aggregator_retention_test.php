@@ -21,6 +21,7 @@ function t($label, $cond, $extra = '')
 
 $root = dirname(__DIR__);
 require_once $root . '/core/FeedCache.php';
+require_once $root . '/core/NewsDeduplicator.php';
 
 echo "--- the cache keeps quiet sources alive for 48h ---\n";
 $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'tnp_feedcache_' . bin2hex(random_bytes(4));
@@ -36,6 +37,16 @@ t('the saved items come back', is_array($hit) && count($hit['items']) === 2);
 t('the fetch time is stamped', is_array($hit) && $hit['fetched_at'] > time() - 5);
 t('empty item lists are not cached', $cache->put('https://example.com/empty', []) === false);
 t('the TTL is 48 hours', FeedCache::TTL === 172800);
+t('a fresh copy is returned without network', is_array($cache->getNewer('https://example.com/feed', 300)));
+
+$oldFreshUrl = 'https://example.com/old-fresh';
+$cache->put($oldFreshUrl, $items);
+$oldPath = $cache->path($oldFreshUrl);
+$tmpData = json_decode((string) file_get_contents($oldPath), true);
+$tmpData['fetched_at'] = time() - 400;
+file_put_contents($oldPath, json_encode($tmpData));
+t('an older copy is not "fresh"', $cache->getNewer($oldFreshUrl, 300) === null && $cache->get($oldFreshUrl) !== null);
+t('the dedupe cache can be reset', method_exists('NewsDeduplicator', 'clearCache'));
 
 echo "\n--- normalisation keeps one file per feed ---\n";
 $cache->put('http://www.Example.com/feed/', $items);

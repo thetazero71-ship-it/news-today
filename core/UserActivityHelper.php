@@ -207,20 +207,10 @@ class UserActivityHelper
             }
         }
 
-        $country = '';
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            $context = stream_context_create(['http' => ['timeout' => 2, 'header' => "User-Agent: TechNews/1.0\r\n"]]);
-            $raw = @file_get_contents('https://ip-api.com/json/' . rawurlencode($ip) . '?fields=status,country,countryCode', false, $context);
-            if (is_string($raw) && $raw !== '') {
-                $data = json_decode($raw, true);
-                if (is_array($data) && ($data['status'] ?? '') === 'success') {
-                    $country = trim((string) ($data['country'] ?? $data['countryCode'] ?? ''));
-                }
-            }
-        }
-        if ($country === '') {
-            $country = 'غير معروف';
-        }
+        // لا نستدعي أي خدمة خارجية أثناء بناء الصفحة: الطلب الشبكي كان يعلّق
+        // لوحة الإدارة لثوانٍ على الاستضافة المشتركة. نكتفي بترويسات CDN
+        // (CF-IPCountry) إن وُجدت، وإلا «غير معروف».
+        $country = 'غير معروف';
 
         if (class_exists('Cache')) {
             Cache::set($cacheKey, $country, self::GEO_TTL);

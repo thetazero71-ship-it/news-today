@@ -12,9 +12,15 @@ class UsersController extends AdminController
 
  $sql = "
  SELECT u.*, r.name as role_name, r.name_ar as role_name_ar,
- (SELECT COUNT(*) FROM articles a WHERE a.author_id = u.id AND a.status = 'published') AS published_articles_count
+ COALESCE(p.published_count, 0) AS published_articles_count
  FROM users u
  LEFT JOIN roles r ON u.role_id = r.id
+ LEFT JOIN (
+ SELECT author_id, COUNT(*) AS published_count
+ FROM articles
+ WHERE status = 'published'
+ GROUP BY author_id
+ ) p ON p.author_id = u.id
  WHERE 1=1
  ";
  $params = [];
