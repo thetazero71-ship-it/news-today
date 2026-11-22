@@ -709,6 +709,12 @@ public function addSource()
   $items[] = $item;
   }
   $items = NewsDeduplicator::annotateDuplicates($items);
+  // Rapid deck order: new items first, published ones sink to the bottom.
+  usort($items, function ($a, $b) {
+  $aPub = (($a['import_status'] ?? '') === 'published') ? 1 : 0;
+  $bPub = (($b['import_status'] ?? '') === 'published') ? 1 : 0;
+  return $aPub <=> $bPub;
+  });
   } else {
   $feedErrors++;
   }

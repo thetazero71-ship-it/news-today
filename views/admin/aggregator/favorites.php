@@ -54,6 +54,11 @@ $favPublishFields = function (array $item, string $sourceName) {
   class="btn <?= (int) $perSource === $n ? 'btn-dark' : 'btn-outline-secondary' ?>"><?= $n ?></a>
   <?php endforeach; ?>
   </div>
+  <div class="btn-group btn-group-sm" role="group" aria-label="فلترة سريعة">
+  <button type="button" class="btn btn-dark" data-fav-filter="all">الكل</button>
+  <button type="button" class="btn btn-outline-secondary" data-fav-filter="new">غير منشور</button>
+  <button type="button" class="btn btn-outline-secondary" data-fav-filter="published">منشور</button>
+  </div>
   <a href="<?= admin_e(app_url('admin/news-feeds')) ?>" class="btn btn-light border btn-sm">
   <i class="bi bi-grid me-1"></i> كل المصادر
   </a>
@@ -84,7 +89,13 @@ $favPublishFields = function (array $item, string $sourceName) {
 
  <div class="row g-3">
  <?php foreach ($groups as $group): ?>
- <?php $src = $group['source']; ?>
+ <?php
+ $src = $group['source'];
+ $newCount = 0;
+ foreach ($group['items'] as $gi) {
+  if (($gi['import_status'] ?? '') !== 'published') $newCount++;
+ }
+ ?>
  <div class="col-12 col-xl-6">
   <div class="card border-0 shadow-sm rounded-4 bg-white h-100">
    <div class="card-header bg-white d-flex align-items-center gap-2 border-bottom">
@@ -105,6 +116,9 @@ $favPublishFields = function (array $item, string $sourceName) {
     <i class="bi bi-archive-fill me-1"></i>كاش
     </span>
     <?php endif; ?>
+    <span class="badge bg-success-subtle text-success border fav-new-count" data-source-id="<?= (int) $src['id'] ?>" title="عناصر لم تُنشر بعد">
+    <i class="bi bi-stars me-1"></i><?= (int) $newCount ?> جديد
+    </span>
 <form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . (int) $src['id'] . '/toggle-favorite')) ?>"
  id="pinForm_<?= (int) $src['id'] ?>" class="d-inline">
  <?= CSRF::field() ?>
@@ -123,7 +137,7 @@ $favPublishFields = function (array $item, string $sourceName) {
     <?php elseif (empty($group['items'])): ?>
     <div class="p-3 text-muted small">لا توجد أخبار في هذه الخلاصة حالياً.</div>
     <?php else: ?>
-    <ul class="list-group list-group-flush">
+    <ul class="list-group list-group-flush fav-list-scroll">
     <?php foreach ($group['items'] as $item): ?>
     <?php
     $published = ($item['import_status'] ?? '') === 'published';
@@ -132,7 +146,7 @@ $favPublishFields = function (array $item, string $sourceName) {
      $thumb = '';
     }
     ?>
-    <li class="list-group-item d-flex align-items-center gap-3 fav-item" data-url="<?= admin_e($item['link'] ?? '') ?>" data-fav-duplicate="<?= !empty($item['duplicate_of']) ? '1' : '0' ?>">
+    <li class="list-group-item d-flex align-items-center gap-3 fav-item" data-url="<?= admin_e($item['link'] ?? '') ?>" data-fav-duplicate="<?= !empty($item['duplicate_of']) ? '1' : '0' ?>" data-fav-status="<?= $published ? 'published' : 'new' ?>" data-fav-source="<?= (int) $src['id'] ?>">
      <div class="fav-thumb flex-shrink-0">
       <?php if ($thumb !== ''): ?>
       <img src="<?= admin_e($thumb) ?>" alt="" loading="lazy" width="72" height="54"
@@ -157,7 +171,7 @@ $favPublishFields = function (array $item, string $sourceName) {
       </div>
       <?php endif; ?>
      </div>
-     <div class="d-flex flex-column gap-1" style="min-width:150px">
+     <div class="d-flex flex-column gap-1 fav-actions" data-source-id="<?= (int) $src['id'] ?>" style="min-width:150px">
       <?php if ($published): ?>
       <span class="btn btn-sm btn-success disabled" style="pointer-events:none">
       <i class="bi bi-check-circle-fill"></i> منشور
@@ -179,7 +193,7 @@ $favPublishFields = function (array $item, string $sourceName) {
       </button>
       <ul class="dropdown-menu dropdown-menu-end shadow-sm">
       <li>
-      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/translate-publish')) ?>" class="m-0">
+      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/translate-publish')) ?>" class="m-0 fav-publish-form" data-action="translate">
       <?= CSRF::field() ?>
       <?= $favPublishFields($item, (string) $src['name']) ?>
       <button type="submit" class="dropdown-item fw-semibold">
@@ -188,7 +202,7 @@ $favPublishFields = function (array $item, string $sourceName) {
       </form>
       </li>
       <li>
-      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/fast-publish')) ?>" class="m-0">
+      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/fast-publish')) ?>" class="m-0 fav-publish-form" data-action="fast">
       <?= CSRF::field() ?>
       <?= $favPublishFields($item, (string) $src['name']) ?>
       <button type="submit" class="dropdown-item fw-semibold">
@@ -198,7 +212,7 @@ $favPublishFields = function (array $item, string $sourceName) {
       </li>
       <li><hr class="dropdown-divider"></li>
       <li>
-      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/draft-article')) ?>" class="m-0">
+      <form method="post" action="<?= admin_e(app_url('admin/news-feeds/draft-article')) ?>" class="m-0 fav-publish-form" data-action="draft">
       <?= CSRF::field() ?>
       <?= $favPublishFields($item, (string) $src['name']) ?>
       <button type="submit" class="dropdown-item">
@@ -242,4 +256,103 @@ document.addEventListener('admin:favorite-changed', function (e) {
     }
   }, 200);
 });
+</script>
+
+<script>
+// ================= Rapid publishing deck (AJAX, in place) =================
+(function () {
+ const filterButtons = Array.prototype.slice.call(document.querySelectorAll('[data-fav-filter]'));
+ let currentFilter = 'all';
+
+ function applyFilter() {
+  document.querySelectorAll('.fav-item').forEach(function (item) {
+   const status = item.getAttribute('data-fav-status') || 'new';
+   const show = currentFilter === 'all'
+    || (currentFilter === 'new' ? status !== 'published' : status === currentFilter);
+   item.style.display = show ? '' : 'none';
+  });
+ }
+
+ filterButtons.forEach(function (btn) {
+  btn.addEventListener('click', function () {
+   currentFilter = btn.getAttribute('data-fav-filter') || 'all';
+   filterButtons.forEach(function (b) {
+    const on = b === btn;
+    b.classList.toggle('btn-dark', on);
+    b.classList.toggle('btn-outline-secondary', !on);
+   });
+   applyFilter();
+  });
+ });
+
+ function deckToast(message, type) {
+  if (window.adminToast) window.adminToast(message, type || 'info');
+ }
+
+ function refreshCounter(sourceId) {
+  const counter = document.querySelector('.fav-new-count[data-source-id="' + sourceId + '"]');
+  if (!counter) return;
+  const m = (counter.textContent || '').match(/\d+/);
+  const n = Math.max(0, (m ? parseInt(m[0], 10) : 1) - 1);
+  counter.innerHTML = '<i class="bi bi-stars me-1"></i>' + n + ' جديد';
+ }
+
+ function markItem(item, state, editUrl, label) {
+  item.setAttribute('data-fav-status', state);
+  const actions = item.querySelector('.fav-actions');
+  if (actions && editUrl) {
+   actions.innerHTML = '<span class="btn btn-sm ' + (state === 'published' ? 'btn-success' : 'btn-warning text-dark') + ' disabled" style="pointer-events:none">'
+    + '<i class="bi ' + (state === 'published' ? 'bi-check-circle-fill' : 'bi-pencil-square') + '"></i> ' + label + '</span>'
+    + ' <a class="btn btn-sm btn-outline-primary" href="' + String(editUrl).replace(/"/g, '&quot;') + '"><i class="bi bi-pencil-square"></i> تعديل</a>';
+  }
+  refreshCounter(item.getAttribute('data-fav-source') || '');
+  applyFilter();
+ }
+
+ document.querySelectorAll('.fav-publish-form').forEach(function (form) {
+  form.addEventListener('submit', async function (event) {
+   event.preventDefault();
+   if (form.dataset.busy === '1') return;
+   form.dataset.busy = '1';
+
+   const item = form.closest('.fav-item');
+   const action = form.getAttribute('data-action') || 'translate';
+   const button = form.querySelector('button[type="submit"], button');
+   const original = button ? button.innerHTML : '';
+   if (button) {
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> جارٍ التنفيذ…';
+   }
+
+   try {
+    const res = await fetch(form.action, {
+     method: 'POST',
+     body: new FormData(form),
+     credentials: 'same-origin',
+     headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await res.json();
+    if (!data || !data.success) {
+     throw new Error((data && (data.message || data.error)) || 'تعذر تنفيذ العملية.');
+    }
+
+    if (action === 'draft') {
+     markItem(item, 'draft', data.edit_url || '', 'مسودة');
+     deckToast('تم استيراد الخبر كمسودة — يمكنك تحريره الآن.', 'success');
+    } else {
+     markItem(item, 'published', data.edit_url || '', 'منشور');
+     deckToast(data.message || 'تم النشر بنجاح.', 'success');
+    }
+   } catch (err) {
+    deckToast(err.message || 'تعذر تنفيذ العملية.', 'error');
+    if (button) {
+     button.disabled = false;
+     button.innerHTML = original;
+    }
+   } finally {
+    form.dataset.busy = '0';
+   }
+  });
+ });
+})();
 </script>

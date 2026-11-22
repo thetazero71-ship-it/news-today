@@ -5088,3 +5088,8 @@ body.zen-reading-mode .article-card-main {
 ::-webkit-scrollbar-track {
   background: linear-gradient(to right, transparent 4px, rgba(148, 163, 184, 0.22) 4px, rgba(148, 163, 184, 0.22) 6px, transparent 6px);
 }
+
+/* ===================== Favorites rapid deck ===================== */
+.fav-list-scroll { max-height: 560px; overflow-y: auto; scrollbar-width: thin; }
+.fav-item { transition: opacity .18s ease; }
+.fav-actions .btn { white-space: nowrap; }
