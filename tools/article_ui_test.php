@@ -86,8 +86,9 @@ t('the thumb has no side border', strpos($css, "border: 0;\n  border-radius: 999
 t('the thumb has a minimum capsule length', strpos($css, 'min-height: 72px;') !== false);
 t('the rail is centred', strpos($css, 'calc(50% - 3px)') !== false
     && strpos($css, 'calc(50% + 3px)') !== false);
-t('the rail is deep black and 4px', strpos($css, '#0a0a0a calc(50% - 3px)') !== false
+t('the rail is deep black and 6px', strpos($css, '#0a0a0a calc(50% - 3px)') !== false
     && strpos($css, '#0a0a0a calc(50% + 3px)') !== false);
+t('the rail override beats the light-theme rule', strpos($css, 'html[data-theme]::-webkit-scrollbar-track') !== false);
 t('the scrollbar is 12px wide', strpos($css, 'width: 12px;') !== false);
 t('the favourites list uses the same capsule', strpos($css, '.fav-items-scrollable::-webkit-scrollbar-thumb') !== false);
 

@@ -5340,3 +5340,19 @@ body.zen-reading-mode .article-card-main {
 }
 
 ::-webkit-scrollbar-corner { background: transparent; }
+
+/* Theme-scoped rail override: the earlier light-theme rule is more specific,
+   so repeat the black 6px rail at equal-or-higher specificity. */
+html[data-theme]::-webkit-scrollbar-track,
+html[data-theme] ::-webkit-scrollbar-track,
+html[data-theme] .fav-items-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+  background-image: linear-gradient(
+    to right,
+    transparent calc(50% - 3px),
+    #0a0a0a calc(50% - 3px),
+    #0a0a0a calc(50% + 3px),
+    transparent calc(50% + 3px)
+  );
+  background-repeat: no-repeat;
+}
