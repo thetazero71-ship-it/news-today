@@ -51,6 +51,18 @@
  </div>
 <?php endif; ?>
 
+<?php if (!empty($fromCache)): ?>
+ <div class="alert alert-info d-flex align-items-center gap-2 shadow-sm">
+ <i class="bi bi-archive-fill"></i>
+ <span>
+ تُعرض آخر نسخة محفوظة من هذه الخلاصة لأن المصدر لم يستجب الآن.
+ <?php if (!empty($cachedAt)): ?>
+ <span class="text-muted small">(آخر جلب ناجح: <span dir="ltr" class="font-monospace"><?= admin_e(fmt_date($cachedAt, 'Y-m-d H:i')) ?></span>)</span>
+ <?php endif; ?>
+ </span>
+ </div>
+<?php endif; ?>
+
 <!-- Quick Custom Web Link Scraper (Collapsed by default for clean UX) -->
 <div class="collapse mb-4 <?= !empty($customFeedUrl) ? 'show' : '' ?>" id="customScraperCollapse">
  <div class="card border-0 shadow-sm rounded-4 bg-white p-3 border-start border-primary border-4" style="background:linear-gradient(135deg, rgba(0, 242, 254, 0.05), rgba(157, 78, 221, 0.05))">
@@ -532,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function () {
  <div class="d-flex align-items-center gap-2 flex-wrap">
  <h5 class="fw-bold mb-0">
  <span>الأخبار الحية من: </span>
- <span class="badge bg-primary-subtle text-primary border py-2 px-3"><?= admin_e($activeSourceName ?: 'المصدر المحدد') ?></span>
+ <span class="badge bg-primary-subtle text-primary border py-2 px-3" id="activeSourceBadge"><?= admin_e($activeSourceName ?: 'المصدر المحدد') ?></span>
  <?php if (!empty($customFeedUrl)): ?>
  <span class="badge bg-info-subtle text-info border py-2 px-3 font-monospace ms-1"><i class="bi bi-link-45deg"></i> <?= admin_e($customFeedUrl) ?></span>
  <?php endif; ?>
@@ -821,6 +833,93 @@ const bar = form.closest('.d-flex.gap-1.flex-wrap');
     btn.innerHTML = originalHtml;
    });
   });
+ });
+})();
+</script>
+
+<script>
+// ================= In-place feed switching (pushState / popstate) =================
+// Chip links keep working as normal links without JS; with JS the grid, counters
+// and active chip are swapped in place, so switching sources never reloads the page.
+(function () {
+ const grid = document.getElementById('newsFeedGrid');
+ if (!grid || typeof window.fetch !== 'function') return;
+
+ let currentRequest = null;
+
+ function setActiveChip(url) {
+  let sourceId = '';
+  try { sourceId = new URL(url, window.location.href).searchParams.get('source_id') || ''; } catch (e) {}
+  document.querySelectorAll('.source-chip-wrapper').forEach(function (chip) {
+   const active = sourceId !== '' && chip.getAttribute('data-source-id') === sourceId;
+   chip.classList.toggle('is-active', active);
+   chip.classList.toggle('bg-dark', active);
+   chip.classList.toggle('text-white', active);
+   chip.classList.toggle('border-dark', active);
+   chip.classList.toggle('shadow-sm', active);
+   chip.classList.toggle('bg-white', !active);
+   chip.classList.toggle('text-dark', !active);
+   chip.classList.toggle('shadow-xs', !active);
+  });
+ }
+
+ async function switchFeed(url, push) {
+  if (currentRequest) currentRequest.abort();
+  currentRequest = new AbortController();
+  grid.style.opacity = '0.45';
+  grid.style.pointerEvents = 'none';
+
+  try {
+   const res = await fetch(url, {
+    credentials: 'same-origin',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    signal: currentRequest.signal
+   });
+   if (!res.ok) throw new Error('HTTP ' + res.status);
+
+   const html = await res.text();
+   const doc = new DOMParser().parseFromString(html, 'text/html');
+   const freshGrid = doc.getElementById('newsFeedGrid');
+   if (!freshGrid) { window.location.href = url; return; }
+
+   grid.innerHTML = freshGrid.innerHTML;
+
+   const freshCount = doc.getElementById('visibleNewsCount');
+   const count = document.getElementById('visibleNewsCount');
+   if (freshCount && count) count.textContent = freshCount.textContent;
+
+   const freshBadge = doc.getElementById('activeSourceBadge');
+   const badge = document.getElementById('activeSourceBadge');
+   if (freshBadge && badge) badge.textContent = freshBadge.textContent;
+
+   setActiveChip(url);
+   if (typeof window.filterNewsLive === 'function') window.filterNewsLive();
+   if (push) window.history.pushState({ feed: url }, '', url);
+  } catch (err) {
+   if (err && err.name === 'AbortError') return;
+   if (window.showToast) window.showToast('تعذر تبديل المصدر، سيُعاد تحميل الصفحة.', true);
+   window.location.href = url;
+  } finally {
+   grid.style.opacity = '';
+   grid.style.pointerEvents = '';
+  }
+ }
+
+ document.addEventListener('click', function (event) {
+  const link = event.target.closest ? event.target.closest('.source-chip-link, .pinned-source-chip a') : null;
+  if (!link || !link.href) return;
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+
+  let target;
+  try { target = new URL(link.href, window.location.href); } catch (e) { return; }
+  if (target.origin !== window.location.origin) return;
+
+  event.preventDefault();
+  switchFeed(target.toString(), true);
+ });
+
+ window.addEventListener('popstate', function () {
+  switchFeed(window.location.href, false);
  });
 })();
 </script>

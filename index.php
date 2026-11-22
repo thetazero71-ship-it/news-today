@@ -571,6 +571,7 @@ $router = new Router();
 // 🌐 PUBLIC / FRONTEND ROUTES
 // ==========================================
 $router->get('/', 'HomeController@index');
+$router->get('/home/load-more', 'HomeController@loadMore');
 $router->get('/articles', 'ArticleController@index');
 $router->get('/article/{slug}', 'ArticleController@show');
 $router->get('/p/{id}', 'ArticleController@shortlink');

@@ -100,6 +100,11 @@ $favPublishFields = function (array $item, string $sourceName) {
     <i class="bi bi-broadcast me-1"></i>تلقائي
     </span>
     <?php endif; ?>
+    <?php if (!empty($group['from_cache'])): ?>
+    <span class="badge bg-info text-dark" title="المصدر لم يستجب الآن — تُعرض آخر نسخة محفوظة (48 ساعة)">
+    <i class="bi bi-archive-fill me-1"></i>كاش
+    </span>
+    <?php endif; ?>
 <form method="post" action="<?= admin_e(app_url('admin/rss-sources/' . (int) $src['id'] . '/toggle-favorite')) ?>"
  id="pinForm_<?= (int) $src['id'] ?>" class="d-inline">
  <?= CSRF::field() ?>

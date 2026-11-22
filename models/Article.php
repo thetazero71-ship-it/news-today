@@ -2,9 +2,10 @@
 
 class Article extends Model
 {
-    public function getLatest($limit = 10)
+    public function getLatest($limit = 10, $offset = 0)
     {
         $limit = max(1, min((int) $limit, 100));
+        $offset = max(0, (int) $offset);
         $sql = "SELECT a.*, u.username AS author_name, c.name AS category_name, c.slug AS category_slug
                 FROM articles a
                 LEFT JOIN users u ON u.id = a.author_id
@@ -12,7 +13,7 @@ class Article extends Model
                 WHERE a.status = 'published'
                   AND (a.published_at IS NULL OR a.published_at <= CURRENT_TIMESTAMP)
                 ORDER BY COALESCE(a.published_at, a.created_at) DESC
-                LIMIT " . $limit;
+                LIMIT " . $limit . " OFFSET " . $offset;
 
         return $this->db->fetchAll($sql);
     }

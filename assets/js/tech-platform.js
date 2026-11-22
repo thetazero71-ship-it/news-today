@@ -2083,4 +2083,52 @@
 
 })();
 
+// --- 11. Home: load more news without leaving the page ---
+(function () {
+  const btn = document.getElementById('homeLoadMoreBtn');
+  const grid = document.getElementById('homeNewsGrid');
+  if (!btn || !grid || typeof window.fetch !== 'function') return;
+
+  let loading = false;
+
+  btn.addEventListener('click', async function () {
+    if (loading) return;
+    loading = true;
+
+    const page = parseInt(btn.getAttribute('data-next-page') || '2', 10);
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>جارٍ التحميل…</span>';
+
+    try {
+      const base = (window.APP_BASE_URL || window.location.origin).replace(/\/$/, '');
+      const res = await fetch(base + '/home/load-more?page=' + encodeURIComponent(page), {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+
+      const data = await res.json();
+      if (!data || !data.success || !data.html) throw new Error('invalid payload');
+
+      grid.insertAdjacentHTML('beforeend', data.html);
+
+      if (data.has_more) {
+        btn.setAttribute('data-next-page', String(page + 1));
+      } else {
+        const wrap = document.getElementById('homeLoadMoreWrap');
+        if (wrap) wrap.remove();
+      }
+    } catch (err) {
+      if (window.showToast) window.showToast('تعذر تحميل المزيد، حاول مرة أخرى.', true);
+    } finally {
+      loading = false;
+      if (btn.isConnected) {
+        btn.disabled = false;
+        btn.innerHTML = original;
+      }
+    }
+  });
+})();
+
 

@@ -208,6 +208,8 @@ public function index()
  'items' => $items,
  'error' => $error,
  'unpublishedCount' => $unpublishedCount,
+ 'fromCache' => !empty($feedData['from_cache'] ?? false),
+ 'cachedAt' => (int) ($feedData['cached_at'] ?? 0),
  ]);
  }
 
@@ -700,7 +702,13 @@ public function addSource()
   } else {
   $feedErrors++;
   }
-  $groups[] = array('source' => $source, 'items' => $items, 'error' => $feed['error'] ?? null);
+  $groups[] = array(
+  'source' => $source,
+  'items' => $items,
+  'error' => $feed['error'] ?? null,
+  'from_cache' => !empty($feed['from_cache']),
+  'cached_at' => (int) ($feed['cached_at'] ?? 0),
+  );
   }
 
   $this->view('admin/aggregator/favorites', array(
@@ -1076,6 +1084,16 @@ $suggestions = [];
  return $count;
  }
 
+ /** كاش الخلاصات (48 ساعة) — نسخة واحدة لكل طلب. */
+ private function feedCache(): FeedCache
+ {
+ static $cache = null;
+ if ($cache === null) {
+ $cache = new FeedCache();
+ }
+ return $cache;
+ }
+
  private function fetchRss($url)
  {
  // محرك مقاوم للحجب: يدوّر وكيل المستخدم عند 403، ويعيد المحاولة عند 429،
@@ -1090,6 +1108,11 @@ $suggestions = [];
   $hint = ' — روابط مقترحة للتجربة: ' . implode(' ، ', array_slice($alts, 0, 3));
  }
  }
+ // مصدر هادئ أو معطّل مؤقتاً: استخدم آخر نسخة صالحة (48 ساعة).
+ $cached = $this->feedCache()->get($url);
+ if ($cached !== null) {
+ return ['success' => true, 'items' => $cached['items'], 'from_cache' => true, 'cached_at' => $cached['fetched_at']];
+ }
  return ['success' => false, 'error' => $fetch['error'] . $hint];
  }
 
@@ -1103,6 +1126,10 @@ $suggestions = [];
  $htmlItems = $this->scrapeHtmlPage($xmlContent, $url);
  if (!empty($htmlItems)) {
  return ['success' => true, 'items' => $htmlItems, 'is_html_scraped' => true];
+ }
+ $cached = $this->feedCache()->get($url);
+ if ($cached !== null) {
+ return ['success' => true, 'items' => $cached['items'], 'from_cache' => true, 'cached_at' => $cached['fetched_at']];
  }
   return ['success' => false, 'error' => 'تعذر استخراج مقالات من الرابط (لا تتوفر خلاصة XML صالحة أو تعذر استخراج عناصر HTML).'];
  }
@@ -1131,9 +1158,14 @@ $suggestions = [];
  if (!empty($htmlItems)) {
  return ['success' => true, 'items' => $htmlItems, 'is_html_scraped' => true];
  }
+ $cached = $this->feedCache()->get($url);
+ if ($cached !== null) {
+ return ['success' => true, 'items' => $cached['items'], 'from_cache' => true, 'cached_at' => $cached['fetched_at']];
+ }
   return ['success' => false, 'error' => 'لم يتم العثور على أي عناصر إخبارية داخل ملف الخلاصة.'];
  }
 
+ $this->feedCache()->put($url, $items);
  return ['success' => true, 'items' => array_slice($items, 0, 30)];
  }
 
