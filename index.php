@@ -99,14 +99,13 @@ if (!function_exists('site_timezone')) {
 
 /**
  * تحويل طابع زمني مخزَّن (UTC) إلى وقت الموقع المحلي (حسب إعداد المنطقة الزمنية).
+ * يقبل ISO/RFC والطوابع الرقمية (Unix) التي ترسلها بعض الخلاصات.
  */
 if (!function_exists('site_dt')) {
     function site_dt($dateStr)
     {
         if (empty($dateStr)) return null;
-        $dt = new DateTime((string) $dateStr, new DateTimeZone('UTC'));
-        $dt->setTimezone(new DateTimeZone(site_timezone()));
-        return $dt;
+        return SiteDate::parse($dateStr, site_timezone());
     }
 }
 

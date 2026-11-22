@@ -138,7 +138,7 @@ $favPublishFields = function (array $item, string $sourceName) {
      </div>
      <div class="flex-grow-1">
       <div class="fw-semibold" style="line-height:1.5"><?= admin_e($item['title']) ?></div>
-      <div class="small text-muted"><?= admin_e($item['pubDate'] ?? '') ?></div>
+      <div class="small text-muted" dir="ltr"><span class="font-monospace"><?= admin_e($item['pubDate'] ?? '') ?></span></div>
      </div>
      <div class="d-flex flex-column gap-1" style="min-width:150px">
       <?php if ($published): ?>

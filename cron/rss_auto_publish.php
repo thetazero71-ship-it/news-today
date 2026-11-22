@@ -30,6 +30,7 @@ require_once $root . '/core/Settings.php';
 require_once $root . '/core/AiTranslator.php';
 require_once $root . '/core/CategoryClassifier.php';
 require_once $root . '/core/FeedFetcher.php';
+require_once $root . '/core/FeedDates.php';
 require_once $root . '/core/FallbackImage.php';
 require_once $root . '/core/FetchOg.php';
 require_once $root . '/core/NewsDeduplicator.php';
@@ -655,7 +656,7 @@ function fetchRssFeed(string $url): array
                 'description'    => html_entity_decode(strip_tags((string) $item->description), ENT_QUOTES, 'UTF-8'),
                 'content'        => $rawContent,
                 'featured_image' => trim($image),
-                'published_at'   => (string) $item->pubDate,
+                'published_at'   => FeedDates::fromRssItem($item),
             ];
         }
     }
@@ -687,7 +688,7 @@ function fetchRssFeed(string $url): array
                 'description'    => html_entity_decode(strip_tags((string) ($entry->summary ?? '')), ENT_QUOTES, 'UTF-8'),
                 'content'        => $rawContent,
                 'featured_image' => trim($image),
-                'published_at'   => (string) ($entry->published ?? $entry->updated ?? ''),
+                'published_at'   => FeedDates::fromAtomEntry($entry),
             ];
         }
     }

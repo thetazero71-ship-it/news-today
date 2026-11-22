@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function () {
  <?php endif; ?>
 
  <span class="badge bg-dark bg-opacity-75 text-white position-absolute top-0 start-0 m-2" style="font-size:0.75rem">
- <i class="bi bi-clock me-1"></i> <?= admin_e($item['pubDate']) ?>
+ <i class="bi bi-clock me-1"></i> <span dir="ltr" class="font-monospace"><?= admin_e($item['pubDate']) ?></span>
  </span>
 
  <?php if (!empty($item['import_status'])): ?>

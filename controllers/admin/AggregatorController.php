@@ -1095,16 +1095,19 @@ $suggestions = [];
 
  $items = [];
  
+ // تاريخ الخلاصة نفسه: تعافٍ ذاتي عند غياب تاريخ العنصر.
+ $feedDate = FeedDates::fromChannel($xml);
+
  // RSS 2.0
  if (isset($xml->channel->item)) {
  foreach ($xml->channel->item as $entry) {
- $items[] = $this->parseRssItem($entry);
+ $items[] = $this->parseRssItem($entry, $feedDate);
  }
  } 
  // Atom Feed
  elseif (isset($xml->entry)) {
  foreach ($xml->entry as $entry) {
- $items[] = $this->parseAtomItem($entry);
+ $items[] = $this->parseAtomItem($entry, $feedDate);
  }
  }
 
@@ -1204,11 +1207,12 @@ $suggestions = [];
  return $items;
  }
 
- private function parseRssItem($item)
+ private function parseRssItem($item, $feedDate = '')
  {
  $title = (string) $item->title;
  $link = (string) $item->link;
- $pubDate = (string) $item->pubDate;
+ $pubDate = FeedDates::fromRssItem($item);
+ if ($pubDate === '') { $pubDate = (string) $feedDate; }
  $description = (string) ($item->description ?? '');
  $content = (string) ($item->children('content', true)->encoded ?? $description);
 
@@ -1241,14 +1245,14 @@ $suggestions = [];
   return [
   'title' => $this->cleanTextEntity($title),
   'link' => trim($link),
-  'pubDate' => $pubDate ? fmt_date($pubDate, 'Y-m-d H:i') : fmt_date('now', 'Y-m-d H:i'),
+  'pubDate' => $this->formatFeedDate($pubDate),
   'excerpt' => mb_strimwidth($cleanDesc ?: $cleanContent, 0, 220, '…', 'UTF-8'),
   'content' => $cleanContent,
   'featured_image' => $image ?: \FallbackImage::general(),
   ];
   }
 
- private function parseAtomItem($entry)
+ private function parseAtomItem($entry, $feedDate = '')
  {
  $title = (string) $entry->title;
  $link = '';
@@ -1256,7 +1260,8 @@ $suggestions = [];
  $attrs = $entry->link->attributes();
  $link = (string) ($attrs['href'] ?? '');
  }
- $pubDate = (string) ($entry->published ?? $entry->updated ?? '');
+ $pubDate = FeedDates::fromAtomEntry($entry);
+ if ($pubDate === '') { $pubDate = (string) $feedDate; }
  $summary = (string) ($entry->summary ?? $entry->content ?? '');
 
 $image = '';
@@ -1273,11 +1278,22 @@ $image = '';
  return [
  'title' => $this->cleanTextEntity($title),
  'link' => trim($link),
- 'pubDate' => $pubDate ? fmt_date($pubDate, 'Y-m-d H:i') : fmt_date('now', 'Y-m-d H:i'),
+ 'pubDate' => $this->formatFeedDate($pubDate),
  'excerpt' => mb_strimwidth($cleanSummary, 0, 220, '…', 'UTF-8'),
  'content' => $cleanSummary,
  'featured_image' => $image ?: \FallbackImage::general(),
  ];
+ }
+
+ /**
+ * تنسيق تاريخ عنصر خلاصة بأمان: يدعم الطوابع الرقمية ومساحات الأسماء،
+ * ولا يُظهر «-» في البطاقة أبداً (يتراجع إلى وقت الجلب عند فشل التحويل).
+ */
+ private function formatFeedDate($raw)
+ {
+ $raw = trim((string) $raw);
+ $formatted = $raw !== '' ? fmt_date($raw, 'Y-m-d H:i', '') : '';
+ return $formatted !== '' ? $formatted : fmt_date('now', 'Y-m-d H:i');
  }
 
  private function cleanTextEntity($text)
