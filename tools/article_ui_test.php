@@ -80,13 +80,14 @@ t('the strip is styled', strpos($css, '.footer-hero-social-icon') !== false
     && strpos($css, '.footer-hero-social-icon:hover') !== false);
 
 echo "\n--- the capsule scrollbar ---\n";
-t('the gradient thumb exists', strpos($css, '::-webkit-scrollbar-thumb') !== false
-    && strpos($css, 'linear-gradient(180deg, #22d3ee, #6366f1)') !== false);
-t('the thumb is a capsule', strpos($css, 'border-radius: 999px') !== false);
-t('it glows', strpos($css, 'box-shadow: inset 0 0 6px rgba(34, 211, 238, 0.45)') !== false);
-t('firefox gets a thin colored bar', strpos($css, 'scrollbar-color: rgba(34, 211, 238, 0.55) transparent') !== false);
-t('the share buttons keep an accessible style', strpos($css, '.action-btn.share-brand') !== false);
-t('the footer circles have hover motion', strpos($css, '.footer-hero-social-icon:hover') !== false);
+t('the final thumb follows the site accent', strpos($css, 'linear-gradient(180deg, var(--accent-primary, #22d3ee), var(--accent-hover, #38bdf8))') !== false);
+t('the thumb is a capsule', strpos($css, 'border-radius: 9999px;') !== false);
+t('the thumb has no side border', strpos($css, "border: 0;\n  border-radius: 9999px;\n  min-height: 72px;") !== false);
+t('the thumb has a minimum capsule length', strpos($css, 'min-height: 72px;') !== false);
+t('the rail is thin and centred', strpos($css, 'calc(50% - 1px)') !== false
+    && strpos($css, 'calc(50% + 1px)') !== false);
+t('the scrollbar is 12px wide', strpos($css, 'width: 12px;') !== false);
+t('the favourites list uses the same capsule', strpos($css, '.fav-items-scrollable::-webkit-scrollbar-thumb') !== false);
 
 echo "\n--- the tutorials share bar matches the article ---\n";
 $tutorial = (string) file_get_contents($root . '/views/tutorials/show.php');
