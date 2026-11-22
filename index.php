@@ -956,6 +956,39 @@ $router->post('/admin/cron/resume', 'CronController@resume');
 $router->get('/admin/cron/status-json', 'CronController@statusJson');
 $router->post('/admin/cron/stop', 'CronController@stop');
 
+// ---------------------------------------------------------------------------
+// Maintenance mode: a real HTTP 503 for the public site. The owner can keep
+// working because the admin area, the login screen, cron and API endpoints are
+// exempt, and so are static assets (otherwise the page would be unstyled).
+// The check runs before the page cache so a cached copy is never served while
+// the site is officially under maintenance.
+// ---------------------------------------------------------------------------
+try {
+    $__siteStatus = (string) Settings::get('site_status', 'active');
+} catch (Throwable $__e) {
+    $__siteStatus = 'active';
+}
+if ($__siteStatus === 'maintenance') {
+    $__path = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+    $__path = '/' . trim($__path, '/');
+    $__exempt = preg_match('#^/(admin|login|logout|cron|api)(/|$)#i', $__path) === 1
+        || preg_match('#\.(css|js|mjs|json|webmanifest|png|jpe?g|gif|svg|ico|webp|avif|woff2?|ttf|eot|map|xml|txt)$#i', $__path) === 1;
+    $__privileged = false;
+    if (!$__exempt && class_exists('Auth') && Auth::check()) {
+        $__privileged = class_exists('Permissions')
+            ? Permissions::canEnterAdmin(Auth::user())
+            : true;
+    }
+    if (!$__exempt && !$__privileged) {
+        http_response_code(503);
+        header('Retry-After: 3600');
+        header('Content-Type: text/html; charset=utf-8');
+        header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+        include APP_ROOT . '/views/errors/maintenance.php';
+        exit;
+    }
+}
+
 // Security Guard (IDS): scan every request for intrusions (path traversal,
 // SQLi, XSS, vulnerability scanners) — blocks with 403 + logs a security
 // alert + notifies admins. Must run before dispatch and after helpers.

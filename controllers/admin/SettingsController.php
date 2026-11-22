@@ -97,7 +97,27 @@ private function ensureCoreRows($db)
   'label_en' => 'Site Description (SEO)',
   'description_ar' => 'الوصف الذي تظهره محركات البحث ومنصات التواصل. اتركه فارغاً ليستخدم اسم المنصة تلقائياً.',
   'description_en' => 'Description used by search engines and social cards. Leave empty to build it from the platform name.',
+  'sort_order' => 5,
+  ],
+  'site_status' => [
+  'group' => 'general',
+  'value' => 'active',
+  'value_type' => 'select',
+  'label_ar' => 'حالة الموقع',
+  'label_en' => 'Site Status',
+  'description_ar' => '«متاح» للعامة · «وضع الصيانة» يوقف الواجهة العامة برد 503 مع صفحة صيانة (المدراء والدخول والكرون والأصول تبقى متاحة) · «خاص» للمسجلين فقط.',
+  'description_en' => 'Active serves everyone. Maintenance returns HTTP 503 with a maintenance page (admins, login, cron and assets stay available). Private is for signed-in users.',
   'sort_order' => 3,
+  ],
+  'maintenance_message' => [
+  'group' => 'general',
+  'value' => 'نُجري أعمال صيانة دورية لتحسين المنصة. سنعود قريباً بإذن الله.',
+  'value_type' => 'textarea',
+  'label_ar' => 'رسالة وضع الصيانة',
+  'label_en' => 'Maintenance Message',
+  'description_ar' => 'النص الذي يظهر للزوار أثناء وضع الصيانة. اتركه فارغاً لاستخدام الرسالة الافتراضية.',
+  'description_en' => 'Text shown to visitors during maintenance. Leave empty to use the default message.',
+  'sort_order' => 4,
   ],
   'breaking_ticker_enabled' => [
   'group' => 'appearance',
@@ -794,6 +814,11 @@ exit;
  // Flush System Cache
  if (class_exists('Cache')) {
  Cache::flush();
+ }
+ // The public HTML cache is a separate layer: without this the new template or
+ // site status would keep serving the previous page for up to the cache TTL.
+ if (class_exists('PageCache')) {
+ PageCache::flush();
  }
 
  ActivityLogger::log('update', 'settings', null, "تحديث إعدادات المجموعة: {$group}");
