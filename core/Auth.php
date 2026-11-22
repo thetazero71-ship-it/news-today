@@ -14,6 +14,14 @@ class Auth
         Session::regenerate();
         Session::set('auth_user_id', (int) $user['id']);
         $db->query('UPDATE users SET last_login_at = CURRENT_TIMESTAMP, login_count = login_count + 1 WHERE id = :id', array(':id' => $user['id']));
+        // سجل الجلسة للأغراض التشخيصية (IP / جهاز / بلد).
+        if (class_exists('UserActivityHelper')) {
+            try {
+                UserActivityHelper::recordLogin($db, (int) $user['id'], $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '');
+            } catch (Throwable $e) {
+                // لا نُفشل الدخول بسبب التشخيص.
+            }
+        }
         return $user;
     }
 
@@ -39,6 +47,14 @@ class Auth
 
     public static function logout()
     {
+        $userId = (int) Session::get('auth_user_id');
+        if ($userId > 0 && class_exists('UserActivityHelper')) {
+            try {
+                UserActivityHelper::recordLogout(new Database(), $userId);
+            } catch (Throwable $e) {
+                // الخروج يجب أن ينجح دائماً.
+            }
+        }
         Session::destroy();
     }
 

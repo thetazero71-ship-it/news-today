@@ -109,9 +109,14 @@ $this->guardPermission('users.manage');
 
  $roles = $db->query("SELECT * FROM roles ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
+ $activity = class_exists('UserActivityHelper')
+ ? UserActivityHelper::summary($db, (int) $user['id'])
+ : array();
+
  $this->renderAdmin('admin/users/edit', [
  'user' => $user,
- 'roles' => $roles
+ 'roles' => $roles,
+ 'activity' => $activity,
  ]);
  }
 
