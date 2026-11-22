@@ -105,7 +105,7 @@ html.admin-dark .ue-chip.ok { color: #34d399; }
                 <div class="ue-stat-label">آخر تسجيل دخول</div>
                 <div class="ue-stat-value" dir="ltr"><?= $activity['last_login'] ? htmlspecialchars(fmt_date($activity['last_login'], 'H:i Y-m-d')) : '—' ?></div>
                 <div class="ue-stat-meta">
-                    <span><?= $activity['last_login'] ? 'منذ ' . htmlspecialchars(fmt_relative_time($activity['last_login'])) : 'لا يوجد بعد' ?></span>
+                    <span><?= $activity['last_login'] ? htmlspecialchars(fmt_relative_time($activity['last_login'])) : 'لا يوجد بعد' ?></span>
                     <span>· الدخول: <?= (int) ($activity['login_count'] ?? 0) ?> مرة</span>
                 </div>
             </div>
