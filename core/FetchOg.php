@@ -203,6 +203,8 @@ class FetchOg
         if ($cur !== '' && !self::isPlaceholder($cur)) {
             return $cur;
         }
-        return self::resolve($itemUrl);
+        $resolved = self::resolve($itemUrl);
+        // لا نمحو صورة موجودة إذا فشل جلب بديل: الصورة الناقصة أفضل من بلا صورة.
+        return $resolved !== '' ? $resolved : $cur;
     }
 }

@@ -244,7 +244,7 @@ $featuredImage = trim($data['featured_image'] ?? '');
   if (strlen($featuredImage) > 1000) $featuredImage = '';
   // عناصر خلاصات مثل Google News لا تحمل صوراً داخل XML؛ نجلب الصورة البارزة
   // الحقيقية من صفحة المقال الأصلية (og:image مع كاش على القرص) عند غيابها.
-  $featuredImage = FetchOg::resolveFor($sourceUrl, $featuredImage);
+  $featuredImage = $this->protectFeaturedImage($sourceUrl, $featuredImage);
  // الصورة تُحفَظ على خادمنا فوراً: الرابط الخارجي قد يموت لاحقاً
  if (ImageStore::isRemote($featuredImage)) {
   $stored = ImageStore::storeFromUrl($featuredImage);
@@ -416,7 +416,7 @@ $featuredImage = trim($data['featured_image'] ?? '');
   if (strlen($featuredImage) > 1000) $featuredImage = '';
   // عناصر خلاصات مثل Google News لا تحمل صوراً داخل XML؛ نجلب الصورة البارزة
   // الحقيقية من صفحة المقال الأصلية (og:image مع كاش على القرص) عند غيابها.
-  $featuredImage = FetchOg::resolveFor($sourceUrl, $featuredImage);
+  $featuredImage = $this->protectFeaturedImage($sourceUrl, $featuredImage);
  // الصورة تُحفَظ على خادمنا فوراً: الرابط الخارجي قد يموت لاحقاً
  if (ImageStore::isRemote($featuredImage)) {
   $stored = ImageStore::storeFromUrl($featuredImage);
@@ -542,7 +542,7 @@ $this->audit('direct_publish', 'article', $newId, null, ['source' => $sourceName
         if (strlen($featuredImage) > 1000) $featuredImage = '';
         // عناصر خلاصات مثل Google News لا تحمل صوراً داخل XML؛ نجلب الصورة البارزة
         // الحقيقية من صفحة المقال الأصلية (og:image مع كاش على القرص) عند غيابها.
-        $featuredImage = FetchOg::resolveFor($sourceUrl, $featuredImage);
+        $featuredImage = $this->protectFeaturedImage($sourceUrl, $featuredImage);
  // الصورة تُحفَظ على خادمنا فوراً: الرابط الخارجي قد يموت لاحقاً
  if (ImageStore::isRemote($featuredImage)) {
   $stored = ImageStore::storeFromUrl($featuredImage);
@@ -727,6 +727,17 @@ public function addSource()
   'feedErrors' => $feedErrors,
   ));
   return null;
+ }
+
+ /**
+ * حماية الصورة البارزة: لا تُستبدل صورة صالحة، ولا تُمحى صورة موجودة إذا
+ * فشل جلب بديل من صفحة المصدر.
+ */
+ private function protectFeaturedImage(string $sourceUrl, string $image): string
+ {
+ $image = trim($image);
+ $resolved = FetchOg::resolveFor($sourceUrl, $image);
+ return $resolved !== '' ? $resolved : $image;
  }
 
  /**

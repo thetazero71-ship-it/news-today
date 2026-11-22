@@ -730,6 +730,18 @@ exit;
  }
  }
 
+ // 1a. A stale copy of the template key in another group can win the
+ // Settings::load() race (rows are read without ORDER). Drop duplicates so the
+ // value the owner just saved is always the one applied to the public site.
+ if (isset($_POST['settings']['site_theme_template'])) {
+ try {
+  $db->query("DELETE FROM settings WHERE `key` = 'site_theme_template' AND `group` <> ?", [$group]);
+ } catch (Throwable $e) {
+  // لا نُفشل الحفظ بسبب تنظيف صف قديم.
+ }
+ }
+ Settings::clear();
+
  // 1b. The platform name is one field: keep the legacy aliases in sync so any
  // reader that still asks for "site_name" gets the same brand.
  try {
