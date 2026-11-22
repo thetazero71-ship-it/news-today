@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Standalone Bootstrap 5 RTL Essential Core Styles & Utilities
  * Provides complete offline / fail-safe layout for Admin Panel
  */
@@ -492,10 +492,10 @@ html.admin-dark code {
   background: transparent;
   background-image: linear-gradient(
     to right,
-    transparent calc(50% - 3px),
-    #0a0a0a calc(50% - 3px),
-    #0a0a0a calc(50% + 3px),
-    transparent calc(50% + 3px)
+    transparent calc(50% - 2px),
+    #0a0a0a calc(50% - 2px),
+    #0a0a0a calc(50% + 2px),
+    transparent calc(50% + 2px)
   );
   background-repeat: no-repeat;
 }
@@ -515,10 +515,10 @@ html.admin-dark code {
 html.admin-dark ::-webkit-scrollbar-track {
   background-image: linear-gradient(
     to right,
-    transparent calc(50% - 3px),
-    rgba(148, 163, 184, 0.45) calc(50% - 3px),
-    rgba(148, 163, 184, 0.45) calc(50% + 3px),
-    transparent calc(50% + 3px)
+    transparent calc(50% - 2px),
+    rgba(148, 163, 184, 0.45) calc(50% - 2px),
+    rgba(148, 163, 184, 0.45) calc(50% + 2px),
+    transparent calc(50% + 2px)
   );
 }
 html.admin-dark ::-webkit-scrollbar-thumb {

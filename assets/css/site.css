@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    AsabTech - Multi-Template Professional Design System
    Templates:
    1. editorial_verge (The Verge & Wired Style)
@@ -5316,10 +5316,10 @@ body.zen-reading-mode .article-card-main {
   background: transparent;
   background-image: linear-gradient(
     to right,
-    transparent calc(50% - 3px),
-    #0a0a0a calc(50% - 3px),
-    #0a0a0a calc(50% + 3px),
-    transparent calc(50% + 3px)
+    transparent calc(50% - 2px),
+    #0a0a0a calc(50% - 2px),
+    #0a0a0a calc(50% + 2px),
+    transparent calc(50% + 2px)
   );
   background-repeat: no-repeat;
 }
@@ -5349,10 +5349,10 @@ html[data-theme] .fav-items-scrollable::-webkit-scrollbar-track {
   background: transparent;
   background-image: linear-gradient(
     to right,
-    transparent calc(50% - 3px),
-    #0a0a0a calc(50% - 3px),
-    #0a0a0a calc(50% + 3px),
-    transparent calc(50% + 3px)
+    transparent calc(50% - 2px),
+    #0a0a0a calc(50% - 2px),
+    #0a0a0a calc(50% + 2px),
+    transparent calc(50% + 2px)
   );
   background-repeat: no-repeat;
 }
