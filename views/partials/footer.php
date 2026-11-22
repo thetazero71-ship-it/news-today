@@ -16,6 +16,26 @@ if (!isset($categories)) {
 
 $siteName = Brand::name();
 $siteDesc = Settings::get('meta_description', 'منصة عربية رائدة في تغطية الأخبار التقنية، أحدث تطورات الذكاء الاصطناعي، الأجهزة الذكية، والأمن السيبراني.');
+
+// Footer social icons: only networks the owner actually configured, up to five.
+$footerSocials = [
+    ['key' => 'social_facebook',  'icon' => 'facebook',  'label' => 'فيسبوك'],
+    ['key' => 'social_x',         'icon' => 'twitter-x', 'label' => 'منصة X'],
+    ['key' => 'social_linkedin',  'icon' => 'linkedin',  'label' => 'لينكدإن'],
+    ['key' => 'social_youtube',   'icon' => 'youtube',   'label' => 'يوتيوب'],
+    ['key' => 'social_instagram', 'icon' => 'instagram', 'label' => 'انستقرام'],
+    ['key' => 'social_telegram',  'icon' => 'telegram',  'label' => 'تيلجرام'],
+    ['key' => 'social_whatsapp',  'icon' => 'whatsapp',  'label' => 'واتساب'],
+];
+$footerSocialLinks = [];
+foreach ($footerSocials as $social) {
+    $socialUrl = trim((string) Settings::get($social['key'], ''));
+    if ($socialUrl !== '') {
+        $social['url'] = $socialUrl;
+        $footerSocialLinks[] = $social;
+    }
+}
+$footerSocialLinks = array_slice($footerSocialLinks, 0, 5);
 ?>
 
 <!-- Command Palette Modal -->
@@ -64,6 +84,15 @@ $siteDesc = Settings::get('meta_description', 'منصة عربية رائدة ف
                 <p class="footer-brand-desc">
                     <?= view_e($siteDesc) ?>
                 </p>
+                <?php if (!empty($footerSocialLinks)): ?>
+                    <div class="footer-social-row" aria-label="حسابات المنصة على مواقع التواصل">
+                        <?php foreach ($footerSocialLinks as $social): ?>
+                            <a class="footer-social-link" href="<?= view_e($social['url']) ?>" target="_blank" rel="external noopener nofollow" title="<?= view_e($social['label']) ?>" aria-label="<?= view_e($social['label']) ?>">
+                                <?= ui_icon($social['icon'], '', 16) ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="footer-col">
                 <h4>أقسام وتغطيات</h4>

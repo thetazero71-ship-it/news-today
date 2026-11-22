@@ -107,9 +107,25 @@ class ArticleController extends Controller
             ", [':aid' => (int) $article['id']]);
         }
 
+        // Sidebar tabs: newest stories and most-read stories (CSS-only tabs).
+        $latestStories = $db->fetchAll("
+            SELECT id, title, slug, published_at, created_at
+            FROM articles
+            WHERE id != :aid AND status = 'published'
+            ORDER BY published_at DESC, id DESC LIMIT 6
+        ", [':aid' => (int) $article['id']]);
+        $mostViewedStories = $db->fetchAll("
+            SELECT id, title, slug, published_at, created_at, views_count
+            FROM articles
+            WHERE id != :aid AND status = 'published'
+            ORDER BY views_count DESC, published_at DESC LIMIT 6
+        ", [':aid' => (int) $article['id']]);
+
         $this->view('article', array(
             'article'     => $article,
             'related'     => $related,
+            'latestStories' => $latestStories,
+            'mostViewedStories' => $mostViewedStories,
             'reactions'   => $reactionCounts,
             'userReacted' => $userReacted,
         ));

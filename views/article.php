@@ -390,16 +390,19 @@ require_once APP_ROOT . '/views/partials/header.php';
                 <?= ui_icon('share', 'text-primary', 16) ?>
                 <span>نشر ومشاركة المقال:</span>
             </span>
-            <div style="display:flex;gap:8px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <?php if (Settings::get('enable_share_twitter', '1') == '1'): ?>
-                    <a class="action-btn" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على X">𝕏</a>
+                    <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://twitter.com/intent/tweet?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على X" aria-label="مشاركة على X"><?= ui_icon('twitter-x', '', 16) ?></a>
+                <?php endif; ?>
+                <?php if (Settings::get('enable_share_facebook', '1') == '1'): ?>
+                    <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://www.facebook.com/sharer/sharer.php?u=<?= rawurlencode($shareUrl) ?>" title="مشاركة على فيسبوك" aria-label="مشاركة على فيسبوك"><?= ui_icon('facebook', '', 16) ?></a>
                 <?php endif; ?>
                 <?php if (Settings::get('enable_share_whatsapp', '1') == '1'): ?>
-                    <a class="action-btn" target="_blank" rel="noopener" href="https://wa.me/?text=<?= rawurlencode($shareTitle . ' ' . $shareUrl) ?>" title="مشاركة على واتساب"><?= ui_icon('comments', '', 16) ?></a>
+                    <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://wa.me/?text=<?= rawurlencode($shareTitle . ' ' . $shareUrl) ?>" title="مشاركة على واتساب" aria-label="مشاركة على واتساب"><?= ui_icon('whatsapp', '', 16) ?></a>
                 <?php endif; ?>
-                <a class="action-btn" target="_blank" rel="noopener" href="https://t.me/share/url?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على تليجرام"><?= ui_icon('link', '', 16) ?></a>
-                <a class="action-btn" target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=<?= rawurlencode($shareUrl) ?>" title="مشاركة على لينكد إن" style="font-weight:800;font-size:0.85rem">in</a>
-                <button class="action-btn" type="button" onclick="navigator.clipboard.writeText('<?= article_e($shareUrl) ?>').then(()=>{ if(window.showToast) showToast('تم نسخ رابط المقال بنجاح!','✔️'); else adminToast('تم نسخ رابط المقال بنجاح!', 'success'); })" title="نسخ رابط المقال"><?= ui_icon('link', '', 16) ?></button>
+                <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://t.me/share/url?url=<?= rawurlencode($shareUrl) ?>&text=<?= rawurlencode($shareTitle) ?>" title="مشاركة على تليجرام" aria-label="مشاركة على تليجرام"><?= ui_icon('telegram', '', 16) ?></a>
+                <a class="action-btn share-brand" target="_blank" rel="noopener nofollow" href="https://www.linkedin.com/sharing/share-offsite/?url=<?= rawurlencode($shareUrl) ?>" title="مشاركة على لينكد إن" aria-label="مشاركة على لينكد إن"><?= ui_icon('linkedin', '', 16) ?></a>
+                <button class="action-btn share-brand" type="button" onclick="navigator.clipboard.writeText('<?= article_e($shareUrl) ?>').then(()=>{ if(window.showToast) showToast('تم نسخ رابط المقال بنجاح!','✔️'); else adminToast('تم نسخ رابط المقال بنجاح!', 'success'); })" title="نسخ رابط المقال" aria-label="نسخ رابط المقال"><?= ui_icon('copy', '', 16) ?></button>
             </div>
         </div>
 
@@ -483,6 +486,8 @@ require_once APP_ROOT . '/views/partials/header.php';
 
     <!-- ================= 📊 SIDEBAR (Visible on Non-Minimalist Templates) ================= -->
     <?php if ($activeTemplate !== 'minimal_techcrunch'): ?>
+        <?php $latestStories = $latestStories ?? []; ?>
+        <?php $mostViewedStories = $mostViewedStories ?? []; ?>
         <aside class="sidebar-sticky-wrap">
             
             <!-- Sidebar Ad Slot -->
@@ -499,6 +504,49 @@ require_once APP_ROOT . '/views/partials/header.php';
                     <span>فريق تحرير نشط على مدار الساعة</span>
                 </div>
             </div>
+
+            <!-- Latest / Most Viewed Tabs (CSS-only, works without JS) -->
+            <?php if (!empty($latestStories) || !empty($mostViewedStories)): ?>
+                <div class="side-widget-card sidebar-tabs-card">
+                    <h4>متابعة سريعة</h4>
+                    <div class="sidebar-tabs">
+                        <input class="sidebar-tab-input" type="radio" name="article-side-tab" id="side-tab-latest" checked>
+                        <input class="sidebar-tab-input" type="radio" name="article-side-tab" id="side-tab-viewed">
+                        <label class="sidebar-tab-label" for="side-tab-latest">آخر الأخبار</label>
+                        <label class="sidebar-tab-label" for="side-tab-viewed">الأكثر مشاهدة</label>
+
+                        <div class="sidebar-tab-panel sidebar-panel-latest">
+                            <?php foreach ($latestStories as $idx => $story): ?>
+                                <a class="side-tab-item" href="<?= article_e(app_url('article/' . $story['slug'])) ?>">
+                                    <span class="side-tab-rank"><?= $idx + 1 ?></span>
+                                    <span class="side-tab-text">
+                                        <span class="side-tab-title"><?= article_e($story['title']) ?></span>
+                                        <span class="side-tab-meta"><?= article_e(fmt_date($story['published_at'] ?: $story['created_at'])) ?></span>
+                                    </span>
+                                </a>
+                            <?php endforeach; ?>
+                            <?php if (empty($latestStories)): ?>
+                                <span class="side-tab-empty">لا توجد أخبار منشورة بعد.</span>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="sidebar-tab-panel sidebar-panel-viewed">
+                            <?php foreach ($mostViewedStories as $idx => $story): ?>
+                                <a class="side-tab-item" href="<?= article_e(app_url('article/' . $story['slug'])) ?>">
+                                    <span class="side-tab-rank"><?= $idx + 1 ?></span>
+                                    <span class="side-tab-text">
+                                        <span class="side-tab-title"><?= article_e($story['title']) ?></span>
+                                        <span class="side-tab-meta"><?= ui_icon('eye', '', 12) ?> <?= number_format((int) ($story['views_count'] ?? 0)) ?> مشاهدة</span>
+                                    </span>
+                                </a>
+                            <?php endforeach; ?>
+                            <?php if (empty($mostViewedStories)): ?>
+                                <span class="side-tab-empty">لا توجد إحصاءات مشاهدة بعد.</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
 
             <!-- Related Articles -->
             <?php if (!empty($related)): ?>
