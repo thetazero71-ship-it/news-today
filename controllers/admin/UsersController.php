@@ -115,6 +115,17 @@ $this->guardPermission('users.manage');
 
  $roles = $db->query("SELECT * FROM roles ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
+ $publishedCount = 0;
+ $commentsCount = 0;
+ try {
+ $row = $db->fetch("SELECT COUNT(*) AS c FROM articles WHERE author_id = ? AND status = 'published'", [(int) $user['id']]);
+ $publishedCount = (int) ($row['c'] ?? 0);
+ $row = $db->fetch("SELECT COUNT(*) AS c FROM comments WHERE user_id = ?", [(int) $user['id']]);
+ $commentsCount = (int) ($row['c'] ?? 0);
+ } catch (Throwable $e) {
+ // تبقى الأعداد صفراً إن كانت القاعدة قديمة.
+ }
+
  $activity = class_exists('UserActivityHelper')
  ? UserActivityHelper::summary($db, (int) $user['id'])
  : array();
@@ -123,6 +134,8 @@ $this->guardPermission('users.manage');
  'user' => $user,
  'roles' => $roles,
  'activity' => $activity,
+ 'publishedCount' => $publishedCount,
+ 'commentsCount' => $commentsCount,
  ]);
  }
 

@@ -78,8 +78,10 @@ $controller = (string) file_get_contents($root . '/controllers/admin/UsersContro
 $view = (string) file_get_contents($root . '/views/admin/users/edit.php');
 t('the controller builds the summary', strpos($controller, 'UserActivityHelper::summary($db, (int) $user[\'id\'])') !== false);
 t('the summary reaches the view', strpos($controller, "'activity' => \$activity") !== false);
-t('the panel exists', strpos($view, 'نشاط المستخدم وتشخيص الدخول') !== false);
-t('the last IP is shown LTR monospace', strpos($view, "dir=\"ltr\" class=\"font-monospace\"") !== false);
+t('published and comments counts are passed', strpos($controller, "'publishedCount' => \$publishedCount") !== false
+    && strpos($controller, "'commentsCount' => \$commentsCount") !== false);;
+t('the panel exists', strpos($view, 'تعديل بيانات ورصد نشاط') !== false);
+t('the last IP is shown LTR', strpos($view, 'ue-stat-value" dir="ltr"') !== false);
 t('the country is shown', strpos($view, "\$activity['country']") !== false);
 t('the device/browser/OS are shown', strpos($view, "\$activity['device']") !== false
     && strpos($view, "\$activity['browser']") !== false
@@ -88,6 +90,15 @@ t('sessions are listed', strpos($view, 'foreach ($actSessions as $sess)') !== fa
 t('audit entries are listed', strpos($view, 'foreach ($actLogs as $log)') !== false);
 t('empty states are explained', strpos($view, 'لا توجد جلسات مسجّلة بعد') !== false
     && strpos($view, 'لا توجد عمليات مسجّلة لهذا المستخدم بعد') !== false);
+t('four top stat cards are rendered', substr_count($view, 'class="ue-stat"') === 4);
+t('the audit log link is filtered by user', strpos($view, "admin/activity-log?user_id=' . (int) \$user['id']") !== false);
+t('the published articles link is filtered', strpos($view, "admin/articles?author_id=' . (int) \$user['id'] . '&status=published") !== false);
+t('the form keeps all fields', strpos($view, 'name="username"') !== false
+    && strpos($view, 'name="email"') !== false
+    && strpos($view, 'name="password"') !== false
+    && strpos($view, 'name="role_id"') !== false
+    && strpos($view, 'name="status"') !== false);
+t('the submit button is gradient styled', strpos($view, 'class="ue-submit"') !== false);
 
 echo "\npassed: $pass  failed: $fail\n";
 exit($fail === 0 ? 0 : 1);
