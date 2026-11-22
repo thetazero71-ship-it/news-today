@@ -151,6 +151,7 @@ class PageCache
         // زاحفة عند أول طلب يتجاوز مدة الصلاحية.
         header('X-Page-Cache: ' . ($age <= self::TTL ? 'HIT' : 'STALE'));
         header('X-Page-Cache-Age: ' . $age);
+        header_remove('Cache-Control');
         header('Cache-Control: public, max-age=60, stale-while-revalidate=300');
         header('Content-Type: text/html; charset=UTF-8');
         echo self::personalise($html);

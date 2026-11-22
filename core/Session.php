@@ -9,10 +9,11 @@ class Session
         }
 
         $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
-        // Do not let PHP force "no-store" on every response; the router sets
-        // the right policy: public HTML 60s for guests, no-store for admin.
+        // Do not let PHP force "no-store" on every response; public pages get a
+        // short browser cache, while admin/API responses override this below.
         if (function_exists('session_cache_limiter')) {
-            session_cache_limiter('');
+            session_cache_limiter('public');
+            session_cache_expire(60);
         }
         session_set_cookie_params(array(
             'lifetime' => 0,

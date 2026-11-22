@@ -1034,10 +1034,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
 // which is what causes the intermittent "502 Bad Gateway" under bursts.
 $__pageCacheable = PageCache::isCacheableRequest();
 if ($__pageCacheable) {
+    header_remove('Cache-Control');
     header('Cache-Control: public, max-age=60, stale-while-revalidate=300');
 } else {
     $__reqPath = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     if (!preg_match('#\.(css|js|mjs|json|webmanifest|png|jpe?g|gif|svg|ico|webp|avif|woff2?|ttf|eot|map|xml|txt)$#i', $__reqPath)) {
+        header_remove('Cache-Control');
         header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
     }
 }
