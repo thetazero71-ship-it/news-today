@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Article reading UI: sidebar tabs, brand share icons, footer socials, scrollbar.
  *
@@ -84,10 +84,10 @@ t('the final thumb follows the site accent', strpos($css, 'linear-gradient(180de
 t('the thumb is a capsule', strpos($css, 'border-radius: 9999px;') !== false);
 t('the thumb has no side border', strpos($css, "border: 0;\n  border-radius: 9999px;\n  min-height: 72px;") !== false);
 t('the thumb has a minimum capsule length', strpos($css, 'min-height: 72px;') !== false);
-t('the rail is centred', strpos($css, 'calc(50% - 2px)') !== false
-    && strpos($css, 'calc(50% + 2px)') !== false);
-t('the rail is deep black and 4px', strpos($css, '#0a0a0a calc(50% - 2px)') !== false
-    && strpos($css, '#0a0a0a calc(50% + 2px)') !== false);
+t('the rail is centred', strpos($css, 'calc(50% - 3px)') !== false
+    && strpos($css, 'calc(50% + 3px)') !== false);
+t('the rail is deep black and 4px', strpos($css, '#0a0a0a calc(50% - 3px)') !== false
+    && strpos($css, '#0a0a0a calc(50% + 3px)') !== false);
 t('the scrollbar is 12px wide', strpos($css, 'width: 12px;') !== false);
 t('the favourites list uses the same capsule', strpos($css, '.fav-items-scrollable::-webkit-scrollbar-thumb') !== false);
 

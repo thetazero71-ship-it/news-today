@@ -149,7 +149,7 @@ if (!function_exists('is_admin_active')) {
  }
  .sidebar-nav::-webkit-scrollbar-track {
  background: transparent;
- background-image: linear-gradient(to right, transparent calc(50% - 2px), rgba(148,163,184,0.45) calc(50% - 2px), rgba(148,163,184,0.45) calc(50% + 2px), transparent calc(50% + 2px));
+ background-image: linear-gradient(to right, transparent calc(50% - 3px), rgba(148,163,184,0.45) calc(50% - 3px), rgba(148,163,184,0.45) calc(50% + 3px), transparent calc(50% + 3px));
  background-repeat: no-repeat;
  }
  .sidebar-nav::-webkit-scrollbar-thumb {
